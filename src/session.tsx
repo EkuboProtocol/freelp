@@ -9,15 +9,13 @@ import {
 } from "react";
 import { getAddress, type Address } from "viem";
 export { rpc } from "./rpc";
-import { DEFAULT_SETTINGS, validateSettings } from "./config";
-import { load, save } from "./storage";
+import { loadSettings, validateSettings } from "./config";
+import { save } from "./storage";
 import { executeTransaction } from "./transactions";
 import { accepted, accept } from "./terms";
 import type { Settings, Transaction, Wallet } from "./types";
 function useSessionState() {
-  const [settings, setSettings] = useState(() =>
-    load<Settings>("freelp:settings", DEFAULT_SETTINGS),
-  );
+  const [settings, setSettings] = useState(loadSettings);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [wallet, setWallet] = useState<Wallet>();
   const [account, setAccount] = useState<Address>();

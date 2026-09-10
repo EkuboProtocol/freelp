@@ -23,6 +23,7 @@ Development remains private. This is a record of observed checks, not a launch a
 - Private app commit 746ffb7fb5bc42d3031ae2a430187a55c065c49c passed complete CI run 34526524892.
 - Private tag v0.0.1 at e8e7043740615bf338378046a2d95d90cd73ab48 passed CI 34527494093. Both the locally built launcher and the independently authenticated downloaded launcher verified default latest-release discovery and offline startup; explicit version selection passed too. Site CID: bafybeidzh7wnisiaehnjfrtjv5z5sd3zarmpvmyaybokdjpqo46p2l2yhy.
 - Public publication no longer requires a project pin API. The private guard and fresh-public-blockstore command flow pass an isolated test with a mock Kubo executable; configuration commands were also checked against real pinned Kubo offline. Public DHT publication remains intentionally unexecuted while private. Twenty unit tests, lint, typecheck and the production build pass.
+- Five browser tests pass after adding configuration recovery coverage: malformed persisted settings fall back safely, unavailable RPC errors are shown, chain mismatches are detected, replacement settings survive reload, and malformed imports are rejected without a render crash.
 - The desktop creation form was visually checked for plain monochrome styling, labeled fields, and the terms gate.
 
 ## Limits and remaining checks
