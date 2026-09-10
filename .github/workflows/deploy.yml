@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
-      attestations: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -22,12 +20,6 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run notices:check
       - run: bun run lint && bun run test && bun run build
-      - name: Compile local launcher
-        run: |
-          bun build cli/main.ts --compile --no-compile-autoload-dotenv --no-compile-autoload-bunfig --no-compile-autoload-tsconfig --no-compile-autoload-package-json --target=bun-linux-x64 --outfile release/freelp-linux-x64
-          bun build cli/main.ts --compile --no-compile-autoload-dotenv --no-compile-autoload-bunfig --no-compile-autoload-tsconfig --no-compile-autoload-package-json --target=bun-darwin-arm64 --outfile release/freelp-darwin-arm64
-      - name: Verify launcher bootstrap isolation
-        run: bun scripts/check-launcher.ts release/freelp-linux-x64
       - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09
         with:
           version: v1.8.1
@@ -38,25 +30,10 @@ jobs:
           bun run test:e2e
       - name: Package content-addressed site
         run: bun scripts/package-release.ts
-      - name: Private provenance (no public transparency log)
-        if: github.event.repository.private
-        run: bun scripts/private-proof.ts
-      - name: Public provenance
-        if: '!github.event.repository.private'
-        id: attest
-        uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661
-        with:
-          subject-path: |
-            release/descriptor.json
-            release/freelp-linux-x64
-            release/freelp-darwin-arm64
-      - name: Preserve public verification bundle
-        if: '!github.event.repository.private'
-        env:
-          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
-        run: cp "$BUNDLE_PATH" release/provenance.json
-      - name: Package site with verification proof
-        run: bun scripts/package-proof.ts
+      - name: Pack npm distribution (no publication)
+        run: npm pack --ignore-scripts --pack-destination release
+      - name: Exercise packaged application
+        run: bun scripts/check-package.ts release/ekubo-freelp-*.tgz
       - name: Verify release through an isolated IPFS gateway
         env:
           PRIVATE_BUILD: ${{ github.event.repository.private }}
@@ -75,11 +52,8 @@ jobs:
             cat /tmp/freelp-ipfs.log
             exit 1
           fi
-          release_cid=$(bun -e 'console.log((await Bun.file("release/deployment.json").json()).releaseCid)')
-          options=()
-          if [[ "$PRIVATE_BUILD" == true ]]; then options+=(--private-build); fi
-          release/freelp-linux-x64 --cid "$release_cid" --gateway http://127.0.0.1:8080 "${options[@]}" --verify-only
-          bun scripts/check-gateway.ts "$release_cid"
+          site_cid=$(bun -e 'console.log((await Bun.file("release/deployment.json").json()).siteCid)')
+          bun scripts/check-gateway.ts "$site_cid"
       - name: Seed public IPFS deployment from CI
         if: '!github.event.repository.private'
         env:

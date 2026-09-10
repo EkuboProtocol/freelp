@@ -4,23 +4,15 @@
   "workspaces": {
     "": {
       "name": "freelp",
-      "dependencies": {
-        "@ipld/car": "^5.4.7",
-        "@lingui/core": "6.6.0",
-        "@lingui/react": "6.6.0",
-        "blockstore-core": "^7.0.1",
-        "ipfs-unixfs-importer": "^17.1.1",
-        "jose": "^6.2.12",
-        "react": "19.2.8",
-        "react-dom": "19.2.8",
-        "viem": "2.55.19",
-      },
       "devDependencies": {
         "@babel/core": "^8.0.1",
         "@eslint/js": "10.0.1",
+        "@ipld/car": "^5.4.7",
         "@lingui/babel-plugin-lingui-macro": "6.6.0",
         "@lingui/cli": "6.6.0",
+        "@lingui/core": "6.6.0",
         "@lingui/format-po": "6.6.0",
+        "@lingui/react": "6.6.0",
         "@lingui/vite-plugin": "6.6.0",
         "@playwright/test": "1.62.1",
         "@rolldown/plugin-babel": "^0.2.4",
@@ -28,12 +20,17 @@
         "@types/react": "19.2.18",
         "@types/react-dom": "19.2.3",
         "@vitejs/plugin-react": "6.1.1",
+        "blockstore-core": "^7.0.1",
         "eslint": "10.9.0",
         "eslint-plugin-react-hooks": "7.1.1",
         "globals": "17.11.0",
+        "ipfs-unixfs-importer": "^17.1.1",
         "prettier": "^3.9.6",
+        "react": "19.2.8",
+        "react-dom": "19.2.8",
         "typescript": "6.0.3",
         "typescript-eslint": "8.68.0",
+        "viem": "2.55.19",
         "vite": "8.2.2",
       },
     },
@@ -456,8 +453,6 @@
     "jest-validate": ["jest-validate@29.7.0", "", { "dependencies": { "@jest/types": "^29.6.3", "camelcase": "^6.2.0", "chalk": "^4.0.0", "jest-get-type": "^29.6.3", "leven": "^3.1.0", "pretty-format": "^29.7.0" } }, "sha512-ZB7wHqaRGVw/9hST/OuFUReG7M8vKeq0/J2egIGLdvjHCmYqGARhzXmtgi+gVeZ5uXFF219aOc3Ls2yLg27tkw=="],
 
     "jiti": ["jiti@2.7.0", "", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ=="],
-
-    "jose": ["jose@6.2.12", "", {}, "sha512-9NiFmJEex0sy2Dk58j2UGBSHgUs2ypF9eZSu4L6vjOX3Dp96Sw1F3uL+H+D1sx02jZZdzUT0HgvCy59CuvXcWw=="],
 
     "js-sha256": ["js-sha256@0.10.1", "", {}, "sha512-5obBtsz9301ULlsgggLg542s/jqtddfOpV5KJc4hajc9JV8GeY2gZHSVpYBn4nWqAUTJ9v+xwtbJ1mIBgIH5Vw=="],
 

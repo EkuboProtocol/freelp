@@ -5,10 +5,11 @@ import { getAddress } from "viem";
 import { useSession, rpc } from "./session";
 import { validateSettings } from "./config";
 import { verifyCode } from "./contracts";
+import { networkName } from "./networks";
 import { Field } from "./common";
 import type { Settings } from "./types";
 export function SettingsPage() {
-  const { settings, configure, setStatus } = useSession();
+  const { settings, networks, configure, setStatus } = useSession();
   const [draft, setDraft] = useState(settings);
   const [importText, setImport] = useState("");
   const update = (key: keyof Settings, value: string | number) =>
@@ -67,6 +68,9 @@ export function SettingsPage() {
         core: parsed.core,
         manager: parsed.manager,
         nativeSymbol: parsed.nativeSymbol,
+        quoteDataFetcher: parsed.quoteDataFetcher,
+        coreDataFetcher: parsed.coreDataFetcher,
+        tokenDataFetcher: parsed.tokenDataFetcher,
       });
       setDraft(next);
     } catch (e) {
@@ -84,6 +88,23 @@ export function SettingsPage() {
           stay in this browser.
         </Trans>
       </p>
+      <Field label={<Trans>Network configuration</Trans>}>
+        <select
+          value={draft.chainId}
+          onChange={(event) => {
+            const selected = networks.find(
+              (network) => network.chainId === Number(event.target.value),
+            );
+            if (selected) setDraft(selected);
+          }}
+        >
+          {networks.map((network) => (
+            <option key={network.chainId} value={network.chainId}>
+              {networkName(network.chainId)}
+            </option>
+          ))}
+        </select>
+      </Field>
       <div className="grid">
         <Field label={<Trans>RPC URL</Trans>}>
           <input
@@ -108,6 +129,20 @@ export function SettingsPage() {
           <input
             value={draft.manager}
             onChange={(e) => update("manager", e.target.value)}
+          />
+        </Field>
+        <Field label={<Trans>Quote data fetcher address</Trans>}>
+          <input
+            value={draft.quoteDataFetcher ?? ""}
+            placeholder={t`Canonical deployment`}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                quoteDataFetcher: event.target.value
+                  ? (event.target.value as Settings["core"])
+                  : undefined,
+              })
+            }
           />
         </Field>
         <Field label={<Trans>Native token symbol</Trans>}>

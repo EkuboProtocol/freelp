@@ -1,5 +1,4 @@
 import { test, expect } from "bun:test";
-import { generateKeyPair, exportJWK, SignJWT } from "jose";
 import {
   contentDag,
   sha256,
@@ -7,13 +6,7 @@ import {
   decodeApplication,
   type ReleaseDescriptor,
 } from "../../cli/content";
-import {
-  verifyPrivateProof,
-  REPOSITORY,
-  REPOSITORY_ID,
-  OWNER_ID,
-  WORKFLOW,
-} from "../../cli/provenance";
+const REPOSITORY = "EkuboProtocol/freelp";
 import { serve } from "../../cli/server";
 const bytes = Buffer.from(
   JSON.stringify([
@@ -72,63 +65,7 @@ test("rejects unsafe paths and duplicate file entries", () => {
     ),
   ).toThrow();
 });
-test("verifies signed GitHub identity bound to content, not a repo label", async () => {
-  const descriptor = await fixture();
-  const descriptorBytes = Buffer.from(JSON.stringify(descriptor));
-  const { privateKey, publicKey } = await generateKeyPair("RS256");
-  const key = { ...(await exportJWK(publicKey)), kid: "test", alg: "RS256" };
-  const iat = Math.floor(Date.now() / 1000) - 1000;
-  const claims = {
-    repository: REPOSITORY,
-    repository_id: REPOSITORY_ID,
-    repository_owner_id: OWNER_ID,
-    workflow_ref: `${WORKFLOW}@${descriptor.ref}`,
-    workflow_sha: descriptor.commit,
-    sha: descriptor.commit,
-    ref: descriptor.ref,
-    event_name: "push",
-    repository_visibility: "private",
-  };
-  async function sign(overrides: Record<string, unknown> = {}) {
-    return new SignJWT({ ...claims, ...overrides })
-      .setProtectedHeader({ alg: "RS256", kid: "test" })
-      .setIssuer("https://token.actions.githubusercontent.com")
-      .setAudience(`freelp:sha256:${sha256(descriptorBytes)}`)
-      .setIssuedAt(iat)
-      .setNotBefore(iat - 5)
-      .setExpirationTime(iat + 300)
-      .sign(privateKey);
-  }
-  const proof = { type: "github-oidc" as const, jwt: await sign() };
-  expect(
-    (await verifyPrivateProof(descriptorBytes, proof, { keys: [key] })).commit,
-  ).toBe(descriptor.commit);
-  for (const overrides of [
-    { repository: "attacker/freelp" },
-    { repository_id: "1" },
-    {
-      workflow_ref: `${REPOSITORY}/.github/workflows/evil.yml@${descriptor.ref}`,
-    },
-    { sha: "b".repeat(40) },
-    { event_name: "pull_request" },
-  ])
-    await expect(
-      verifyPrivateProof(
-        descriptorBytes,
-        { ...proof, jwt: await sign(overrides) },
-        { keys: [key] },
-      ),
-    ).rejects.toThrow();
-  await expect(
-    verifyPrivateProof(
-      Buffer.from(JSON.stringify({ ...descriptor, siteCid: "modified" })),
-      proof,
-      { keys: [key] },
-    ),
-  ).rejects.toThrow();
-  await expect(verifyPrivateProof(descriptorBytes, proof)).rejects.toThrow();
-});
-test("loopback server serves only verified snapshot and rejects bad Host/methods", async () => {
+test("loopback server serves only its packaged snapshot and rejects bad Host/methods", async () => {
   const files = decodeApplication(bytes);
   const server = await serve(files, 19417, false);
   try {

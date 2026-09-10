@@ -36,8 +36,8 @@ if (!/^bafy[a-z2-7]{55}$/.test(cid ?? "") || !/^\d{2,5}$/.test(port))
   throw new Error("Usage: bun scripts/check-gateway.ts RELEASE_CID [PORT]");
 const browser = await chromium.launch();
 try {
-  await check(browser, `http://127.0.0.1:${port}/ipfs/${cid}/site/`);
-  await check(browser, `http://${cid}.ipfs.localhost:${port}/site/`);
+  await check(browser, `http://127.0.0.1:${port}/ipfs/${cid}/`);
+  await check(browser, `http://${cid}.ipfs.localhost:${port}/`);
 } finally {
   await browser.close();
 }

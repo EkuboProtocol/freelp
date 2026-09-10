@@ -8,6 +8,7 @@ type Package = {
   license?: string;
   author?: unknown;
   dependencies?: Record<string, string>;
+  freelpBundledDependencies?: string[];
   optionalDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
 };
@@ -43,8 +44,8 @@ const app = JSON.parse(
   await readFile(join(root, "package.json"), "utf8"),
 ) as Package;
 const queue = await Promise.all(
-  Object.keys(app.dependencies ?? {}).map((name) =>
-    packageDirectory(name, root),
+  (app.freelpBundledDependencies ?? Object.keys(app.dependencies ?? {})).map(
+    (name) => packageDirectory(name, root),
   ),
 );
 const packages = new Map<string, { info: Package; text: string }>();

@@ -251,12 +251,15 @@ for (const { missingDecimals, native } of [
         "match the bundled contract artifacts",
       );
     }
+    await deployFetchers(page, missingDecimals, native);
     const deployedManager = await page.evaluate(
       () => JSON.parse(localStorage.getItem("freelp:settings")!).manager as Hex,
     );
     await page.getByRole("link", { name: "Create", exact: true }).click();
+    await page.getByText("Advanced pool settings", { exact: true }).click();
     await page.getByLabel("Token 0 address").fill(tokens[0]);
     await page.getByLabel("Token 1 address").fill(tokens[1]);
+    await checkTokenImports(page, tokens, missingDecimals, native);
     await page.getByLabel("Maximum token 0 amount").fill(amount(1));
     await page.getByLabel("Maximum token 1 amount").fill(amount(1));
     await page.getByRole("button", { name: "Preview position" }).click();
@@ -286,8 +289,10 @@ for (const { missingDecimals, native } of [
       page.getByRole("button", { name: "#1", exact: true }),
     ).toBeVisible({ timeout: 30000 });
     await page.getByRole("link", { name: "Create", exact: true }).click();
+    await page.getByText("Advanced pool settings", { exact: true }).click();
     await page.getByLabel("Token 0 address").fill(tokens[0]);
     await page.getByLabel("Token 1 address").fill(tokens[1]);
+    await checkPoolChart(page, missingDecimals, native);
     await page
       .getByLabel("Initial price (new pools only)")
       .fill("ignored for existing pool");
@@ -387,3 +392,73 @@ for (const { missingDecimals, native } of [
     expect(unexpected).toEqual([]);
     expect(await client.getBalance({ address: deployedManager })).toBe(0n);
   });
+
+async function deployFetchers(
+  page: Page,
+  missingDecimals: boolean,
+  native: boolean,
+) {
+  if (missingDecimals || native) return;
+  for (const kind of [
+    "QuoteDataFetcher",
+    "CoreDataFetcher",
+    "TokenDataFetcher",
+  ]) {
+    await page
+      .getByRole("button", { name: `Deploy ${kind}`, exact: true })
+      .click();
+    await expect(page.locator(".status[role=status]")).toContainText(
+      `${kind} deployed and verified:`,
+      { timeout: 30000 },
+    );
+  }
+}
+async function checkPoolChart(
+  page: Page,
+  missingDecimals: boolean,
+  native: boolean,
+) {
+  if (missingDecimals || native) return;
+  await page.getByRole("button", { name: "Find pools on chain" }).click();
+  await expect(
+    page.getByRole("img", { name: "Pool liquidity by price" }),
+  ).toBeVisible({ timeout: 30000 });
+  await expect(page.getByText("Existing pool", { exact: true })).toBeVisible();
+  const heights = await page
+    .locator(".liquidity-chart rect")
+    .evaluateAll((nodes) =>
+      nodes.map((node) => Number(node.getAttribute("height"))),
+    );
+  expect(heights.some((height) => height > 0)).toBe(true);
+}
+
+async function checkTokenImports(
+  page: Page,
+  tokens: Hex[],
+  missingDecimals: boolean,
+  native: boolean,
+) {
+  if (missingDecimals || native) return;
+  for (const [index, address] of tokens.entries()) {
+    await page
+      .getByRole("button", {
+        name: index === 0 ? "Select first token" : "Select second token",
+      })
+      .click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Search tokens or paste an address").fill(address);
+    await dialog.getByRole("button", { name: "Read token from chain" }).click();
+    await dialog
+      .getByRole("button", { name: "Import token", exact: true })
+      .click();
+  }
+  const saved = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("freelp:tokens:31337")!),
+  );
+  expect(
+    saved.filter((token: { symbol: string }) => token.symbol === "TT"),
+  ).toHaveLength(2);
+  expect(
+    await page.evaluate(() => localStorage.getItem("freelp:tokens:8453")),
+  ).toBeNull();
+}

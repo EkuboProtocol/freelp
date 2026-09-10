@@ -12,17 +12,28 @@ import managerArtifact from "../artifacts/FreeLP.json" with { type: "json" };
 import coreArtifact from "../artifacts/Core.json" with { type: "json" };
 import { rpc } from "./rpc";
 import type { Amounts, Descriptor, Position, Settings } from "./types";
+import quoteArtifact from "../artifacts/QuoteDataFetcher.json" with { type: "json" };
+import coreDataArtifact from "../artifacts/CoreDataFetcher.json" with { type: "json" };
+import tokenDataArtifact from "../artifacts/TokenDataFetcher.json" with { type: "json" };
+const CONTRACT_ARTIFACTS = {
+  Core: coreArtifact,
+  FreeLP: managerArtifact,
+  QuoteDataFetcher: quoteArtifact,
+  CoreDataFetcher: coreDataArtifact,
+  TokenDataFetcher: tokenDataArtifact,
+};
+export type ContractKind = keyof typeof CONTRACT_ARTIFACTS;
 export const managerAbi = managerArtifact.abi as Abi;
 export const managerData = (
   functionName: string,
   args: readonly unknown[] = [],
 ) => encodeFunctionData({ abi: managerAbi, functionName, args });
-export function deployment(kind: "Core" | "FreeLP", core: Address) {
-  const artifact = kind === "Core" ? coreArtifact : managerArtifact;
+export function deployment(kind: ContractKind, core: Address) {
+  const artifact = CONTRACT_ARTIFACTS[kind];
   return encodeDeployData({
     abi: artifact.abi as Abi,
     bytecode: artifact.bytecode as Hex,
-    args: kind === "Core" ? [] : [core],
+    args: kind === "Core" || kind === "TokenDataFetcher" ? [] : [core],
   });
 }
 export async function read<T>(
@@ -156,9 +167,9 @@ export function approval(address: Address, spender: Address, amount: bigint) {
 export async function verifyCode(
   settings: Settings,
   address: Address,
-  kind: "Core" | "FreeLP",
+  kind: ContractKind,
 ) {
-  const artifact = kind === "Core" ? coreArtifact : managerArtifact;
+  const artifact = CONTRACT_ARTIFACTS[kind];
   const code = await rpc(settings).getCode({ address });
   if (!code) throw new Error("No contract at this address.");
   assertRuntime(artifact, code, settings.core);

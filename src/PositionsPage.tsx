@@ -1,3 +1,4 @@
+import { NetworkPortfolio } from "./NetworkPortfolio";
 import { t } from "@lingui/core/macro";
 import { parseAmount } from "./amounts";
 import { ApprovalButton } from "./ApprovalButton";
@@ -36,7 +37,7 @@ export function PositionsPage() {
   });
   const items = loaded.scope === scope ? loaded.items : [];
   const [loading, setLoading] = useState(false);
-  const [selected, setSelected] = useState<string>();
+  const [selected, setSelected] = useState<string>(location.hash.split("/")[2]);
   useEffect(() => {
     let active = true;
     if (!account || settings.manager === zeroAddress) return;
@@ -58,6 +59,7 @@ export function PositionsPage() {
   const item = items.find((p) => p.id.toString() === selected);
   return (
     <section>
+      <NetworkPortfolio />
       <h2>
         <Trans>Your positions</Trans>
       </h2>

@@ -1,11 +1,12 @@
-import { isAddress, zeroAddress } from "viem";
+import { DEFAULT_CORE } from "./deployments";
+import { isAddress } from "viem";
 import { load } from "./storage";
 import type { Settings } from "./types";
 export const DEFAULT_SETTINGS: Settings = {
   rpcUrl: "https://ethereum-rpc.publicnode.com",
   chainId: 1,
-  core: zeroAddress,
-  manager: zeroAddress,
+  core: DEFAULT_CORE,
+  manager: "0x0000000000000000000000000000000000000000",
   nativeSymbol: "ETH",
 };
 export function validateSettings(value: Settings) {
@@ -19,10 +20,9 @@ export function validateSettings(value: Settings) {
     throw new Error("RPC must use HTTP or HTTPS.");
   if (!Number.isSafeInteger(value.chainId) || value.chainId < 1)
     throw new Error("Invalid chain ID.");
-  if (!isAddress(value.core) || !isAddress(value.manager))
-    throw new Error("Invalid contract address.");
   if (value.nativeSymbol.length > 16)
     throw new Error("Native token symbol is too long.");
+  validateAddresses(value);
   return value;
 }
 
@@ -34,4 +34,16 @@ export function loadSettings() {
   } catch {
     return DEFAULT_SETTINGS;
   }
+}
+
+function validateAddresses(value: Settings) {
+  const addresses = [
+    value.core,
+    value.manager,
+    value.coreDataFetcher ?? "0x0000000000000000000000000000000000000000",
+    value.tokenDataFetcher ?? "0x0000000000000000000000000000000000000000",
+    value.quoteDataFetcher ?? "0x0000000000000000000000000000000000000000",
+  ];
+  if (!addresses.every((address) => isAddress(address)))
+    throw new Error("Invalid contract address.");
 }

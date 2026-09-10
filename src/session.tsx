@@ -10,12 +10,14 @@ import {
 } from "react";
 import { getAddress, type Address } from "viem";
 export { rpc } from "./rpc";
+import { loadNetworks, updateNetworks } from "./networks";
 import { loadSettings, validateSettings } from "./config";
 import { save } from "./storage";
 import { executeTransaction } from "./transactions";
 import { accepted, accept } from "./terms";
 import type { Settings, Transaction, Wallet } from "./types";
 function useSessionState() {
+  const [networks, setNetworks] = useState(loadNetworks);
   const [settings, setSettings] = useState(loadSettings);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [wallet, setWallet] = useState<Wallet>();
@@ -74,9 +76,25 @@ function useSessionState() {
       );
     validateSettings(next);
     setSettings(next);
+    setNetworks((current) => updateNetworks(current, next));
     save("freelp:settings", next);
     setRevision((n) => n + 1);
   }, []);
+  function selectNetwork(chainId: number) {
+    const next = networks.find((network) => network.chainId === chainId);
+    if (next) configure(next);
+  }
+  async function switchWalletNetwork() {
+    if (!wallet) throw new Error(t`Connect a wallet first.`);
+    if (transactionLock.current)
+      throw new Error(t`Finish the pending transaction first.`);
+    await wallet.provider.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: `0x${settings.chainId.toString(16)}` }],
+    });
+    await connect(wallet);
+    setStatus(t`Wallet connected to the selected network.`);
+  }
   async function send(tx: Transaction) {
     if (!wallet || !account) throw new Error(t`Connect a wallet first.`);
     if (transactionLock.current)
@@ -107,6 +125,9 @@ function useSessionState() {
   }
   return {
     settings,
+    networks,
+    selectNetwork,
+    switchWalletNetwork,
     configure,
     wallets,
     account,

@@ -1,3 +1,6 @@
+import { PoolPicker } from "./PoolPicker";
+import type { Currency } from "./tokens";
+import { CurrencySelect } from "./CurrencySelect";
 import { t } from "@lingui/core/macro";
 import { parseAmount } from "./amounts";
 import { concentratedConfig } from "./pools";
@@ -8,7 +11,13 @@ import { PricePreview } from "./PricePreview";
 import { rpc } from "./rpc";
 import { useState } from "react";
 import { Trans } from "@lingui/react/macro";
-import { formatUnits, getAddress, zeroAddress, type Address } from "viem";
+import {
+  formatUnits,
+  getAddress,
+  isAddress,
+  zeroAddress,
+  type Address,
+} from "viem";
 import { useSession } from "./session";
 import { read, token, managerData, type Token } from "./contracts";
 import { Action, Field } from "./common";
@@ -37,6 +46,27 @@ export function CreatePage() {
   const [quote, setQuote] = useState<Quote>();
   const [fallbackA, setFallbackA] = useState("");
   const [fallbackB, setFallbackB] = useState("");
+  function chooseCurrency(side: 0 | 1, token: Currency) {
+    const pair = side === 0 ? [token.address, b] : [a, token.address];
+    const fallback =
+      side === 0
+        ? [String(token.decimals), fallbackB]
+        : [fallbackA, String(token.decimals)];
+    if (
+      isAddress(pair[0]) &&
+      isAddress(pair[1]) &&
+      BigInt(pair[0]) > BigInt(pair[1])
+    ) {
+      pair.reverse();
+      fallback.reverse();
+      setMaxA(maxB);
+      setMaxB(maxA);
+    }
+    setA(pair[0]);
+    setB(pair[1]);
+    setFallbackA(fallback[0]);
+    setFallbackB(fallback[1]);
+  }
   const key = JSON.stringify([
     settings,
     account,
@@ -143,37 +173,89 @@ export function CreatePage() {
       </h2>
       <p>
         <Trans>
-          Enter token addresses in ascending order. Use the zero address for the
-          native token. Prices use token 1 per token 0; raw ticks use a 1.000001
-          price step.
+          Choose two tokens, explore available pools, and set the price range
+          for your liquidity. Token selections are ordered automatically. Prices
+          show the second token per first token.
         </Trans>
       </p>
-      <div className="grid">
-        <Field label={<Trans>Token 0 address</Trans>}>
-          <input value={a} onChange={(e) => setA(e.target.value)} />
-        </Field>
-        <Field label={<Trans>Token 1 address</Trans>}>
-          <input value={b} onChange={(e) => setB(e.target.value)} />
-        </Field>
-        <Field label={<Trans>Maximum token 0 amount</Trans>}>
-          <input value={maxA} onChange={(e) => setMaxA(e.target.value)} />
-        </Field>
-        <Field label={<Trans>Maximum token 1 amount</Trans>}>
-          <input value={maxB} onChange={(e) => setMaxB(e.target.value)} />
-        </Field>
-        <Field label={<Trans>Pool fee (%)</Trans>}>
-          <input value={fee} onChange={(e) => setFee(e.target.value)} />
-        </Field>
-        <Field label={<Trans>Slippage (basis points)</Trans>}>
-          <input
-            type="number"
-            min={0}
-            max={1000}
-            value={slippage}
-            onChange={(e) => setSlippage(Number(e.target.value))}
+      <div className="grid deposit-inputs">
+        <div className="deposit-input">
+          <CurrencySelect
+            value={a}
+            label={t`Select first token`}
+            onChange={(token) => chooseCurrency(0, token)}
           />
-        </Field>
+          <Field label={<Trans>Maximum token 0 amount</Trans>}>
+            <input
+              inputMode="decimal"
+              placeholder="0"
+              value={maxA}
+              onChange={(e) => setMaxA(e.target.value)}
+            />
+          </Field>
+        </div>
+        <div className="deposit-input">
+          <CurrencySelect
+            value={b}
+            label={t`Select second token`}
+            onChange={(token) => chooseCurrency(1, token)}
+          />
+          <Field label={<Trans>Maximum token 1 amount</Trans>}>
+            <input
+              inputMode="decimal"
+              placeholder="0"
+              value={maxB}
+              onChange={(e) => setMaxB(e.target.value)}
+            />
+          </Field>
+        </div>
       </div>
+      <details className="advanced-settings">
+        <summary>
+          <Trans>Advanced pool settings</Trans>
+        </summary>
+        <div className="grid">
+          <Field label={<Trans>Token 0 address</Trans>}>
+            <input value={a} onChange={(e) => setA(e.target.value)} />
+          </Field>
+          <Field label={<Trans>Token 1 address</Trans>}>
+            <input value={b} onChange={(e) => setB(e.target.value)} />
+          </Field>
+          <Field label={<Trans>Pool fee (%)</Trans>}>
+            <input value={fee} onChange={(e) => setFee(e.target.value)} />
+          </Field>
+          <Field label={<Trans>Slippage (basis points)</Trans>}>
+            <input
+              type="number"
+              min={0}
+              max={1000}
+              value={slippage}
+              onChange={(e) => setSlippage(Number(e.target.value))}
+            />
+          </Field>
+        </div>
+      </details>
+      <PoolPicker
+        key={JSON.stringify([settings, a, b])}
+        token0={a}
+        token1={b}
+        fee={fee}
+        spacing={range.spacing}
+        onSelect={(selectedFee, spacing, price) => {
+          setFee(selectedFee);
+          setRange({
+            ...range,
+            spacing,
+            prices: price
+              ? [
+                  String(Number(price) * 0.9),
+                  String(Number(price) * 1.1),
+                  price,
+                ]
+              : range.prices,
+          });
+        }}
+      />
       <RangeFields range={range} setRange={setRange} />
       <details>
         <summary>

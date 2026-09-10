@@ -6,7 +6,14 @@ if (!source)
     "Usage: bun scripts/import-contracts.ts /path/to/evm-contracts",
   );
 await mkdir("artifacts", { recursive: true });
-for (const name of ["Core", "FreeLP", "TestToken"]) {
+for (const name of [
+  "Core",
+  "FreeLP",
+  "TestToken",
+  "QuoteDataFetcher",
+  "CoreDataFetcher",
+  "TokenDataFetcher",
+]) {
   const input = JSON.parse(
     await readFile(
       resolve(source, "out", `${name}.sol`, `${name}.json`),

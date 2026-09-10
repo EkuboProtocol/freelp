@@ -12,7 +12,7 @@ export type RangeInput = {
 export const DEFAULT_RANGE: RangeInput = {
   raw: false,
   full: false,
-  spacing: 100,
+  spacing: 5982,
   prices: ["0.99", "1.01", "1"],
   ticks: ["-10000", "10000", "0"],
 };

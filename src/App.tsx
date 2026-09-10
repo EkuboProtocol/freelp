@@ -1,6 +1,7 @@
 import { t } from "@lingui/core/macro";
 import { useEffect, useState } from "react";
 import { Trans } from "@lingui/react/macro";
+import { networkName } from "./networks";
 import { useSession } from "./session";
 import { SettingsPage } from "./SettingsPage";
 import { TermsPage } from "./TermsPage";
@@ -16,24 +17,22 @@ function BuildPage() {
       <p>
         <Trans>Official source repository:</Trans>{" "}
         <a
-          href="https://github.com/moodysalem/freelp"
+          href="https://github.com/EkuboProtocol/freelp"
           target="_blank"
           rel="noreferrer"
         >
-          moodysalem/freelp
+          EkuboProtocol/freelp
         </a>
       </p>
       <p>
-        <Trans>
-          Use the FreeLP CLI to verify GitHub CI provenance and all application
-          files before opening this app. A website cannot independently prove
-          its own authenticity.
-        </Trans>
+        <Trans>Run the installed app locally with</Trans>{" "}
+        <code>bunx @ekubo/freelp</code>.
       </p>
       <p>
         <Trans>
-          This page does not assert that the build is verified. The independent
-          launcher reports the authenticated commit and content identifier.
+          The package contains the complete application. Your package manager
+          handles package integrity; the launcher serves local files without
+          fetching a separate build or contacting GitHub.
         </Trans>
       </p>
       <p className="row">
@@ -121,9 +120,34 @@ export function App() {
             </span>
           ) : null}
           <span>
-            <Trans>Chain {session.settings.chainId}</Trans>
+            <select
+              aria-label={t`Active network`}
+              value={session.settings.chainId}
+              disabled={session.busy}
+              onChange={(event) =>
+                session.selectNetwork(Number(event.target.value))
+              }
+            >
+              {session.networks.map((network) => (
+                <option key={network.chainId} value={network.chainId}>
+                  {networkName(network.chainId)}
+                </option>
+              ))}
+            </select>
           </span>
         </div>
+        {session.account ? (
+          <button
+            disabled={session.busy}
+            onClick={() =>
+              void session
+                .switchWalletNetwork()
+                .catch((error) => session.setStatus(String(error)))
+            }
+          >
+            <Trans>Switch wallet to this network</Trans>
+          </button>
+        ) : null}
         {!session.consent ? (
           <p>
             <Trans>
@@ -138,13 +162,13 @@ export function App() {
           {session.status}
         </p>
       ) : null}
-      <Page route={route} />
+      <Page key={`${session.settings.chainId}:${route}`} route={route} />
       <footer className="row">
         <a href="#/terms">
           <Trans>Terms</Trans>
         </a>
         <a href="#/build">
-          <Trans>Build provenance</Trans>
+          <Trans>About FreeLP</Trans>
         </a>
         <span>
           <Trans>No application fees. Network gas applies.</Trans>

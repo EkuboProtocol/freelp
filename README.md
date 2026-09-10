@@ -1,48 +1,35 @@
 # FreeLP
 
-Plain, EVM-only, RPC-only liquidity position management. No swap UI, indexer, hosted metadata, API keys, telemetry, or application fee. All authoritative position data and NFT metadata generation are on-chain. The static app runs on IPFS or from a verified local launcher.
+EVM liquidity position management using only RPC endpoints and an injected wallet. No swaps, TWAMM orders, indexer, hosted metadata, API keys, analytics, or application fee. Position records and NFT metadata are on-chain. Network gas still applies.
 
-Private development: do not publish this repository or its build CIDs until launch readiness. New Solidity lives in the EVM contracts repository; compiled contract artifacts retain their separate licenses.
+**Private development:** do not publish this repository, npm package, or IPFS content before launch readiness. Solidity changes live separately in EkuboProtocol/evm-contracts.
 
-## Development
+## Run the packaged app
 
-Use Bun 1.4.0. `bun install --frozen-lockfile`, `bun run build`, `bun run dev`. The app needs an injected EIP-6963 wallet. Configure the chain RPC and compatible Core/FreeLP manager in Settings, or use Deploy to create them. All transactions require terms acceptance and a separate wallet confirmation.
+Once published, `bunx @ekubo/freelp` serves the complete installed application on localhost and opens your browser. Use `--no-browser` or `--port 4173` as needed. A specific version can be selected with `bunx @ekubo/freelp@VERSION`.
 
-`bun run test`, `bun run lint`, `bun run check-ts`. Browser tests require Anvil with Osaka support listening on port 18545: `anvil --port 18545 --hardfork osaka --silent`, then `bun run build && bun run test:e2e`. Tests use only public Anvil development keys and freshly deployed local contracts.
+Trust the package publisher and your package manager's integrity checks. The package contains its static assets and has no runtime package dependencies. The launcher does not contact GitHub, download a second build, or handle wallet keys. Bun is installed separately; no runtime binary is distributed.
 
-## Verified launcher
+During private development, build with `bun install --frozen-lockfile && bun run pack:app`. Test the resulting tarball with `bun scripts/check-package.ts ekubo-freelp-0.1.0.tgz`, or run `bun cli/main.ts` from the built checkout. Packing does not publish; `private: true` prevents accidental npm publication.
 
-From a trusted source checkout: `bun cli/main.ts`. Requires GitHub CLI for release discovery and public Sigstore verification. Download and independently verify a packaged CLI before trusting it. Never bootstrap trust using a badge in the candidate web app.
+## Use FreeLP
 
-- `--version vX.Y.Z`: explicitly choose an official version.
-- `--cid RELEASE_CID --gateway http://127.0.0.1:8080`: fetch an explicit release from local Kubo and verify its outer CID, provenance, and site. Add `--private-build` for private development proof.
-- `--offline`: reverify and serve the last cached official release.
-- `--bundle PATH --private-build`: verify a downloaded private CI release bundle.
-- `--licenses`: print embedded dependency and runtime notices without fetching or launching an app.
-- `--no-browser --port 4173`: serve on loopback without launching a browser.
+Robinhood Chain, Base, Arbitrum, and Ethereum have bundled network configurations and free public RPC defaults. Each network retains its own RPC and contract addresses. Settings also supports custom EVM networks. Public RPC operators can change availability; replace an endpoint or use your own node at any time.
 
-Compiled launchers disable automatic loading of working-directory .env, bunfig.toml, tsconfig.json, and package.json files. CI tests that an untrusted local preload hook cannot execute. The CLI checks repository/workflow identity, source commit, signed artifact digest, every file, and the IPFS CID before serving an in-memory snapshot. GitHub is needed for updates, not for ongoing LP operation. Offline verification cannot discover new revocations. Transactions remain in the user's wallet; the CLI never handles wallet keys.
+Choose bundled tokens or import a token by address using on-chain metadata. Select a fee tier and discover existing pools using QuoteDataFetcher. The liquidity chart reconstructs current liquidity from initialized ticks, using the original interface's liquidity math. It shows only the fetched tick range, without historical or USD data. Choose a range, preview amounts, approve tokens, and create a position. Positions can be listed across configured networks and managed on their respective network.
+
+Canonical Core and QuoteDataFetcher addresses are bundled. A FreeLP manager must be configured or deployed before managing positions. The Deploy page can deploy Core, FreeLP, QuoteDataFetcher, CoreDataFetcher, and TokenDataFetcher from pinned artifacts, verifies the resulting runtime, and saves addresses per network. Deploying a fresh Core creates an independent liquidity system. Wallet transactions require terms acceptance and wallet confirmation.
+
+## Development and verification
+
+Use Bun 1.4.0. Run `bun run dev`, `bun run lint`, `bun run check-ts`, `bun run test`, and `bun run build`. Browser tests use Anvil with Osaka support at port 18545: `anvil --port 18545 --hardfork osaka --silent`, then `bun run test:e2e`. Only documented local development keys are used.
 
 ## IPFS
 
-`bun scripts/package-release.ts SOURCE_COMMIT` creates `release/application.json`, its descriptor, and `release/site.car`. After CI signs the descriptor, `bun scripts/package-proof.ts` creates `release/release.car` and `deployment.json`. The outer directory contains the unchanged app under `site/` and the descriptor, application archive, and proof under `proof/`. The signed descriptor authenticates the inner site CID; the outer CID also binds the proof without a circular signature dependency. The fixed import settings are in `cli/content.ts`. Import either CAR into Kubo to preserve the exact CID. A private offline import does not advertise content publicly.
+CI builds and packages each main commit and version tag. `bun scripts/package-release.ts SOURCE_COMMIT` produces the static site's CAR, manifest, and `deployment.json` with its CID and source commit. CI tests both an isolated IPFS gateway and the npm tarball, then retains artifacts in a private GitHub release. No npm publication occurs.
 
-Each main/tag commit is built and pinned in CI; the complete CAR is retained in a repository release so it can be restored independently. Before launch the repository and releases remain private. After public launch, CI seeds each deployment directly on IPFS from a fresh temporary node. No pinning API, project server, or paid provider is required. CI storage ends with the job; long-lived IPFS availability depends on users retaining the CAR on their own nodes. The repository release also retains the CAR for independent restoration. The CLI defaults to a loopback Kubo gateway for CID selection, rejects gateway redirects, and requires local gateways for private builds. A remote gateway may supply bytes for public releases, but verification still checks every file and both CIDs. Stable version tags are distinct from per-commit prereleases.
-
-To retain an authorized public deployment on your own Kubo node, download `release.car` and run `ipfs dag import release.car`. Keep that node online to serve its pinned content. Before launch, import only with `ipfs --offline dag import release.car` in an isolated repository, and never start that repository online. A content address verifies bytes; it does not pay for or guarantee their permanent storage.
+While private, content is imported only into an isolated offline Kubo node. After public launch, CI can seed the site's CAR on IPFS. Retain `site.car` on user-operated nodes for continuing availability; a CID verifies content but does not guarantee permanent storage. Restore a public deployment with `ipfs dag import site.car`. Before launch, use only an isolated offline repository and never advertise its content to peers.
 
 ## Licensing
 
-New interface and CLI code are MIT. This independent repository was reduced from the interface checkout and begins with one squashed initial commit. Commit squashing does not change third-party licensing. Contract artifacts and dependencies keep their applicable notices; see THIRD_PARTY_NOTICES.md.
-
-## Rebuilding the launcher runtime
-
-The compiled launcher includes Bun 1.4.0. Its upstream license file and native-library source references are retained in public/licenses/bun-runtime.md and embedded in `freelp --licenses`. FreeLP's source and dependency lockfile are available in this repository.
-
-To use a modified/relinked Bun, follow the upstream Bun/WebKit build instructions in that notice, then compile this application's sources with the rebuilt executable:
-
-```sh
-bun build cli/main.ts --compile --compile-executable-path /absolute/path/to/rebuilt/bun --no-compile-autoload-dotenv --no-compile-autoload-bunfig --no-compile-autoload-tsconfig --no-compile-autoload-package-json --outfile .cache/freelp
-```
-
-Keep all notice files when redistributing source or binaries. Locally rebuilt binaries do not claim official CI provenance.
+New interface and CLI code are MIT. The repository started with one squashed reduced-interface commit; squashing does not relicense dependencies or contract artifacts. Reused Ekubo interface math, ABI, and configuration logic are identified in source. Retain the licenses and attribution in THIRD_PARTY_NOTICES.md.

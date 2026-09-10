@@ -13,6 +13,12 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: entry.kind
+#. placeholder {1}: receipt.contractAddress
+#: src/FetcherDeployments.tsx
+msgid "{0} deployed and verified: {1}"
+msgstr "{0} deployed and verified: {1}"
+
 #: src/DeployPage.tsx
 msgid "1. Core"
 msgstr "1. Core"
@@ -25,6 +31,10 @@ msgstr "2. Position manager"
 msgid "A transaction is already pending."
 msgstr "A transaction is already pending."
 
+#: src/App.tsx
+msgid "About FreeLP"
+msgstr "About FreeLP"
+
 #: src/TermsPage.tsx
 msgid "Accept terms"
 msgstr "Accept terms"
@@ -33,9 +43,25 @@ msgstr "Accept terms"
 msgid "Accepted for the connected wallet."
 msgstr "Accepted for the connected wallet."
 
+#: src/NetworkPortfolio.tsx
+msgid "Across all networks"
+msgstr "Across all networks"
+
+#: src/LiquidityChart.tsx
+msgid "Active liquidity"
+msgstr "Active liquidity"
+
+#: src/App.tsx
+msgid "Active network"
+msgstr "Active network"
+
 #: src/PositionsPage.tsx
 msgid "Add liquidity"
 msgstr "Add liquidity"
+
+#: src/CreatePage.tsx
+msgid "Advanced pool settings"
+msgstr "Advanced pool settings"
 
 #. placeholder {0}: token.symbol
 #: src/ApprovalButton.tsx
@@ -54,22 +80,29 @@ msgstr "Before any transaction, read and accept the <0>Terms of Service</0>. Use
 msgid "Build details"
 msgstr "Build details"
 
-#: src/App.tsx
-msgid "Build provenance"
-msgstr "Build provenance"
-
 #: src/PositionsPage.tsx
 msgid "Burn empty NFT"
 msgstr "Burn empty NFT"
 
-#. placeholder {0}: session.settings.chainId
-#: src/App.tsx
-msgid "Chain {0}"
-msgstr "Chain {0}"
+#: src/SettingsPage.tsx
+msgid "Canonical deployment"
+msgstr "Canonical deployment"
 
 #: src/SettingsPage.tsx
 msgid "Chain ID"
 msgstr "Chain ID"
+
+#: src/PoolPicker.tsx
+msgid "Choose a pool"
+msgstr "Choose a pool"
+
+#: src/CreatePage.tsx
+msgid "Choose two tokens, explore available pools, and set the price range for your liquidity. Token selections are ordered automatically. Prices show the second token per first token."
+msgstr "Choose two tokens, explore available pools, and set the price range for your liquidity. Token selections are ordered automatically. Prices show the second token per first token."
+
+#: src/CurrencySelect.tsx
+msgid "Close token selector"
+msgstr "Close token selector"
 
 #: src/PositionsPage.tsx
 msgid "Collect fees"
@@ -122,6 +155,7 @@ msgid "Connection settings"
 msgstr "Connection settings"
 
 #: src/DeployPage.tsx
+#: src/FetcherDeployments.tsx
 msgid "Constructor Core address:"
 msgstr "Constructor Core address:"
 
@@ -150,6 +184,18 @@ msgstr "Create"
 msgid "Create position"
 msgstr "Create position"
 
+#: src/LiquidityChart.tsx
+msgid "Current pool liquidity, read directly from chain"
+msgstr "Current pool liquidity, read directly from chain"
+
+#: src/FetcherDeployments.tsx
+msgid "Data fetchers"
+msgstr "Data fetchers"
+
+#: src/CurrencySelect.tsx
+msgid "decimals"
+msgstr "decimals"
+
 #: src/CreatePage.tsx
 msgid "Decimals unavailable: amounts are raw integer units."
 msgstr "Decimals unavailable: amounts are raw integer units."
@@ -166,6 +212,11 @@ msgstr "Dependency notices"
 msgid "Deploy"
 msgstr "Deploy"
 
+#. placeholder {0}: entry.kind
+#: src/FetcherDeployments.tsx
+msgid "Deploy {0}"
+msgstr "Deploy {0}"
+
 #: src/DeployPage.tsx
 msgid "Deploy an ownerless position manager against an existing compatible Core, or deploy a fresh Core first. A fresh Core has separate pools and liquidity. You pay network gas."
 msgstr "Deploy an ownerless position manager against an existing compatible Core, or deploy a fresh Core first. A fresh Core has separate pools and liquidity. You pay network gas."
@@ -175,6 +226,7 @@ msgid "Deploy contracts"
 msgstr "Deploy contracts"
 
 #: src/DeployPage.tsx
+#: src/FetcherDeployments.tsx
 msgid "Deployment receipt has no address."
 msgstr "Deployment receipt has no address."
 
@@ -182,13 +234,13 @@ msgstr "Deployment receipt has no address."
 msgid "Deposit preview"
 msgstr "Deposit preview"
 
-#: src/CreatePage.tsx
-msgid "Enter token addresses in ascending order. Use the zero address for the native token. Prices use token 1 per token 0; raw ticks use a 1.000001 price step."
-msgstr "Enter token addresses in ascending order. Use the zero address for the native token. Prices use token 1 per token 0; raw ticks use a 1.000001 price step."
-
 #: src/common.tsx
 msgid "Error: {error}"
 msgstr "Error: {error}"
+
+#: src/PoolPicker.tsx
+msgid "Existing pool"
+msgstr "Existing pool"
 
 #: src/PricePreview.tsx
 msgid "Existing pool: the initial-price input is ignored."
@@ -197,6 +249,14 @@ msgstr "Existing pool: the initial-price input is ignored."
 #: src/SettingsPage.tsx
 msgid "Export settings"
 msgstr "Export settings"
+
+#: src/PoolPicker.tsx
+msgid "Fee tier"
+msgstr "Fee tier"
+
+#: src/PoolPicker.tsx
+msgid "Find pools on chain"
+msgstr "Find pools on chain"
 
 #: src/session.tsx
 msgid "Finish the pending transaction before changing settings."
@@ -222,6 +282,10 @@ msgstr "If a token has no decimals method, amounts use raw integer units. You ca
 msgid "Import settings"
 msgstr "Import settings"
 
+#: src/CurrencySelect.tsx
+msgid "Import token"
+msgstr "Import token"
+
 #: src/RangeFields.tsx
 msgid "Initial price (new pools only)"
 msgstr "Initial price (new pools only)"
@@ -237,6 +301,10 @@ msgstr "Invalid slippage."
 #: src/PositionsPage.tsx
 msgid "Liquidity"
 msgstr "Liquidity"
+
+#: src/LiquidityChart.tsx
+msgid "Liquidity distribution"
+msgstr "Liquidity distribution"
 
 #: src/CreatePage.tsx
 msgid "Liquidity:"
@@ -270,6 +338,10 @@ msgstr "MIT license"
 msgid "Native token symbol"
 msgstr "Native token symbol"
 
+#: src/SettingsPage.tsx
+msgid "Network configuration"
+msgstr "Network configuration"
+
 #: src/PricePreview.tsx
 msgid "New pool: creation will initialize its price."
 msgstr "New pool: creation will initialize its price."
@@ -290,9 +362,17 @@ msgstr "No positions in this manager."
 msgid "Official source repository:"
 msgstr "Official source repository:"
 
+#: src/LiquidityChart.tsx
+msgid "Only the on-chain tick range fetched is shown. Empty space outside that range is not assumed to have zero liquidity."
+msgstr "Only the on-chain tick range fetched is shown. Empty space outside that range is not assumed to have zero liquidity."
+
 #: src/CreatePage.tsx
 msgid "Pool fee (%)"
 msgstr "Pool fee (%)"
+
+#: src/LiquidityChart.tsx
+msgid "Pool liquidity by price"
+msgstr "Pool liquidity by price"
 
 #: src/PricePreview.tsx
 msgid "Pool state is unavailable."
@@ -320,6 +400,10 @@ msgstr "Position manager deployed and verified: {0}"
 msgid "Position range:"
 msgstr "Position range:"
 
+#: src/NetworkPortfolio.tsx
+msgid "positions"
+msgstr "positions"
+
 #: src/App.tsx
 msgid "Positions"
 msgstr "Positions"
@@ -327,6 +411,10 @@ msgstr "Positions"
 #: src/CreatePage.tsx
 msgid "Preview position"
 msgstr "Preview position"
+
+#: src/LiquidityChart.tsx
+msgid "Price"
+msgstr "Price"
 
 #: src/PricePreview.tsx
 msgid "Price (token 1 per token 0):"
@@ -343,6 +431,18 @@ msgstr "Prices are token 1 per token 0. Range prices round outward to valid tick
 #: src/PositionsPage.tsx
 msgid "Principal:"
 msgstr "Principal:"
+
+#: src/SettingsPage.tsx
+msgid "Quote data fetcher address"
+msgstr "Quote data fetcher address"
+
+#: src/FetcherDeployments.tsx
+msgid "QuoteDataFetcher supplies current prices and initialized ticks for liquidity charts. Deploy it for a new Core, or use the canonical deployment. All fetchers below are bundled and deployable from this page."
+msgstr "QuoteDataFetcher supplies current prices and initialized ticks for liquidity charts. Deploy it for a new Core, or use the canonical deployment. All fetchers below are bundled and deployable from this page."
+
+#: src/CurrencySelect.tsx
+msgid "Read token from chain"
+msgstr "Read token from chain"
 
 #: src/PositionsPage.tsx
 msgid "Reading positions…"
@@ -373,6 +473,10 @@ msgstr "Review and deploy position manager"
 msgid "RPC reports chain {chain}."
 msgstr "RPC reports chain {chain}."
 
+#: src/NetworkPortfolio.tsx
+msgid "RPC unavailable. Check this network’s settings."
+msgstr "RPC unavailable. Check this network’s settings."
+
 #: src/SettingsPage.tsx
 msgid "RPC URL"
 msgstr "RPC URL"
@@ -381,13 +485,41 @@ msgstr "RPC URL"
 msgid "RPC URLs can contain credentials. Copy a configuration with a public RPC URL for sharing."
 msgstr "RPC URLs can contain credentials. Copy a configuration with a public RPC URL for sharing."
 
+#: src/App.tsx
+msgid "Run the installed app locally with"
+msgstr "Run the installed app locally with"
+
 #: src/SettingsPage.tsx
 msgid "Save settings"
 msgstr "Save settings"
 
+#: src/CurrencySelect.tsx
+msgid "Search tokens or paste an address"
+msgstr "Search tokens or paste an address"
+
+#: src/CurrencySelect.tsx
+msgid "Select a token"
+msgstr "Select a token"
+
+#: src/CreatePage.tsx
+msgid "Select first token"
+msgstr "Select first token"
+
+#: src/CreatePage.tsx
+msgid "Select second token"
+msgstr "Select second token"
+
+#: src/CurrencySelect.tsx
+msgid "Select token"
+msgstr "Select token"
+
 #: src/DeployPage.tsx
 msgid "Set an existing Core in Settings, or deploy one here. This step creates a new independent Core."
 msgstr "Set an existing Core in Settings, or deploy one here. This step creates a new independent Core."
+
+#: src/NetworkPortfolio.tsx
+msgid "Set up positions"
+msgstr "Set up positions"
 
 #: src/App.tsx
 msgid "Settings"
@@ -410,6 +542,14 @@ msgstr "Slippage (basis points)"
 msgid "Slippage must be between 0 and 1000 basis points."
 msgstr "Slippage must be between 0 and 1000 basis points."
 
+#: src/FetcherDeployments.tsx
+msgid "Standalone token balance and metadata reader. No Core constructor argument."
+msgstr "Standalone token balance and metadata reader. No Core constructor argument."
+
+#: src/App.tsx
+msgid "Switch wallet to this network"
+msgstr "Switch wallet to this network"
+
 #: src/App.tsx
 msgid "Terms"
 msgstr "Terms"
@@ -426,18 +566,23 @@ msgstr "Terms version: {TERMS_HASH}"
 msgid "Test RPC"
 msgstr "Test RPC"
 
+#: src/App.tsx
+msgid "The package contains the complete application. Your package manager handles package integrity; the launcher serves local files without fetching a separate build or contacting GitHub."
+msgstr "The package contains the complete application. Your package manager handles package integrity; the launcher serves local files without fetching a separate build or contacting GitHub."
+
 #: src/DeployPage.tsx
 msgid "There is no owner, upgrade key, or manager fee. All position information and NFT metadata are on-chain."
 msgstr "There is no owner, upgrade key, or manager fee. All position information and NFT metadata are on-chain."
 
-#: src/App.tsx
-msgid "This page does not assert that the build is verified. The independent launcher reports the authenticated commit and content identifier."
-msgstr "This page does not assert that the build is verified. The independent launcher reports the authenticated commit and content identifier."
+#: src/PoolPicker.tsx
+msgid "This pool is not initialized. Set its initial price when creating the first position."
+msgstr "This pool is not initialized. Set its initial price when creating the first position."
 
 #: src/PositionsPage.tsx
 msgid "Tick range"
 msgstr "Tick range"
 
+#: src/PoolPicker.tsx
 #: src/RangeFields.tsx
 msgid "Tick spacing"
 msgstr "Tick spacing"
@@ -518,10 +663,6 @@ msgstr "Use full range"
 msgid "Use raw ticks"
 msgstr "Use raw ticks"
 
-#: src/App.tsx
-msgid "Use the FreeLP CLI to verify GitHub CI provenance and all application files before opening this app. A website cannot independently prove its own authenticity."
-msgstr "Use the FreeLP CLI to verify GitHub CI provenance and all application files before opening this app. A website cannot independently prove its own authenticity."
-
 #. placeholder {0}: t.decimals
 #: src/CreatePage.tsx
 msgid "Using manually supplied decimals: {0}"
@@ -534,6 +675,10 @@ msgstr "Verify contracts"
 #: src/session.tsx
 msgid "Wallet changed. Connect again to review the active account."
 msgstr "Wallet changed. Connect again to review the active account."
+
+#: src/session.tsx
+msgid "Wallet connected to the selected network."
+msgstr "Wallet connected to the selected network."
 
 #: src/session.tsx
 msgid "Wallet has no account."
@@ -554,6 +699,10 @@ msgstr "Withdraw percentage"
 #: src/PositionsPage.tsx
 msgid "Withdrawal percentage must be 1–100."
 msgstr "Withdrawal percentage must be 1–100."
+
+#: src/NetworkPortfolio.tsx
+msgid "Your liquidity"
+msgstr "Your liquidity"
 
 #: src/PositionsPage.tsx
 msgid "Your positions"

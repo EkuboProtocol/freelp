@@ -50,7 +50,7 @@ export async function serve(
     });
   });
   const url = `http://127.0.0.1:${port}/`;
-  console.log(`Verified app: ${url}\nPress Ctrl+C to stop this local server.`);
+  console.log(`FreeLP: ${url}\nPress Ctrl+C to stop this local server.`);
   if (open) {
     const command =
       process.platform === "darwin"

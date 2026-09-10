@@ -173,3 +173,246 @@ footer {
     overflow: auto;
   }
 }
+/* A restrained LP workspace: generous hierarchy, compact secondary details. */
+:root {
+  background: #f6f6f6;
+  color: #171717;
+}
+main {
+  max-width: 1180px;
+  padding: 28px 36px;
+}
+header {
+  padding-bottom: 22px;
+  margin-bottom: 22px;
+}
+header nav a {
+  text-decoration: none;
+  padding: 8px 4px;
+  font-weight: 500;
+}
+h1 {
+  letter-spacing: -0.8px;
+  font-size: 28px;
+}
+h2 {
+  font-size: 27px;
+  letter-spacing: -0.7px;
+  margin-bottom: 20px;
+}
+h3 {
+  margin: 0 0 10px;
+}
+button,
+input,
+select,
+textarea {
+  border-radius: 10px;
+  border-color: #ddd;
+}
+button {
+  transition: background 0.12s;
+  font-weight: 500;
+}
+button:disabled {
+  opacity: 0.6;
+  border-style: solid;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #222;
+}
+.panel,
+fieldset,
+.pool-picker {
+  border: 1px solid #e1e1e1;
+  border-radius: 18px;
+  background: #fff;
+  padding: 24px;
+}
+.grid {
+  gap: 20px;
+}
+.spread {
+  justify-content: space-between;
+}
+small {
+  color: #656565;
+}
+.currency-select {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  text-align: left;
+  font-size: 20px;
+  background: white;
+}
+.currency-select small,
+.token-option small {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  margin-top: 3px;
+}
+.currency-select > :last-child {
+  margin-left: auto;
+}
+.currency-mark {
+  flex: 0 0 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  background: #ececec;
+  border-radius: 50%;
+  color: #222;
+  font-size: 18px;
+}
+.currency-dialog {
+  width: min(480px, calc(100vw - 32px));
+  padding: 28px;
+  border: 1px solid #ddd;
+  border-radius: 22px;
+  max-height: 85vh;
+  box-shadow: 0 24px 100px #0003;
+}
+.currency-dialog::backdrop {
+  background: #0005;
+}
+.token-list {
+  display: grid;
+  margin-top: 16px;
+  max-height: 42vh;
+  overflow: auto;
+}
+.token-option {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 14px;
+  border: 0;
+  padding: 14px 8px;
+}
+.pool-picker {
+  margin: 24px 0;
+}
+.pool-options,
+.network-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.pool-options button {
+  display: grid;
+  text-align: left;
+  gap: 8px;
+  padding: 18px;
+}
+.pool-options strong {
+  font-size: 24px;
+}
+.pool-options .selected {
+  border: 2px solid #111;
+  background: #f5f5f5;
+  padding: 17px;
+}
+.liquidity-chart {
+  border-top: 1px solid #eee;
+  padding-top: 24px;
+  margin-top: 24px;
+}
+.liquidity-chart svg {
+  display: block;
+  width: 100%;
+  margin: 20px 0;
+  overflow: visible;
+}
+.segmented {
+  display: flex;
+  gap: 4px;
+}
+.segmented button {
+  font-size: 12px;
+  padding: 6px 9px;
+}
+.segmented button[aria-pressed="true"] {
+  background: #222;
+  color: white;
+}
+.network-card {
+  background: white;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.network-card h3 {
+  font-size: 16px;
+}
+.position-count {
+  font-size: 32px;
+  letter-spacing: -1px;
+}
+.eyebrow {
+  font-size: 12px;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+table {
+  background: white;
+  border-radius: 14px;
+}
+th {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+  padding: 16px;
+}
+td {
+  padding: 16px;
+}
+@media (max-width: 750px) {
+  .pool-options,
+  .network-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  main {
+    padding: 20px;
+  }
+}
+.deposit-input {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 18px;
+  overflow: hidden;
+}
+.deposit-input .currency-select {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+}
+.deposit-input label {
+  padding: 0 20px 20px;
+}
+.deposit-input input {
+  font-size: 30px;
+  border: 0;
+  padding: 8px 0;
+}
+.advanced-settings {
+  margin-top: 20px;
+}
+.advanced-settings .grid {
+  margin-top: 18px;
+}
+summary {
+  cursor: pointer;
+}
+.token-option > span:last-child {
+  min-width: 0;
+}

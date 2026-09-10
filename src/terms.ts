@@ -8,7 +8,7 @@ You are responsible for reviewing the network, contracts, tokens, amounts, permi
 
 To the fullest extent permitted by applicable law, the authors and contributors disclaim liability for losses or damages arising from use of FreeLP. Nothing in these terms excludes rights or liabilities that applicable law does not allow to be excluded.
 
-FreeLP does not take custody of your wallet keys. You decide whether to sign each transaction. A build provenance check establishes source and build origin; it is not a guarantee of safety.
+FreeLP does not take custody of your wallet keys. You decide whether to sign each transaction.
 
 These terms govern use of this application. They do not restrict rights granted under the MIT software license or other applicable component licenses.`;
 export const TERMS_HASH = keccak256(stringToHex(TERMS));

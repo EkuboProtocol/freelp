@@ -2,6 +2,7 @@ import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { zeroAddress } from "viem";
 import { useSession } from "./session";
+import { FetcherDeployments } from "./FetcherDeployments";
 import { deployment, verifyCode } from "./contracts";
 import { Action } from "./common";
 export function DeployPage() {
@@ -14,6 +15,8 @@ export function DeployPage() {
       ...settings,
       core: receipt.contractAddress,
       manager: zeroAddress,
+      quoteDataFetcher: zeroAddress,
+      coreDataFetcher: zeroAddress,
     });
     await verifyCode(settings, receipt.contractAddress, "Core");
     setStatus(t`Core deployed and verified: ${receipt.contractAddress}`);
@@ -73,6 +76,7 @@ export function DeployPage() {
           <Trans>Review and deploy position manager</Trans>
         </Action>
       </div>
+      <FetcherDeployments />
     </section>
   );
 }

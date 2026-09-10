@@ -25,8 +25,8 @@ test("full range preserves initialization and existing pools ignore that input",
     18,
     18,
   );
-  expect(full.lower).toBe(-88722800);
-  expect(full.upper).toBe(88722800);
+  expect(full.lower).toBe(-88719042);
+  expect(full.upper).toBe(88719042);
   expect(tickPrice(full.initial, 18, 18)).toBeCloseTo(2, 5);
   expect(
     rangeTicks(

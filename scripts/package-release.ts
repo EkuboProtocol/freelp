@@ -7,7 +7,7 @@ import {
   type FileEntry,
   type ReleaseDescriptor,
 } from "../cli/content";
-import { REPOSITORY } from "../cli/provenance";
+const REPOSITORY = "EkuboProtocol/freelp";
 async function collect(dir: string, prefix = ""): Promise<FileEntry[]> {
   const entries: FileEntry[] = [];
   for (const name of (await readdir(dir)).sort()) {
@@ -34,18 +34,8 @@ const { root, blockstore } = await contentDag(map);
 const commit = process.env.GITHUB_SHA ?? process.argv[2];
 if (!commit || !/^[a-f0-9]{40}$/.test(commit))
   throw new Error("Supply a source commit SHA.");
-const launchers = [];
-for (const name of ["freelp-linux-x64", "freelp-darwin-arm64"]) {
-  try {
-    const bytes = await readFile(`release/${name}`);
-    launchers.push({ name, sha256: sha256(bytes), size: bytes.length });
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-  }
-}
 const descriptor: ReleaseDescriptor = {
   schema: 1,
-  launchers,
   repository: REPOSITORY,
   commit,
   ref: process.env.GITHUB_REF ?? "refs/heads/main",
@@ -62,3 +52,8 @@ await writeFile("release/application.json", application);
 await writeFile("release/descriptor.json", JSON.stringify(descriptor));
 await writeCar("release/site.car", { root, blockstore });
 console.log(`Application CID: ${root}`);
+
+await writeFile(
+  "release/deployment.json",
+  JSON.stringify({ repository: REPOSITORY, commit, siteCid: root.toString() }),
+);

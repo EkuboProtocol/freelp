@@ -5,6 +5,9 @@ export type Settings = {
   core: Address;
   manager: Address;
   nativeSymbol: string;
+  quoteDataFetcher?: Address;
+  coreDataFetcher?: Address;
+  tokenDataFetcher?: Address;
 };
 export type Descriptor = {
   poolKey: { token0: Address; token1: Address; config: Hex };

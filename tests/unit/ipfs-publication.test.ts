@@ -51,14 +51,12 @@ if (process.argv[2] === "daemon") writeFileSync(process.env.IPFS_PATH + "/api", 
       "dag",
       "import",
       "release/site.car",
-      "release/release.car",
     ]);
     expect(calls.at(-1)?.args).toEqual([
       "--timeout=2m",
       "routing",
       "provide",
       "site-cid",
-      "release-cid",
     ]);
   } finally {
     await rm(dir, { recursive: true, force: true });

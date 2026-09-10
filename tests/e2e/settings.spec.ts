@@ -64,3 +64,40 @@ test("invalid saved settings recover and RPC replacement survives reload", async
   await expect(page.getByLabel("Native token symbol")).toHaveValue("ETH");
   expect(errors).toEqual([]);
 });
+
+test("network RPC settings remain independent and bundled currencies follow the selected chain", async ({
+  page,
+}) => {
+  await page.goto("/#/settings");
+  await page.getByLabel("Network configuration").selectOption("8453");
+  await page.getByLabel("RPC URL").fill("http://127.0.0.1:18545/base");
+  await page
+    .getByRole("button", { name: "Save settings", exact: true })
+    .click();
+  await page.getByLabel("Active network").selectOption("42161");
+  await expect(page.getByLabel("RPC URL")).toHaveValue(
+    "https://arb1.arbitrum.io/rpc",
+  );
+  await page.getByLabel("Active network").selectOption("8453");
+  await page.reload();
+  await expect(page.getByLabel("RPC URL")).toHaveValue(
+    "http://127.0.0.1:18545/base",
+  );
+  await page.getByRole("link", { name: "Create", exact: true }).click();
+  await page.getByRole("button", { name: "Select first token" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: /USDC/ }).click();
+  await expect(page.getByLabel("Token 0 address")).toHaveValue(
+    "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  );
+  await page.getByRole("button", { name: "Select second token" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /ETH Ether/ })
+    .click();
+  await expect(page.getByLabel("Token 0 address")).toHaveValue(
+    "0x0000000000000000000000000000000000000000",
+  );
+  await expect(page.getByLabel("Token 1 address")).toHaveValue(
+    "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  );
+});
