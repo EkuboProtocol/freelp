@@ -1,0 +1,70 @@
+name: Verify and deploy to IPFS
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile
+      - run: bun run lint && bun run test && bun run build
+      - name: Compile local launcher
+        run: |
+          bun build cli/main.ts --compile --target=bun-linux-x64 --outfile release/freelp-linux-x64
+          bun build cli/main.ts --compile --target=bun-darwin-arm64 --outfile release/freelp-darwin-arm64
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09
+        with:
+          version: v1.8.1
+      - name: Browser contract lifecycle
+        run: |
+          bunx playwright install --with-deps chromium
+          anvil --port 18545 --hardfork osaka --silent > /tmp/freelp-anvil.log 2>&1 &
+          bun run test:e2e
+      - name: Package content-addressed site
+        run: bun scripts/package-release.ts
+      - name: Private provenance (no public transparency log)
+        if: github.event.repository.private
+        run: bun scripts/private-proof.ts
+      - name: Public provenance
+        if: '!github.event.repository.private'
+        id: attest
+        uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661
+        with:
+          subject-path: |
+            release/descriptor.json
+            release/freelp-linux-x64
+            release/freelp-darwin-arm64
+      - name: Preserve public verification bundle
+        if: '!github.event.repository.private'
+        env:
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+        run: cp "$BUNDLE_PATH" release/provenance.json
+      - name: Import and pin IPFS deployment
+        env:
+          FREELP_PUBLIC_RELEASE: ${{ !github.event.repository.private }}
+          FREELP_PIN_API: ${{ secrets.FREELP_PIN_API }}
+        run: bash scripts/install-ipfs.sh && bash scripts/pin-release.sh
+      - name: Retain deployment artifacts privately before launch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            tag="${GITHUB_REF#refs/tags/}"
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$tag" --notes-file docs/release-notes.md release/*
+          else
+            tag="build-$GITHUB_SHA"
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false --title "Build $GITHUB_SHA" --notes-file docs/release-notes.md release/*
+          fi

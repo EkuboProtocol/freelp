@@ -1,0 +1,32 @@
+# FreeLP
+
+Plain, RPC-only liquidity position management. No swap UI, indexer, hosted metadata, API keys, telemetry, or application fee. All authoritative position data and NFT metadata generation are on-chain. The static app runs on IPFS or from a verified local launcher.
+
+Private development: do not publish this repository or its build CIDs until launch readiness. New Solidity lives in the EVM contracts repository; compiled contract artifacts retain their separate licenses.
+
+## Development
+
+Use Bun 1.4.0. `bun install --frozen-lockfile`, `bun run build`, `bun run dev`. The app needs an injected EIP-6963 wallet. Configure the chain RPC and compatible Core/FreeLP manager in Settings, or use Deploy to create them. All transactions require terms acceptance and a separate wallet confirmation.
+
+`bun run test`, `bun run lint`, `bun run check-ts`. Browser tests require Anvil with Osaka support listening on port 18545: `anvil --port 18545 --hardfork osaka --silent`, then `bun run build && bun run test:e2e`. Tests use only public Anvil development keys and freshly deployed local contracts.
+
+## Verified launcher
+
+From a trusted source checkout: `bun cli/main.ts`. Requires GitHub CLI for release discovery and public Sigstore verification. Download and independently verify a packaged CLI before trusting it. Never bootstrap trust using a badge in the candidate web app.
+
+- `--version vX.Y.Z`: explicitly choose an official version.
+- `--offline`: reverify and serve the last cached official release.
+- `--bundle PATH --private-build`: verify a downloaded private CI release bundle.
+- `--no-browser --port 4173`: serve on loopback without launching a browser.
+
+The CLI checks repository/workflow identity, source commit, signed artifact digest, every file, and the IPFS CID before serving an in-memory snapshot. GitHub is needed for updates, not for ongoing LP operation. Offline verification cannot discover new revocations. Transactions remain in the user's wallet; the CLI never handles wallet keys.
+
+## IPFS
+
+`bun scripts/package-release.ts SOURCE_COMMIT` creates `release/application.json`, its descriptor, and `release/site.car`. The fixed import settings are in `cli/content.ts`. Import the CAR into Kubo to preserve the exact CID. A private offline import does not advertise content publicly.
+
+Each main/tag commit is built and pinned in CI; the complete CAR is retained in a repository release so it can be restored independently. Before launch the repository and releases remain private. Public publication requires a configured project-controlled IPFS pin endpoint (`FREELP_PIN_API`); no paid pinning provider is required. Long-lived copies still require storage somewhere. Stable version tags are distinct from per-commit prereleases.
+
+## Licensing
+
+New interface and CLI code are MIT. This independent repository was reduced from the interface checkout and begins with one squashed initial commit. Commit squashing does not change third-party licensing. Contract artifacts and dependencies keep their applicable notices; see THIRD_PARTY_NOTICES.md.

@@ -1,0 +1,203 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #111;
+  background: #fff;
+  font-synthesis: none;
+  line-height: 1.5;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 1050px;
+  margin: auto;
+  padding: 24px;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid;
+  padding-bottom: 16px;
+}
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+a {
+  color: inherit;
+  text-underline-offset: 4px;
+}
+h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+h2 {
+  font-size: 21px;
+}
+h3 {
+  font-size: 17px;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1px solid #666;
+  border-radius: 0;
+  padding: 8px 12px;
+}
+button {
+  cursor: pointer;
+}
+button:hover {
+  background: #eee;
+}
+button:disabled {
+  color: #666;
+  border-style: dashed;
+  cursor: not-allowed;
+}
+button.primary {
+  background: #111;
+  color: #fff;
+}
+button.primary:disabled {
+  background: #ddd;
+  color: #666;
+}
+:focus-visible {
+  outline: 3px double #111;
+  outline-offset: 3px;
+}
+label {
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+input,
+select {
+  min-width: 0;
+  width: 100%;
+}
+input[type="checkbox"] {
+  width: auto;
+}
+fieldset {
+  border: 1px solid #aaa;
+  padding: 16px;
+  margin: 20px 0;
+}
+legend {
+  padding: 0 6px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.stack {
+  display: grid;
+  gap: 16px;
+}
+.panel {
+  border: 1px solid #999;
+  padding: 20px;
+  margin: 20px 0;
+}
+.muted {
+  color: #555;
+}
+.mono {
+  font-family: monospace;
+  overflow-wrap: anywhere;
+}
+.status {
+  border-left: 3px solid;
+  padding: 12px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.terms {
+  white-space: pre-wrap;
+  max-height: 45vh;
+  overflow: auto;
+  border: 1px solid #aaa;
+  padding: 16px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th,
+td {
+  text-align: left;
+  border-bottom: 1px solid #bbb;
+  padding: 12px 8px;
+  vertical-align: top;
+}
+code {
+  overflow-wrap: anywhere;
+}
+small {
+  font-size: 12px;
+}
+footer {
+  margin-top: 40px;
+  border-top: 1px solid #bbb;
+  padding-top: 16px;
+}
+.nft {
+  max-width: 100%;
+  border: 1px solid #bbb;
+}
+.range {
+  height: 8px;
+  background: #eee;
+  position: relative;
+  margin: 16px 0;
+}
+.range span {
+  position: absolute;
+  height: 8px;
+  background: #111;
+}
+dialog {
+  max-width: 640px;
+  width: 90%;
+  padding: 24px;
+  border: 1px solid;
+}
+dialog::backdrop {
+  background: #0008;
+}
+@media (max-width: 650px) {
+  main {
+    padding: 16px;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  table {
+    display: block;
+    overflow: auto;
+  }
+}

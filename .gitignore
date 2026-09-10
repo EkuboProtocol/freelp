@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.cache/
+.env*
+playwright-report/
+test-results/
+.worktrees/
+release/

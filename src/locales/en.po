@@ -1,0 +1,380 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-09-10 15:06-0400\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/DeployPage.tsx
+msgid "1. Core"
+msgstr "1. Core"
+
+#: src/DeployPage.tsx
+msgid "2. Position manager"
+msgstr "2. Position manager"
+
+#: src/TermsPage.tsx
+msgid "Accept terms"
+msgstr "Accept terms"
+
+#: src/TermsPage.tsx
+msgid "Accepted for the connected wallet."
+msgstr "Accepted for the connected wallet."
+
+#: src/PositionsPage.tsx
+msgid "Add liquidity"
+msgstr "Add liquidity"
+
+#. placeholder {0}: t.symbol
+#: src/CreatePage.tsx
+msgid "Approve {0}"
+msgstr "Approve {0}"
+
+#. placeholder {0}: t.symbol
+#: src/PositionsPage.tsx
+msgid "Approve/reset {0}"
+msgstr "Approve/reset {0}"
+
+#: src/CreatePage.tsx
+msgid "Balance:"
+msgstr "Balance:"
+
+#: src/App.tsx
+msgid "Before any transaction, read and accept the <0>Terms of Service</0>. Use at your own risk."
+msgstr "Before any transaction, read and accept the <0>Terms of Service</0>. Use at your own risk."
+
+#: src/App.tsx
+msgid "Build details"
+msgstr "Build details"
+
+#: src/App.tsx
+msgid "Build provenance"
+msgstr "Build provenance"
+
+#: src/PositionsPage.tsx
+msgid "Burn empty NFT"
+msgstr "Burn empty NFT"
+
+#. placeholder {0}: session.settings.chainId
+#: src/App.tsx
+msgid "Chain {0}"
+msgstr "Chain {0}"
+
+#: src/SettingsPage.tsx
+msgid "Chain ID"
+msgstr "Chain ID"
+
+#: src/PositionsPage.tsx
+msgid "Collect fees"
+msgstr "Collect fees"
+
+#: src/SettingsPage.tsx
+msgid "Configuration file"
+msgstr "Configuration file"
+
+#: src/PositionsPage.tsx
+msgid "Configure a position manager in Settings or deploy one."
+msgstr "Configure a position manager in Settings or deploy one."
+
+#. placeholder {0}: w.info.name
+#: src/App.tsx
+msgid "Connect {0}"
+msgstr "Connect {0}"
+
+#: src/PositionsPage.tsx
+msgid "Connect a wallet to load positions directly from the chain."
+msgstr "Connect a wallet to load positions directly from the chain."
+
+#: src/TermsPage.tsx
+msgid "Connect a wallet to record your acceptance."
+msgstr "Connect a wallet to record your acceptance."
+
+#: src/SettingsPage.tsx
+msgid "Connection settings"
+msgstr "Connection settings"
+
+#: src/DeployPage.tsx
+msgid "Constructor Core address:"
+msgstr "Constructor Core address:"
+
+#: src/SettingsPage.tsx
+msgid "Core address"
+msgstr "Core address"
+
+#: src/App.tsx
+msgid "Create"
+msgstr "Create"
+
+#: src/CreatePage.tsx
+msgid "Create position"
+msgstr "Create position"
+
+#: src/App.tsx
+msgid "Deploy"
+msgstr "Deploy"
+
+#: src/DeployPage.tsx
+msgid "Deploy an ownerless position manager against an existing compatible Core, or deploy a fresh Core first. A fresh Core has separate pools and liquidity. You pay network gas."
+msgstr "Deploy an ownerless position manager against an existing compatible Core, or deploy a fresh Core first. A fresh Core has separate pools and liquidity. You pay network gas."
+
+#: src/DeployPage.tsx
+msgid "Deploy contracts"
+msgstr "Deploy contracts"
+
+#: src/CreatePage.tsx
+msgid "Deposit preview"
+msgstr "Deposit preview"
+
+#: src/CreatePage.tsx
+msgid "Enter token addresses in ascending order. Use the zero address for the native token. Prices use token 1 per token 0; raw ticks use a 1.000001 price step."
+msgstr "Enter token addresses in ascending order. Use the zero address for the native token. Prices use token 1 per token 0; raw ticks use a 1.000001 price step."
+
+#: src/common.tsx
+msgid "Error: {error}"
+msgstr "Error: {error}"
+
+#: src/SettingsPage.tsx
+msgid "Export settings"
+msgstr "Export settings"
+
+#: src/TermsPage.tsx
+msgid "I have read and agree to the Terms of Service and understand that I use FreeLP at my own risk."
+msgstr "I have read and agree to the Terms of Service and understand that I use FreeLP at my own risk."
+
+#: src/CreatePage.tsx
+msgid "If a token has no decimals method, confirm its decimals here before entering amounts."
+msgstr "If a token has no decimals method, confirm its decimals here before entering amounts."
+
+#: src/SettingsPage.tsx
+msgid "Import settings"
+msgstr "Import settings"
+
+#: src/CreatePage.tsx
+msgid "Initial tick (new pools only)"
+msgstr "Initial tick (new pools only)"
+
+#: src/PositionsPage.tsx
+msgid "Liquidity"
+msgstr "Liquidity"
+
+#: src/CreatePage.tsx
+msgid "Liquidity:"
+msgstr "Liquidity:"
+
+#: src/CreatePage.tsx
+msgid "Lower tick"
+msgstr "Lower tick"
+
+#: src/CreatePage.tsx
+msgid "Maximum token 0 amount"
+msgstr "Maximum token 0 amount"
+
+#: src/CreatePage.tsx
+msgid "Maximum token 1 amount"
+msgstr "Maximum token 1 amount"
+
+#: src/SettingsPage.tsx
+msgid "Native token symbol"
+msgstr "Native token symbol"
+
+#: src/App.tsx
+msgid "No application fees. Network gas applies."
+msgstr "No application fees. Network gas applies."
+
+#: src/App.tsx
+msgid "No injected wallet detected. Open this page in a browser with a wallet extension."
+msgstr "No injected wallet detected. Open this page in a browser with a wallet extension."
+
+#: src/PositionsPage.tsx
+msgid "No positions in this manager."
+msgstr "No positions in this manager."
+
+#: src/App.tsx
+msgid "Official source repository:"
+msgstr "Official source repository:"
+
+#: src/CreatePage.tsx
+msgid "Pool fee (%)"
+msgstr "Pool fee (%)"
+
+#: src/PositionsPage.tsx
+msgid "Position"
+msgstr "Position"
+
+#. placeholder {0}: p.id.toString()
+#: src/PositionsPage.tsx
+msgid "Position #{0}"
+msgstr "Position #{0}"
+
+#: src/SettingsPage.tsx
+msgid "Position manager address"
+msgstr "Position manager address"
+
+#: src/App.tsx
+msgid "Positions"
+msgstr "Positions"
+
+#: src/CreatePage.tsx
+msgid "Preview position"
+msgstr "Preview position"
+
+#: src/PositionsPage.tsx
+msgid "Principal:"
+msgstr "Principal:"
+
+#: src/PositionsPage.tsx
+msgid "Reading positions…"
+msgstr "Reading positions…"
+
+#: src/PositionsPage.tsx
+msgid "Recipient address"
+msgstr "Recipient address"
+
+#: src/DeployPage.tsx
+msgid "Review and deploy new Core"
+msgstr "Review and deploy new Core"
+
+#: src/DeployPage.tsx
+msgid "Review and deploy position manager"
+msgstr "Review and deploy position manager"
+
+#: src/SettingsPage.tsx
+msgid "RPC URL"
+msgstr "RPC URL"
+
+#: src/SettingsPage.tsx
+msgid "Save settings"
+msgstr "Save settings"
+
+#: src/DeployPage.tsx
+msgid "Set an existing Core in Settings, or deploy one here. This step creates a new independent Core."
+msgstr "Set an existing Core in Settings, or deploy one here. This step creates a new independent Core."
+
+#: src/App.tsx
+msgid "Settings"
+msgstr "Settings"
+
+#: src/CreatePage.tsx
+#: src/PositionsPage.tsx
+msgid "Slippage (basis points)"
+msgstr "Slippage (basis points)"
+
+#: src/App.tsx
+msgid "Terms"
+msgstr "Terms"
+
+#: src/TermsPage.tsx
+msgid "Terms of Service"
+msgstr "Terms of Service"
+
+#: src/TermsPage.tsx
+msgid "Terms version: {TERMS_HASH}"
+msgstr "Terms version: {TERMS_HASH}"
+
+#: src/SettingsPage.tsx
+msgid "Test RPC"
+msgstr "Test RPC"
+
+#: src/DeployPage.tsx
+msgid "There is no owner, upgrade key, or manager fee. All position information and NFT metadata are on-chain."
+msgstr "There is no owner, upgrade key, or manager fee. All position information and NFT metadata are on-chain."
+
+#: src/App.tsx
+msgid "This page does not assert that the build is verified. The independent launcher reports the authenticated commit and content identifier."
+msgstr "This page does not assert that the build is verified. The independent launcher reports the authenticated commit and content identifier."
+
+#: src/PositionsPage.tsx
+msgid "Tick range"
+msgstr "Tick range"
+
+#: src/CreatePage.tsx
+msgid "Tick spacing"
+msgstr "Tick spacing"
+
+#: src/CreatePage.tsx
+msgid "Token 0 address"
+msgstr "Token 0 address"
+
+#: src/CreatePage.tsx
+msgid "Token 0 fallback decimals"
+msgstr "Token 0 fallback decimals"
+
+#: src/PositionsPage.tsx
+msgid "Token 0 maximum"
+msgstr "Token 0 maximum"
+
+#: src/CreatePage.tsx
+msgid "Token 1 address"
+msgstr "Token 1 address"
+
+#: src/CreatePage.tsx
+msgid "Token 1 fallback decimals"
+msgstr "Token 1 fallback decimals"
+
+#: src/PositionsPage.tsx
+msgid "Token 1 maximum"
+msgstr "Token 1 maximum"
+
+#: src/CreatePage.tsx
+msgid "Token metadata fallback"
+msgstr "Token metadata fallback"
+
+#: src/PositionsPage.tsx
+msgid "Token pair"
+msgstr "Token pair"
+
+#: src/PositionsPage.tsx
+msgid "Transfer NFT to recipient"
+msgstr "Transfer NFT to recipient"
+
+#: src/PositionsPage.tsx
+msgid "Uncollected fees:"
+msgstr "Uncollected fees:"
+
+#: src/CreatePage.tsx
+msgid "Upper tick"
+msgstr "Upper tick"
+
+#: src/SettingsPage.tsx
+msgid "Use a public RPC or your own node. No API key is required. Settings stay in this browser."
+msgstr "Use a public RPC or your own node. No API key is required. Settings stay in this browser."
+
+#: src/CreatePage.tsx
+msgid "Use full range"
+msgstr "Use full range"
+
+#: src/App.tsx
+msgid "Use the FreeLP CLI to verify GitHub CI provenance and all application files before opening this app. A website cannot independently prove its own authenticity."
+msgstr "Use the FreeLP CLI to verify GitHub CI provenance and all application files before opening this app. A website cannot independently prove its own authenticity."
+
+#: src/CreatePage.tsx
+msgid "Using fallback decimals"
+msgstr "Using fallback decimals"
+
+#: src/SettingsPage.tsx
+msgid "Verify contracts"
+msgstr "Verify contracts"
+
+#: src/PositionsPage.tsx
+msgid "Withdraw liquidity and fees"
+msgstr "Withdraw liquidity and fees"
+
+#: src/PositionsPage.tsx
+msgid "Withdraw or collect"
+msgstr "Withdraw or collect"
+
+#: src/PositionsPage.tsx
+msgid "Withdraw percentage"
+msgstr "Withdraw percentage"
+
+#: src/PositionsPage.tsx
+msgid "Your positions"
+msgstr "Your positions"
