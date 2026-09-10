@@ -106,10 +106,12 @@ export function PoolPicker({
           <Trans>Choose a pool</Trans>
         </h3>
         <button
+          aria-busy={busy}
           disabled={busy || !isAddress(token0) || !isAddress(token1)}
           onClick={() => void discover()}
         >
           <Trans>Find pools on chain</Trans>
+          {busy ? " …" : ""}
         </button>
       </div>
       <div className="pool-options">

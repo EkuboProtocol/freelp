@@ -1,0 +1,23 @@
+[Unit]
+Description=FreeLP persistent IPFS release node
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=freelp
+Group=freelp
+Environment=GOMEMLIMIT=300MiB
+Environment=IPFS_TELEMETRY=off
+Environment=DO_NOT_TRACK=1
+MemoryMax=384M
+Environment=IPFS_PATH=/home/freelp/.local/share/freelp/ipfs
+ExecStart=/home/freelp/.local/lib/freelp/ipfs daemon
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/freelp/.local/share/freelp/ipfs
+
+[Install]
+WantedBy=multi-user.target

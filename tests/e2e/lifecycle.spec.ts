@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
 import {
   createPublicClient,
@@ -373,6 +374,10 @@ for (const { missingDecimals, native } of [
     await expect(page.locator(".status[role=status]")).toContainText(
       "Confirmed:",
     );
+    const accessibility = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+      .analyze();
+    expect(accessibility.violations).toEqual([]);
     await page.getByLabel("Withdraw percentage").fill("50");
     await page
       .getByRole("button", { name: "Withdraw liquidity and fees" })

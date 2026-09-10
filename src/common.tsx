@@ -39,10 +39,13 @@ export function Action({
   return (
     <button
       type="button"
+      aria-busy={running}
+      className="primary-button"
       disabled={disabled || busy || running || !consent || !account}
       onClick={() => void act()}
     >
       {children}
+      {running ? <span aria-hidden="true"> …</span> : null}
     </button>
   );
 }

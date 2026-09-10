@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export IPFS_TELEMETRY=off DO_NOT_TRACK=1
 # This script must never expose the private verification node or its old blockstore.
 if [[ "${FREELP_PUBLIC_RELEASE:-false}" != true ]]; then
   echo 'Public IPFS seeding is disabled for private development.' >&2

@@ -1,3 +1,4 @@
+import { IPNS_NAME } from "./distribution";
 import { t } from "@lingui/core/macro";
 import { useEffect, useState } from "react";
 import { Trans } from "@lingui/react/macro";
@@ -26,13 +27,59 @@ function BuildPage() {
       </p>
       <p>
         <Trans>Run the installed app locally with</Trans>{" "}
-        <code>bunx @ekubo/freelp</code>.
+        <code>bunx @ekubo/freelp</code> <Trans>or</Trans>{" "}
+        <code>npx @ekubo/freelp</code>.
       </p>
       <p>
         <Trans>
           The package contains the complete application. Your package manager
           handles package integrity; the launcher serves local files without
           fetching a separate build or contacting GitHub.
+        </Trans>
+      </p>
+      <h3>
+        <Trans>Run locally</Trans>
+      </h3>
+      <Command command="bunx @ekubo/freelp" />
+      <Command command="npx @ekubo/freelp" />
+      <p>
+        <Trans>
+          Use a version suffix to keep a specific release, for example
+          @ekubo/freelp@0.1.1. The package opens a local web server; your wallet
+          signs transactions in the browser.
+        </Trans>
+      </p>
+      <h3>
+        <Trans>Open through IPFS</Trans>
+      </h3>
+      <p>
+        <Trans>
+          After public launch, the IPNS address follows the latest stable
+          release. Each release also includes its immutable IPFS address and a
+          CAR you can pin yourself.
+        </Trans>
+      </p>
+      <p>
+        <code>ipns://{IPNS_NAME}</code>
+      </p>
+      <p>
+        <a href={`http://127.0.0.1:8080/ipns/${IPNS_NAME}/`}>
+          <Trans>Open with your local IPFS gateway</Trans>
+        </a>
+      </p>
+      <p>
+        <a
+          href={`https://${IPNS_NAME}.ipns.dweb.link/`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <Trans>Open with a public IPFS gateway</Trans>
+        </a>
+      </p>
+      <p>
+        <Trans>
+          The IPNS address is reserved during private development. Public
+          gateway links become usable after launch.
         </Trans>
       </p>
       <p className="row">
@@ -76,22 +123,19 @@ export function App() {
   }, []);
   return (
     <main>
+      <a
+        className="skip-link"
+        href="#main-content"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById("main-content")?.focus();
+        }}
+      >
+        <Trans>Skip to content</Trans>
+      </a>
       <header>
         <h1>FreeLP</h1>
-        <nav aria-label={t`Main navigation`}>
-          <a href="#/positions">
-            <Trans>Positions</Trans>
-          </a>
-          <a href="#/create">
-            <Trans>Create</Trans>
-          </a>
-          <a href="#/settings">
-            <Trans>Settings</Trans>
-          </a>
-          <a href="#/deploy">
-            <Trans>Deploy</Trans>
-          </a>
-        </nav>
+        <MainNavigation route={route} />
       </header>
       <div className="panel">
         <div className="row">
@@ -162,7 +206,9 @@ export function App() {
           {session.status}
         </p>
       ) : null}
-      <Page key={`${session.settings.chainId}:${route}`} route={route} />
+      <div id="main-content" tabIndex={-1}>
+        <Page key={`${session.settings.chainId}:${route}`} route={route} />
+      </div>
       <footer className="row">
         <a href="#/terms">
           <Trans>Terms</Trans>
@@ -175,5 +221,62 @@ export function App() {
         </span>
       </footer>
     </main>
+  );
+}
+
+function MainNavigation({ route }: { route: string }) {
+  return (
+    <nav aria-label={t`Main navigation`}>
+      <a
+        href="#/positions"
+        aria-current={
+          route.startsWith("#/positions") || !route ? "page" : undefined
+        }
+      >
+        <Trans>Positions</Trans>
+      </a>
+      <a
+        href="#/create"
+        aria-current={route.startsWith("#/create") ? "page" : undefined}
+      >
+        <Trans>Create</Trans>
+      </a>
+      <a
+        href="#/settings"
+        aria-current={route.startsWith("#/settings") ? "page" : undefined}
+      >
+        <Trans>Settings</Trans>
+      </a>
+      <a
+        href="#/deploy"
+        aria-current={route.startsWith("#/deploy") ? "page" : undefined}
+      >
+        <Trans>Deploy</Trans>
+      </a>
+    </nav>
+  );
+}
+
+function Command({ command }: { command: string }) {
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState("");
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(command);
+      setCopied(true);
+    } catch {
+      setError(t`Select and copy the command manually.`);
+    }
+  }
+  return (
+    <>
+      <div className="command">
+        <code>{command}</code>
+        <button onClick={() => void copy()}>
+          {copied ? <Trans>Copied</Trans> : <Trans>Copy command</Trans>}
+        </button>
+      </div>
+      <span role="status">{error}</span>
+    </>
   );
 }

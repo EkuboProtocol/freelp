@@ -1,0 +1,50 @@
+name: Update stable IPNS release
+on:
+  workflow_run:
+    workflows: [Verify and deploy to IPFS]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Stable release tag (blank selects latest)
+        type: string
+      dry_run:
+        description: Verify signing and resolution offline without publishing
+        type: boolean
+        default: true
+  schedule:
+    - cron: '17 */12 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: freelp-stable-ipns
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.dry_run) ||
+      (!github.event.repository.private && vars.FREELP_PUBLIC_RELEASE == 'true' &&
+      (github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      startsWith(github.event.workflow_run.head_branch, 'v'))))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          persist-credentials: false
+      - run: bash scripts/install-ipfs.sh
+      - name: Retain release and update its stable name
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FREELP_IPNS_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'true' || 'false' }}
+          FREELP_RELEASE_TAG: ${{ inputs.release_tag }}
+          FREELP_PUBLIC_RELEASE: ${{ vars.FREELP_PUBLIC_RELEASE }}
+          FREELP_IPNS_NAME: ${{ vars.FREELP_IPNS_NAME }}
+          FREELP_IPNS_KEY: ${{ secrets.FREELP_IPNS_KEY }}
+          FREELP_PIN_HOST: ${{ vars.FREELP_PIN_HOST }}
+          FREELP_PIN_SSH_KEY: ${{ secrets.FREELP_PIN_SSH_KEY }}
+          FREELP_PIN_HOST_KEY: ${{ secrets.FREELP_PIN_HOST_KEY }}
+        run: bash scripts/update-ipns.sh

@@ -1,6 +1,7 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { readdir, readFile, lstat } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { serve } from "./server";
 
@@ -29,14 +30,16 @@ async function collect(directory: string, prefix = "") {
 }
 if (values.help)
   console.log(
-    "bunx @ekubo/freelp [--port 4173] [--no-browser]\nServes the app bundled in the installed package on localhost. No GitHub access or binary download is required.",
+    "bunx @ekubo/freelp | npx @ekubo/freelp [--port 4173] [--no-browser]\nServes the app bundled in the installed package on localhost. No GitHub access or binary download is required.",
   );
 else {
   try {
     const port = Number(values.port);
     if (!Number.isInteger(port) || port < 1024 || port > 65535)
       throw new Error("Port must be 1024–65535.");
-    const files = await collect(join(import.meta.dir, "../dist"));
+    const files = await collect(
+      fileURLToPath(new URL("../dist/", import.meta.url)),
+    );
     const server = await serve(files, port, !values["no-browser"]);
     process.on("SIGINT", () => server.close(() => process.exit(0)));
     process.on("SIGTERM", () => server.close(() => process.exit(0)));

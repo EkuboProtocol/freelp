@@ -63,6 +63,10 @@ msgstr "Add liquidity"
 msgid "Advanced pool settings"
 msgstr "Advanced pool settings"
 
+#: src/App.tsx
+msgid "After public launch, the IPNS address follows the latest stable release. Each release also includes its immutable IPFS address and a CAR you can pin yourself."
+msgstr "After public launch, the IPNS address follows the latest stable release. Each release also includes its immutable IPFS address and a CAR you can pin yourself."
+
 #. placeholder {0}: token.symbol
 #: src/ApprovalButton.tsx
 msgid "Approve {0}"
@@ -116,10 +120,6 @@ msgstr "Configuration file"
 msgid "Configuration JSON"
 msgstr "Configuration JSON"
 
-#: src/PositionsPage.tsx
-msgid "Configure a position manager in Settings or deploy one."
-msgstr "Configure a position manager in Settings or deploy one."
-
 #. placeholder {0}: receipt.transactionHash
 #: src/session.tsx
 msgid "Confirmed: {0}"
@@ -163,6 +163,14 @@ msgstr "Constructor Core address:"
 msgid "Contract license"
 msgstr "Contract license"
 
+#: src/App.tsx
+msgid "Copied"
+msgstr "Copied"
+
+#: src/App.tsx
+msgid "Copy command"
+msgstr "Copy command"
+
 #: src/SettingsPage.tsx
 msgid "Core address"
 msgstr "Core address"
@@ -181,6 +189,7 @@ msgid "Create"
 msgstr "Create"
 
 #: src/CreatePage.tsx
+#: src/PositionsPage.tsx
 msgid "Create position"
 msgstr "Create position"
 
@@ -225,6 +234,10 @@ msgstr "Deploy an ownerless position manager against an existing compatible Core
 msgid "Deploy contracts"
 msgstr "Deploy contracts"
 
+#: src/PositionsPage.tsx
+msgid "Deploy your own"
+msgstr "Deploy your own"
+
 #: src/DeployPage.tsx
 #: src/FetcherDeployments.tsx
 msgid "Deployment receipt has no address."
@@ -245,6 +258,10 @@ msgstr "Existing pool"
 #: src/PricePreview.tsx
 msgid "Existing pool: the initial-price input is ignored."
 msgstr "Existing pool: the initial-price input is ignored."
+
+#: src/LiquidityChart.tsx
+msgid "Explore liquidity by price"
+msgstr "Explore liquidity by price"
 
 #: src/SettingsPage.tsx
 msgid "Export settings"
@@ -322,6 +339,10 @@ msgstr "Lower tick"
 msgid "Main navigation"
 msgstr "Main navigation"
 
+#: src/PositionsPage.tsx
+msgid "Manage position"
+msgstr "Manage position"
+
 #: src/CreatePage.tsx
 msgid "Maximum token 0 amount"
 msgstr "Maximum token 0 amount"
@@ -365,6 +386,22 @@ msgstr "Official source repository:"
 #: src/LiquidityChart.tsx
 msgid "Only the on-chain tick range fetched is shown. Empty space outside that range is not assumed to have zero liquidity."
 msgstr "Only the on-chain tick range fetched is shown. Empty space outside that range is not assumed to have zero liquidity."
+
+#: src/App.tsx
+msgid "Open through IPFS"
+msgstr "Open through IPFS"
+
+#: src/App.tsx
+msgid "Open with a public IPFS gateway"
+msgstr "Open with a public IPFS gateway"
+
+#: src/App.tsx
+msgid "Open with your local IPFS gateway"
+msgstr "Open with your local IPFS gateway"
+
+#: src/App.tsx
+msgid "or"
+msgstr "or"
 
 #: src/CreatePage.tsx
 msgid "Pool fee (%)"
@@ -486,6 +523,10 @@ msgid "RPC URLs can contain credentials. Copy a configuration with a public RPC 
 msgstr "RPC URLs can contain credentials. Copy a configuration with a public RPC URL for sharing."
 
 #: src/App.tsx
+msgid "Run locally"
+msgstr "Run locally"
+
+#: src/App.tsx
 msgid "Run the installed app locally with"
 msgstr "Run the installed app locally with"
 
@@ -500,6 +541,10 @@ msgstr "Search tokens or paste an address"
 #: src/CurrencySelect.tsx
 msgid "Select a token"
 msgstr "Select a token"
+
+#: src/App.tsx
+msgid "Select and copy the command manually."
+msgstr "Select and copy the command manually."
 
 #: src/CreatePage.tsx
 msgid "Select first token"
@@ -517,6 +562,10 @@ msgstr "Select token"
 msgid "Set an existing Core in Settings, or deploy one here. This step creates a new independent Core."
 msgstr "Set an existing Core in Settings, or deploy one here. This step creates a new independent Core."
 
+#: src/PositionsPage.tsx
+msgid "Set up a position manager for this network to start providing liquidity."
+msgstr "Set up a position manager for this network to start providing liquidity."
+
 #: src/NetworkPortfolio.tsx
 msgid "Set up positions"
 msgstr "Set up positions"
@@ -532,6 +581,10 @@ msgstr "Settings saved."
 #: src/session.tsx
 msgid "Simulating and requesting wallet confirmation…"
 msgstr "Simulating and requesting wallet confirmation…"
+
+#: src/App.tsx
+msgid "Skip to content"
+msgstr "Skip to content"
 
 #: src/CreatePage.tsx
 #: src/PositionsPage.tsx
@@ -565,6 +618,10 @@ msgstr "Terms version: {TERMS_HASH}"
 #: src/SettingsPage.tsx
 msgid "Test RPC"
 msgstr "Test RPC"
+
+#: src/App.tsx
+msgid "The IPNS address is reserved during private development. Public gateway links become usable after launch."
+msgstr "The IPNS address is reserved during private development. Public gateway links become usable after launch."
 
 #: src/App.tsx
 msgid "The package contains the complete application. Your package manager handles package integrity; the launcher serves local files without fetching a separate build or contacting GitHub."
@@ -650,6 +707,14 @@ msgstr "Upper tick"
 #: src/SettingsPage.tsx
 msgid "Use a public RPC or your own node. No API key is required. Settings stay in this browser."
 msgstr "Use a public RPC or your own node. No API key is required. Settings stay in this browser."
+
+#: src/App.tsx
+msgid "Use a version suffix to keep a specific release, for example @ekubo/freelp@0.1.1. The package opens a local web server; your wallet signs transactions in the browser."
+msgstr "Use a version suffix to keep a specific release, for example @ekubo/freelp@0.1.1. The package opens a local web server; your wallet signs transactions in the browser."
+
+#: src/PositionsPage.tsx
+msgid "Use an existing manager"
+msgstr "Use an existing manager"
 
 #: src/RangeFields.tsx
 msgid "Use custom range"

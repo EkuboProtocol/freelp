@@ -10,10 +10,12 @@ The UI bundles Core, FreeLP, QuoteDataFetcher, CoreDataFetcher, and TokenDataFet
 
 ## Application and distribution
 
-- Lint, TypeScript, production build, and 15 unit tests pass. Unit coverage includes settlement safeguards, terms checks at transaction entry, exact amounts/ranges, sorted on-chain enumeration, immutable runtime checks, content CIDs/server boundaries, private IPFS publication guards, and liquidity reconstruction across initialized ticks.
+- Lint, TypeScript, production build, and 18 unit tests pass. Unit coverage includes settlement safeguards, terms checks at transaction entry, exact amounts/ranges, sorted on-chain enumeration, immutable runtime checks, content CIDs/server boundaries, private IPFS publication guards, and liquidity reconstruction across initialized ticks.
 - Seven local-chain browser tests cover standard/native/nonstandard-token LP lifecycles, Core/FreeLP/data-fetcher deployment from the UI, pool discovery and nonzero liquidity bars, independent network configurations, bundled token selection and ordering, and terms behavior with account/storage changes.
-- The npm tarball installs offline with npm and starts via `bun x --no-install @ekubo/freelp` from a temporary directory without the source checkout. Its bundled JavaScript is served and arbitrary filesystem paths return 404. No runtime dependencies or second application download are required.
+- The npm tarball installs offline with npm and starts via `bun x --no-install @ekubo/freelp` and `npx --offline --no-install -- @ekubo/freelp` from a temporary directory without the source checkout. Its bundled JavaScript is served and arbitrary filesystem paths return 404. No runtime dependencies or second application download are required.
 - Desktop and mobile rendering were inspected. Token amounts and selectors are grouped together; raw addresses and custom fee/slippage inputs are under advanced settings.
 - Old compiled binaries, attestation verification, proof packaging, and their obsolete tests have been removed. Historical v0.0.2 validation remains in git history; it does not describe the current npm distribution.
 
 CI repeats these checks, tests the site's path and subdomain IPFS gateway layouts with external requests blocked, and retains per-commit CAR/npm artifacts in private GitHub releases. Public npm publication and public IPFS seeding have not been performed. Persistent public availability still requires retained copies and usable RPC endpoints.
+
+The UX and distribution revision adds measured accessibility/Lighthouse gates (ux-audit.md), Node-compatible npm launching, and separate IPNS publication infrastructure (distribution.md). The DigitalOcean node was provisioned and tested with harmless public fixture content; private application CARs remain local or in private GitHub releases. Actual IPNS-key signing and resolution were rehearsed entirely offline.

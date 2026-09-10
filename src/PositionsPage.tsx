@@ -1,3 +1,5 @@
+import { currencies } from "./tokens";
+import { networkName } from "./networks";
 import { NetworkPortfolio } from "./NetworkPortfolio";
 import { t } from "@lingui/core/macro";
 import { parseAmount } from "./amounts";
@@ -31,8 +33,13 @@ function metadataImage(uri: string) {
 export function PositionsPage() {
   const { settings, account, revision, setStatus } = useSession();
   const scope = JSON.stringify([settings, account]);
-  const [loaded, setLoaded] = useState<{ scope: string; items: Position[] }>({
+  const [loaded, setLoaded] = useState<{
+    scope: string;
+    revision: number;
+    items: Position[];
+  }>({
     scope: "",
+    revision: -1,
     items: [],
   });
   const items = loaded.scope === scope ? loaded.items : [];
@@ -44,7 +51,7 @@ export function PositionsPage() {
     setLoading(true);
     positions(settings, account)
       .then((data) => {
-        if (active) setLoaded({ scope, items: data });
+        if (active) setLoaded({ scope, revision, items: data });
       })
       .catch((e) => {
         if (active) setStatus(String(e));
@@ -60,9 +67,14 @@ export function PositionsPage() {
   return (
     <section>
       <NetworkPortfolio />
-      <h2>
-        <Trans>Your positions</Trans>
-      </h2>
+      <div className="row spread">
+        <h2>
+          <Trans>Your positions</Trans> · {networkName(settings.chainId)}
+        </h2>
+        <a className="primary-link" href="#/create">
+          <Trans>Create position</Trans>
+        </a>
+      </div>
       {!account ? (
         <p>
           <Trans>
@@ -71,62 +83,49 @@ export function PositionsPage() {
         </p>
       ) : null}
       {settings.manager === zeroAddress ? (
-        <p>
-          <Trans>Configure a position manager in Settings or deploy one.</Trans>
-        </p>
+        <div className="setup-note">
+          <p>
+            <Trans>
+              Set up a position manager for this network to start providing
+              liquidity.
+            </Trans>
+          </p>
+          <a href="#/settings">
+            <Trans>Use an existing manager</Trans>
+          </a>
+          <a href="#/deploy">
+            <Trans>Deploy your own</Trans>
+          </a>
+        </div>
       ) : null}
       {loading ? (
         <p role="status">
           <Trans>Reading positions…</Trans>
         </p>
       ) : null}
-      <table>
-        <thead>
-          <tr>
-            <th>
-              <Trans>Position</Trans>
-            </th>
-            <th>
-              <Trans>Token pair</Trans>
-            </th>
-            <th>
-              <Trans>Tick range</Trans>
-            </th>
-            <th>
-              <Trans>Liquidity</Trans>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((p) => (
-            <tr key={p.id.toString()}>
-              <td>
-                <button onClick={() => setSelected(p.id.toString())}>
-                  #{p.id.toString()}
-                </button>
-              </td>
-              <td>
-                <small className="mono">
-                  {p.descriptor.poolKey.token0}
-                  <br />
-                  {p.descriptor.poolKey.token1}
-                </small>
-              </td>
-              <td>
-                {p.descriptor.tickLower} — {p.descriptor.tickUpper}
-              </td>
-              <td>{p.amounts.liquidity.toString()}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {!loading && account && items.length === 0 ? (
+      <PositionTable
+        items={items}
+        chainId={settings.chainId}
+        onSelect={setSelected}
+      />
+      {!loading &&
+      account &&
+      settings.manager !== zeroAddress &&
+      items.length === 0 ? (
         <p>
           <Trans>No positions in this manager.</Trans>
         </p>
       ) : null}
       {item ? (
-        <PositionDetail key={`${scope}:${item.id}`} position={item} />
+        <fieldset
+          disabled={loaded.revision !== revision}
+          aria-busy={loaded.revision !== revision}
+        >
+          <legend>
+            <Trans>Manage position</Trans>
+          </legend>
+          <PositionDetail key={`${scope}:${item.id}`} position={item} />
+        </fieldset>
       ) : null}
     </section>
   );
@@ -363,5 +362,86 @@ function PositionDetail({ position: p }: { position: Position }) {
         </Action>
       </p>
     </div>
+  );
+}
+
+function TokenLabel({
+  address,
+  chainId,
+}: {
+  address: string;
+  chainId: number;
+}) {
+  const currency = currencies(chainId).find(
+    (token) => token.address.toLowerCase() === address.toLowerCase(),
+  );
+  return (
+    <span title={address}>
+      {currency?.symbol ?? `${address.slice(0, 6)}…${address.slice(-4)}`}
+    </span>
+  );
+}
+
+function PositionTable({
+  items,
+  chainId,
+  onSelect,
+}: {
+  items: Position[];
+  chainId: number;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <>
+      {" "}
+      {items.length > 0 ? (
+        <table>
+          <thead>
+            <tr>
+              <th>
+                <Trans>Position</Trans>
+              </th>
+              <th>
+                <Trans>Token pair</Trans>
+              </th>
+              <th>
+                <Trans>Tick range</Trans>
+              </th>
+              <th>
+                <Trans>Liquidity</Trans>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((p) => (
+              <tr key={p.id.toString()}>
+                <td>
+                  <button onClick={() => onSelect(p.id.toString())}>
+                    #{p.id.toString()}
+                  </button>
+                </td>
+                <td>
+                  <small className="mono">
+                    <TokenLabel
+                      address={p.descriptor.poolKey.token0}
+                      chainId={chainId}
+                    />
+                    <br />
+                    <TokenLabel
+                      address={p.descriptor.poolKey.token1}
+                      chainId={chainId}
+                    />
+                  </small>
+                </td>
+                <td>
+                  {p.descriptor.tickLower} — {p.descriptor.tickUpper}
+                </td>
+                <td>{p.amounts.liquidity.toString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : null}
+    </>
   );
 }

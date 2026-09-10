@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import { t } from "@lingui/core/macro";
 import { erc20Abi, getAddress, isAddress } from "viem";
@@ -15,6 +15,7 @@ export function CurrencySelect({
   label: string;
   onChange: (token: Currency) => void;
 }) {
+  const titleId = useId();
   const { settings } = useSession();
   const dialog = useRef<HTMLDialogElement>(null);
   const [search, setSearch] = useState("");
@@ -75,11 +76,15 @@ export function CurrencySelect({
           {selected?.symbol ?? <Trans>Select token</Trans>}{" "}
           <small>{selected?.name}</small>
         </span>
-        <span>⌄</span>
+        <span aria-hidden="true">⌄</span>
       </button>
-      <dialog ref={dialog} className="currency-dialog">
+      <dialog
+        ref={dialog}
+        className="currency-dialog"
+        aria-labelledby={titleId}
+      >
         <div className="row spread">
-          <h2>
+          <h2 id={titleId}>
             <Trans>Select a token</Trans>
           </h2>
           <button
@@ -91,6 +96,8 @@ export function CurrencySelect({
         </div>
         <Field label={<Trans>Search tokens or paste an address</Trans>}>
           <input
+            name="token-search"
+            spellCheck={false}
             autoComplete="off"
             value={search}
             onChange={(event) => {

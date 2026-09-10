@@ -1,6 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { resolve, join } from "node:path";
+import { resolve, join, dirname } from "node:path";
+import { spawn } from "node:child_process";
 const archive = resolve(process.argv[2]);
 const directory = await mkdtemp(join(tmpdir(), "freelp-package-"));
 async function waitForPage() {
@@ -14,6 +15,38 @@ async function waitForPage() {
     await Bun.sleep(100);
   }
   throw new Error("Packaged app did not start.");
+}
+async function checkRunner(command: string[]) {
+  const nodePath = dirname(Bun.which("node")!);
+  const child = spawn(
+    command[0],
+    [...command.slice(1), "--no-browser", "--port", "19419"],
+    {
+      cwd: directory,
+      detached: true,
+      stdio: "inherit",
+      env: { ...process.env, PATH: `${nodePath}:/usr/bin:/bin` },
+    },
+  );
+  const exited = new Promise<void>((resolve, reject) => {
+    child.once("exit", () => resolve());
+    child.once("error", reject);
+  });
+  try {
+    const html = await (await waitForPage()).text();
+    if (!html.includes("FreeLP")) throw new Error("Missing application HTML.");
+    const script = html.match(/src="([^"]+\.js)"/)?.[1];
+    if (!script) throw new Error("Missing bundled script.");
+    if (!(await fetch(new URL(script, "http://127.0.0.1:19419/"))).ok)
+      throw new Error("Missing packaged assets.");
+    if ((await fetch("http://127.0.0.1:19419/.env")).status !== 404)
+      throw new Error("Unexpected filesystem access.");
+    console.log("Packaged app served with:", command.join(" "));
+  } finally {
+    if (child.pid && child.exitCode === null)
+      process.kill(-child.pid, "SIGTERM");
+    await exited;
+  }
 }
 try {
   const install = Bun.spawn(
@@ -34,34 +67,14 @@ try {
     throw new Error(
       `Cannot install npm artifact: ${await new Response(install.stderr).text()}`,
     );
-  const child = Bun.spawn(
-    [
-      "bun",
-      "x",
-      "--no-install",
-      "@ekubo/freelp",
-      "--no-browser",
-      "--port",
-      "19419",
-    ],
-    { cwd: directory, stdout: "pipe", stderr: "pipe" },
-  );
-  try {
-    const html = await (await waitForPage()).text();
-    if (!html.includes("FreeLP")) throw new Error("Missing application HTML.");
-    const script = html.match(/src="([^"]+\.js)"/)?.[1];
-    if (!script) throw new Error("Missing bundled script.");
-    if (!(await fetch(new URL(script, "http://127.0.0.1:19419/"))).ok)
-      throw new Error("Missing packaged assets.");
-    if ((await fetch("http://127.0.0.1:19419/.env")).status !== 404)
-      throw new Error("Unexpected filesystem access.");
-    console.log(
-      "Offline npm install and bunx serve the complete packaged app without a source checkout.",
-    );
-  } finally {
-    child.kill("SIGTERM");
-    await child.exited;
-  }
+  await checkRunner([Bun.which("bun")!, "x", "--no-install", "@ekubo/freelp"]);
+  await checkRunner([
+    Bun.which("npx")!,
+    "--offline",
+    "--no-install",
+    "--",
+    "@ekubo/freelp",
+  ]);
 } finally {
   await rm(directory, { recursive: true, force: true });
 }

@@ -16,26 +16,31 @@ export function NetworkPortfolio() {
   useEffect(() => {
     let active = true;
     if (!account) return;
-    void Promise.all(
-      networks
-        .filter((network) => network.manager !== zeroAddress)
-        .map(async (network) => {
-          try {
-            return {
-              chainId: network.chainId,
-              positions: await positions(network, account),
-            };
-          } catch (error) {
-            return {
-              chainId: network.chainId,
-              positions: [],
-              error: String(error),
-            };
-          }
-        }),
-    ).then((rows) => {
-      if (active) setLoaded({ scope, rows });
-    });
+    networks
+      .filter((network) => network.manager !== zeroAddress)
+      .map(async (network) => {
+        try {
+          return {
+            chainId: network.chainId,
+            positions: await positions(network, account),
+          };
+        } catch (error) {
+          return {
+            chainId: network.chainId,
+            positions: [],
+            error: String(error),
+          };
+        }
+      })
+      .forEach((request) => {
+        void request.then((row) => {
+          if (active)
+            setLoaded((previous) => ({
+              scope,
+              rows: [...(previous.scope === scope ? previous.rows : []), row],
+            }));
+        });
+      });
     return () => {
       active = false;
     };

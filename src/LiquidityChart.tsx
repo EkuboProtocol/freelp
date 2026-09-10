@@ -93,6 +93,16 @@ export function LiquidityChart({
           {price(upper)}
         </text>
       </svg>
+      <label>
+        <Trans>Explore liquidity by price</Trans>
+        <input
+          type="range"
+          min={0}
+          max={79}
+          value={hover ?? 40}
+          onChange={(event) => setHover(Number(event.target.value))}
+        />
+      </label>
       <div className="row spread">
         <small>
           <Trans>Price</Trans> {price(selected.tick)}

@@ -6,11 +6,11 @@ EVM liquidity position management using only RPC endpoints and an injected walle
 
 ## Run the packaged app
 
-Once published, `bunx @ekubo/freelp` serves the complete installed application on localhost and opens your browser. Use `--no-browser` or `--port 4173` as needed. A specific version can be selected with `bunx @ekubo/freelp@VERSION`.
+Once published, `bunx @ekubo/freelp` or `npx @ekubo/freelp` serves the complete installed application on localhost and opens your browser. Use `--no-browser` or `--port 4173` as needed. A specific version can be selected with `bunx @ekubo/freelp@VERSION`.
 
-Trust the package publisher and your package manager's integrity checks. The package contains its static assets and has no runtime package dependencies. The launcher does not contact GitHub, download a second build, or handle wallet keys. Bun is installed separately; no runtime binary is distributed.
+Trust the package publisher and your package manager's integrity checks. The package contains its static assets and has no runtime package dependencies. The launcher does not contact GitHub, download a second build, or handle wallet keys. Use Node 22+ for npx, or Bun for bunx. No runtime binary is distributed.
 
-During private development, build with `bun install --frozen-lockfile && bun run pack:app`. Test the resulting tarball with `bun scripts/check-package.ts ekubo-freelp-0.1.0.tgz`, or run `bun cli/main.ts` from the built checkout. Packing does not publish; `private: true` prevents accidental npm publication.
+During private development, build with `bun install --frozen-lockfile && bun run pack:app`. Test the resulting tarball with `bun scripts/check-package.ts ekubo-freelp-0.1.1.tgz`, or run `node cli-dist/main.js` from the built checkout. Packing does not publish; `private: true` prevents accidental npm publication.
 
 ## Use FreeLP
 
@@ -28,8 +28,10 @@ Use Bun 1.4.0. Run `bun run dev`, `bun run lint`, `bun run check-ts`, `bun run t
 
 CI builds and packages each main commit and version tag. `bun scripts/package-release.ts SOURCE_COMMIT` produces the static site's CAR, manifest, and `deployment.json` with its CID and source commit. CI tests both an isolated IPFS gateway and the npm tarball, then retains artifacts in a private GitHub release. No npm publication occurs.
 
-While private, content is imported only into an isolated offline Kubo node. After public launch, CI can seed the site's CAR on IPFS. Retain `site.car` on user-operated nodes for continuing availability; a CID verifies content but does not guarantee permanent storage. Restore a public deployment with `ipfs dag import site.car`. Before launch, use only an isolated offline repository and never advertise its content to peers.
+While private, content is imported only into an isolated offline Kubo node. After public launch, tagged builds seed the site’s CAR on IPFS. A separate IPNS job confirms a durable pin on the allocated DigitalOcean node before updating the stable name, and renews that record every 12 hours. Retain `site.car` on user-operated nodes for continuing availability; a CID verifies content but does not guarantee permanent storage. Restore a public deployment with `ipfs dag import site.car`. Before launch, use only an isolated offline repository and never advertise its content to peers.
 
 ## Licensing
 
 New interface and CLI code are MIT. The repository started with one squashed reduced-interface commit; squashing does not relicense dependencies or contract artifacts. Reused Ekubo interface math, ABI, and configuration logic are identified in source. Retain the licenses and attribution in THIRD_PARTY_NOTICES.md.
+
+See [distribution and infrastructure](docs/distribution.md) for the bunx/npx commands, immutable IPFS and stable IPNS URLs, allocated node, privacy gates, and recovery instructions.
