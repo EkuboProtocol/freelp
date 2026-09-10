@@ -1,6 +1,6 @@
 # FreeLP: RPC-only LP interface implementation plan
 
-Status: implementation in progress, 2026-09-10. Private repository: moodysalem/freelp. Contract PR: EkuboProtocol/evm-contracts#372. Public application publication remains disabled.
+Status: implemented and validated as private release v0.0.2, 2026-09-10. Private repository: moodysalem/freelp. Contract PR: EkuboProtocol/evm-contracts#372. Public application publication remains disabled.
 
 ## Outcome and privacy
 

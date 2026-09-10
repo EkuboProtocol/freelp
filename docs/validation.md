@@ -37,3 +37,18 @@ The first full contracts run passed 965 tests and failed four existing ExposedSt
 Private builds use GitHub-signed OIDC issuance evidence with a descriptor-bound audience, because standard private GitHub artifact attestations require an entitlement unavailable to this project. Public Sigstore verification is implemented but still needs a real public release verification exercise before public launch.
 
 After explicit loopback API/gateway bindings were added, release-packaging CI run 34523811210 passed for commit 012eefd31b26bf9c17251634b17a204842e4989e, including verification through offline Kubo and browser gateway checks. RPC/settings recovery and CLI rollback/failure integration have now been exercised. The source/behavior audit is recorded in docs/requirements-audit.md. Final release CI and artifact verification are checked separately from source claims. Stable-release discovery and the latest launcher changes were exercised against the private tagged release. Public launch execution remains deferred until authorization/readiness as described in docs/launch-checklist.md.
+
+## Final private release
+
+Release `v0.0.2` pins commit `54fb7b9bc9b2851298399a02d600863f52b4c2cd`. Tag CI run `34529273144` passed, including 20 unit tests, six full browser tests, bootstrap isolation, notices, static builds, and isolated IPFS gateway verification.
+
+The downloaded Linux launcher was independently authenticated with the trusted checkout's `scripts/verify-launcher.ts` before execution. That binary passed default latest-release discovery, offline verification, and explicit release-CID verification through the existing private offline Kubo node. The complete release CAR is pinned there without public announcement.
+
+The local build reproduces CI's complete file manifest, application archive hash, and site CID exactly:
+
+- Site: `bafybeiaaugvzemosozt2rnogzrdpmnmo3cfpurxgwfwffus7d5org5omae`
+- Release (site plus proof): `bafybeigw5newibtnlydsijups4xz6ms3prbp2p3tbz4nqskfkqwqipdf2i`
+
+The imported Core, FreeLP, and test-token ABIs, creation bytecode, deployed bytecode, and immutable references were compared directly with the pinned contracts worktree's build output and match. Contract PR #372 is now ready for review; it is not merged or deployed to production. The default free Ethereum RPC returned chain ID 1 during the final check.
+
+The repository and all application releases remain private. Public launch execution is described in `docs/launch-checklist.md` and has not been performed. No project pin service is required; persistent public IPFS availability still needs retained copies.
