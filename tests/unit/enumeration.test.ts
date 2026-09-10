@@ -3,7 +3,7 @@ import { decodeFunctionData, encodeFunctionResult, zeroAddress } from "viem";
 import { managerAbi, positions } from "../../src/contracts";
 
 test("standard owner enumeration reads one block and sorts the complete list", async () => {
-  const ids = [10n, 2n, 8n, 1n, 9n, 3n];
+  const ids = Array.from({ length: 257 }, (_, index) => BigInt(257 - index));
   const seen: string[] = [];
   const blocks: string[] = [];
   const server = Bun.serve({
@@ -62,7 +62,9 @@ test("standard owner enumeration reads one block and sorts the complete list", a
       },
       zeroAddress,
     );
-    expect(rows.map((p) => p.id)).toEqual([1n, 2n, 3n, 8n, 9n, 10n]);
+    expect(rows.map((p) => p.id)).toEqual(
+      Array.from({ length: 257 }, (_, index) => BigInt(index + 1)),
+    );
     expect(seen.filter((name) => name === "tokenOfOwnerByIndex")).toHaveLength(
       ids.length,
     );

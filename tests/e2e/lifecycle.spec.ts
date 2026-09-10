@@ -48,14 +48,16 @@ async function approveDeposits(
   });
   for (let i = 0; i < 5; i++) {
     const allowances = await Promise.all(
-      tokens.map((address) =>
-        client.readContract({
-          address,
-          abi: erc20Abi,
-          functionName: "allowance",
-          args: [account.address, manager],
-        }),
-      ),
+      tokens
+        .filter((address) => address !== zeroAddress)
+        .map((address) =>
+          client.readContract({
+            address,
+            abi: erc20Abi,
+            functionName: "allowance",
+            args: [account.address, manager],
+          }),
+        ),
     );
     const labels = allowances
       .filter((amount) => amount < 2n * 10n ** 18n)
@@ -71,21 +73,39 @@ async function approveDeposits(
   }
   throw new Error("Approvals did not converge");
 }
-for (const missingDecimals of [false, true])
-  test(`RPC-only LP lifecycle with terms enforced (missing decimals: ${missingDecimals})`, async ({
+for (const { missingDecimals, native } of [
+  { missingDecimals: false, native: false },
+  { missingDecimals: true, native: false },
+  { missingDecimals: false, native: true },
+])
+  test(`RPC-only LP lifecycle with terms enforced (missing decimals: ${missingDecimals}, native: ${native})`, async ({
     page,
   }) => {
     const amount = (value: number) =>
       missingDecimals
         ? (BigInt(value) * 10n ** 18n).toString()
         : value.toString();
+    const deploymentStatus = (success: string) =>
+      missingDecimals ? "Deployment verification RPC unavailable" : success;
     const core = zeroAddress;
     const manager = zeroAddress;
     const tokens = [
-      await deploy(tokenArtifact, [account.address]),
+      native ? zeroAddress : await deploy(tokenArtifact, [account.address]),
       await deploy(tokenArtifact, [account.address]),
     ].sort((a, b) => (BigInt(a) < BigInt(b) ? -1 : 1));
     const unexpected: string[] = [];
+    let verificationFailure: "core" | "manager" | undefined = missingDecimals
+      ? "core"
+      : undefined;
+    let deployedCore: string = zeroAddress;
+    function failsCodeRead(method: string, address: string) {
+      return (
+        method === "eth_getCode" &&
+        !!verificationFailure &&
+        (verificationFailure === "core" ||
+          address.toLowerCase() !== deployedCore.toLowerCase())
+      );
+    }
     page.on("request", (request) => {
       const url = request.url();
       if (
@@ -98,6 +118,19 @@ for (const missingDecimals of [false, true])
     await page.route(`${rpcUrl}/`, async (route) => {
       const body = route.request().postDataJSON();
       const methods = Array.isArray(body) ? body : [body];
+      if (failsCodeRead(body.method, body.params?.[0])) {
+        await route.fulfill({
+          json: {
+            jsonrpc: "2.0",
+            id: body.id,
+            error: {
+              code: -32000,
+              message: "Deployment verification RPC unavailable",
+            },
+          },
+        });
+        return;
+      }
       if (methods.some((v) => v.method === "eth_getLogs"))
         throw new Error("Historical logs forbidden");
       if (
@@ -184,16 +217,40 @@ for (const missingDecimals of [false, true])
       .getByRole("button", { name: "Review and deploy new Core" })
       .click();
     await expect(page.locator(".status[role=status]")).toContainText(
-      "Core deployed and verified:",
+      deploymentStatus("Core deployed and verified:"),
       { timeout: 30000 },
     );
+    deployedCore = await page.evaluate(
+      () => JSON.parse(localStorage.getItem("freelp:settings")!).core,
+    );
+    expect(deployedCore).not.toBe(zeroAddress);
+    verificationFailure = missingDecimals ? "manager" : undefined;
+    if (missingDecimals) {
+      await page.reload();
+      await page.getByRole("button", { name: "Connect Local wallet" }).click();
+      await expect(
+        page.getByText(deployedCore, { exact: true }).first(),
+      ).toBeVisible();
+    }
     await page
       .getByRole("button", { name: "Review and deploy position manager" })
       .click();
     await expect(page.locator(".status[role=status]")).toContainText(
-      "Position manager deployed and verified:",
+      deploymentStatus("Position manager deployed and verified:"),
       { timeout: 30000 },
     );
+    verificationFailure = undefined;
+    if (missingDecimals) {
+      await page.reload();
+      await page.getByRole("button", { name: "Connect Local wallet" }).click();
+      await page.getByRole("link", { name: "Settings", exact: true }).click();
+      await page
+        .getByRole("button", { name: "Verify contracts", exact: true })
+        .click();
+      await expect(page.locator(".status[role=status]")).toContainText(
+        "match the bundled contract artifacts",
+      );
+    }
     const deployedManager = await page.evaluate(
       () => JSON.parse(localStorage.getItem("freelp:settings")!).manager as Hex,
     );
@@ -206,7 +263,7 @@ for (const missingDecimals of [false, true])
     await expect(
       page.getByRole("heading", { name: "Deposit preview" }),
     ).toBeVisible();
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < (native ? 1 : 2); i++) {
       await page
         .getByRole("button", { name: "Approve TT", exact: true })
         .first()
@@ -328,7 +385,5 @@ for (const missingDecimals of [false, true])
     await page.getByRole("button", { name: "Burn empty NFT" }).click();
     await expect(page.getByText("No positions in this manager.")).toBeVisible();
     expect(unexpected).toEqual([]);
-    expect(
-      await client.getBalance({ address: zeroAddress }),
-    ).toBeGreaterThanOrEqual(0n);
+    expect(await client.getBalance({ address: deployedManager })).toBe(0n);
   });

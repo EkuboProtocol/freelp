@@ -10,12 +10,12 @@ export function DeployPage() {
     const receipt = await send({ data: deployment("Core", zeroAddress) });
     if (!receipt.contractAddress)
       throw new Error(t`Deployment receipt has no address.`);
-    await verifyCode(settings, receipt.contractAddress, "Core");
     configure({
       ...settings,
       core: receipt.contractAddress,
       manager: zeroAddress,
     });
+    await verifyCode(settings, receipt.contractAddress, "Core");
     setStatus(t`Core deployed and verified: ${receipt.contractAddress}`);
   }
   async function deployManager() {
@@ -23,8 +23,8 @@ export function DeployPage() {
     const receipt = await send({ data: deployment("FreeLP", settings.core) });
     if (!receipt.contractAddress)
       throw new Error(t`Deployment receipt has no address.`);
-    await verifyCode(settings, receipt.contractAddress, "FreeLP");
     configure({ ...settings, manager: receipt.contractAddress });
+    await verifyCode(settings, receipt.contractAddress, "FreeLP");
     setStatus(
       t`Position manager deployed and verified: ${receipt.contractAddress}`,
     );
