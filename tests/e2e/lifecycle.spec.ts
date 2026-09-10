@@ -228,6 +228,17 @@ for (const missingDecimals of [false, true])
     await expect(
       page.getByRole("button", { name: "#1", exact: true }),
     ).toBeVisible({ timeout: 30000 });
+    await page.getByRole("link", { name: "Create", exact: true }).click();
+    await page.getByLabel("Token 0 address").fill(tokens[0]);
+    await page.getByLabel("Token 1 address").fill(tokens[1]);
+    await page
+      .getByLabel("Initial price (new pools only)")
+      .fill("ignored for existing pool");
+    await page.getByRole("button", { name: "Preview position" }).click();
+    await expect(
+      page.getByText("Existing pool: the initial-price input is ignored."),
+    ).toBeVisible();
+    await page.getByRole("link", { name: "Positions", exact: true }).click();
     await page.reload();
     await page.getByRole("button", { name: "Connect Local wallet" }).click();
     await page.getByRole("button", { name: "#1", exact: true }).click();

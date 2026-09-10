@@ -1,5 +1,6 @@
 import { parseAmount } from "./amounts";
 import { ApprovalButton } from "./ApprovalButton";
+import { PricePreview } from "./PricePreview";
 import { useEffect, useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import {
@@ -129,7 +130,8 @@ export function PositionsPage() {
 }
 function PositionDetail({ position: p }: { position: Position }) {
   const { settings, account, setStatus, send } = useSession();
-  const [tokens, setTokens] = useState<Token[]>();
+  const [tokens, setTokens] = useState<[Token, Token]>();
+  const [sqrtRatio, setSqrtRatio] = useState(0n);
   const [recipient, setRecipient] = useState(account ?? "");
   const [portion, setPortion] = useState(100);
   const [slippage, setSlippage] = useState(50);
@@ -141,9 +143,15 @@ function PositionDetail({ position: p }: { position: Position }) {
     Promise.all([
       token(settings, p.descriptor.poolKey.token0, account),
       token(settings, p.descriptor.poolKey.token1, account),
+      read<[bigint, number, bigint]>(settings, "poolState", [
+        p.descriptor.poolKey,
+      ]),
     ])
-      .then((t) => {
-        if (active) setTokens(t);
+      .then(([a, b, state]) => {
+        if (active) {
+          setTokens([a, b]);
+          setSqrtRatio(state[0]);
+        }
       })
       .catch((e) => {
         if (active) setStatus(String(e));
@@ -218,6 +226,13 @@ function PositionDetail({ position: p }: { position: Position }) {
       </h3>
       {image ? (
         <img className="nft" src={image} alt="On-chain position metadata" />
+      ) : null}
+      {tokens ? (
+        <PricePreview
+          descriptor={p.descriptor}
+          sqrtRatio={sqrtRatio}
+          tokens={tokens}
+        />
       ) : null}
       {tokens ? (
         <div className="grid">

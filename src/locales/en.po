@@ -33,10 +33,8 @@ msgstr "Accepted for the connected wallet."
 msgid "Add liquidity"
 msgstr "Add liquidity"
 
-#. placeholder {0}: t.symbol
 #. placeholder {0}: token.symbol
 #: src/ApprovalButton.tsx
-#: src/CreatePage.tsx
 msgid "Approve {0}"
 msgstr "Approve {0}"
 
@@ -154,9 +152,17 @@ msgstr "Enter token addresses in ascending order. Use the zero address for the n
 msgid "Error: {error}"
 msgstr "Error: {error}"
 
+#: src/PricePreview.tsx
+msgid "Existing pool: the initial-price input is ignored."
+msgstr "Existing pool: the initial-price input is ignored."
+
 #: src/SettingsPage.tsx
 msgid "Export settings"
 msgstr "Export settings"
+
+#: src/RangeFields.tsx
+msgid "Full range selected."
+msgstr "Full range selected."
 
 #: src/TermsPage.tsx
 msgid "I have read and agree to the Terms of Service and understand that I use FreeLP at my own risk."
@@ -170,7 +176,11 @@ msgstr "If a token has no decimals method, amounts use raw integer units. You ca
 msgid "Import settings"
 msgstr "Import settings"
 
-#: src/CreatePage.tsx
+#: src/RangeFields.tsx
+msgid "Initial price (new pools only)"
+msgstr "Initial price (new pools only)"
+
+#: src/RangeFields.tsx
 msgid "Initial tick (new pools only)"
 msgstr "Initial tick (new pools only)"
 
@@ -182,7 +192,11 @@ msgstr "Liquidity"
 msgid "Liquidity:"
 msgstr "Liquidity:"
 
-#: src/CreatePage.tsx
+#: src/RangeFields.tsx
+msgid "Lower price"
+msgstr "Lower price"
+
+#: src/RangeFields.tsx
 msgid "Lower tick"
 msgstr "Lower tick"
 
@@ -201,6 +215,10 @@ msgstr "MIT license"
 #: src/SettingsPage.tsx
 msgid "Native token symbol"
 msgstr "Native token symbol"
+
+#: src/PricePreview.tsx
+msgid "New pool: creation will initialize its price."
+msgstr "New pool: creation will initialize its price."
 
 #: src/App.tsx
 msgid "No application fees. Network gas applies."
@@ -222,6 +240,10 @@ msgstr "Official source repository:"
 msgid "Pool fee (%)"
 msgstr "Pool fee (%)"
 
+#: src/PricePreview.tsx
+msgid "Pool state is unavailable."
+msgstr "Pool state is unavailable."
+
 #: src/PositionsPage.tsx
 msgid "Position"
 msgstr "Position"
@@ -235,6 +257,10 @@ msgstr "Position #{0}"
 msgid "Position manager address"
 msgstr "Position manager address"
 
+#: src/PricePreview.tsx
+msgid "Position range:"
+msgstr "Position range:"
+
 #: src/App.tsx
 msgid "Positions"
 msgstr "Positions"
@@ -242,6 +268,18 @@ msgstr "Positions"
 #: src/CreatePage.tsx
 msgid "Preview position"
 msgstr "Preview position"
+
+#: src/PricePreview.tsx
+msgid "Price (token 1 per token 0):"
+msgstr "Price (token 1 per token 0):"
+
+#: src/RangeFields.tsx
+msgid "Price range"
+msgstr "Price range"
+
+#: src/RangeFields.tsx
+msgid "Prices are token 1 per token 0. Range prices round outward to valid ticks; review the resulting range in the preview."
+msgstr "Prices are token 1 per token 0. Range prices round outward to valid ticks; review the resulting range in the preview."
 
 #: src/PositionsPage.tsx
 msgid "Principal:"
@@ -317,9 +355,13 @@ msgstr "This page does not assert that the build is verified. The independent la
 msgid "Tick range"
 msgstr "Tick range"
 
-#: src/CreatePage.tsx
+#: src/RangeFields.tsx
 msgid "Tick spacing"
 msgstr "Tick spacing"
+
+#: src/PricePreview.tsx
+msgid "Ticks:"
+msgstr "Ticks:"
 
 #: src/CreatePage.tsx
 msgid "Token 0 address"
@@ -361,7 +403,11 @@ msgstr "Transfer NFT to recipient"
 msgid "Uncollected fees:"
 msgstr "Uncollected fees:"
 
-#: src/CreatePage.tsx
+#: src/RangeFields.tsx
+msgid "Upper price"
+msgstr "Upper price"
+
+#: src/RangeFields.tsx
 msgid "Upper tick"
 msgstr "Upper tick"
 
@@ -369,9 +415,17 @@ msgstr "Upper tick"
 msgid "Use a public RPC or your own node. No API key is required. Settings stay in this browser."
 msgstr "Use a public RPC or your own node. No API key is required. Settings stay in this browser."
 
-#: src/CreatePage.tsx
+#: src/RangeFields.tsx
+msgid "Use custom range"
+msgstr "Use custom range"
+
+#: src/RangeFields.tsx
 msgid "Use full range"
 msgstr "Use full range"
+
+#: src/RangeFields.tsx
+msgid "Use raw ticks"
+msgstr "Use raw ticks"
 
 #: src/App.tsx
 msgid "Use the FreeLP CLI to verify GitHub CI provenance and all application files before opening this app. A website cannot independently prove its own authenticity."

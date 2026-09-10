@@ -60,7 +60,7 @@ Data requirements:
 
 | UI data                                  | Source                                   |
 | ---------------------------------------- | ---------------------------------------- |
-| Owned NFT IDs and pool/range descriptors | New manager paginated getters            |
+| Owned NFT IDs and pool/range descriptors | Standard ERC-721 Enumerable getters            |
 | Liquidity, principal, uncollected fees   | Manager/Core eth_call                    |
 | Spot price and pool initialization state | Core state through RPC                   |
 | Token metadata, balances, allowances     | ERC-20 calls; native-token chain config  |

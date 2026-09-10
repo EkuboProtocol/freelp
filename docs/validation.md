@@ -18,6 +18,8 @@ Development remains private. This is a record of observed checks, not a launch a
 - The complete browser lifecycle also passes when token decimals calls revert. Amounts are explicitly labeled raw integer units rather than silently assuming 18 decimals.
 - Terms browser tests pass with normal and unavailable local storage, stale stored terms, account changes, and cleared storage. Switching accounts resets the checkbox. Unit tests confirm the transaction entrypoint makes no wallet request before acceptance and refuses an account change during gas estimation.
 - Pool input tests reject spacing overflow into fee bits and unsupported fee precision before constructing calldata.
+- Price inputs convert token decimal scales and round range bounds to valid ticks, with raw ticks and full-range options retained. Previews show chain-derived initialization state, price, and actual bounds. Existing pools ignore the initial-price input. Seventeen unit tests and all four browser tests pass after this change.
+- The desktop creation form was visually checked for plain monochrome styling, labeled fields, and the terms gate.
 
 ## Limits and remaining checks
 

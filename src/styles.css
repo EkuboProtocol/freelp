@@ -66,14 +66,6 @@ button:disabled {
   border-style: dashed;
   cursor: not-allowed;
 }
-button.primary {
-  background: #111;
-  color: #fff;
-}
-button.primary:disabled {
-  background: #ddd;
-  color: #666;
-}
 :focus-visible {
   outline: 3px double #111;
   outline-offset: 3px;
@@ -95,6 +87,9 @@ fieldset {
   border: 1px solid #aaa;
   padding: 16px;
   margin: 20px 0;
+}
+fieldset > .grid {
+  margin: 16px 0;
 }
 legend {
   padding: 0 6px;
@@ -118,9 +113,6 @@ legend {
   border: 1px solid #999;
   padding: 20px;
   margin: 20px 0;
-}
-.muted {
-  color: #555;
 }
 .mono {
   font-family: monospace;
@@ -164,26 +156,6 @@ footer {
 .nft {
   max-width: 100%;
   border: 1px solid #bbb;
-}
-.range {
-  height: 8px;
-  background: #eee;
-  position: relative;
-  margin: 16px 0;
-}
-.range span {
-  position: absolute;
-  height: 8px;
-  background: #111;
-}
-dialog {
-  max-width: 640px;
-  width: 90%;
-  padding: 24px;
-  border: 1px solid;
-}
-dialog::backdrop {
-  background: #0008;
 }
 @media (max-width: 650px) {
   main {

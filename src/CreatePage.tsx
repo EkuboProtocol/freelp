@@ -1,15 +1,21 @@
 import { parseAmount } from "./amounts";
 import { concentratedConfig } from "./pools";
+import { DEFAULT_RANGE, rangeTicks } from "./prices";
+import { RangeFields } from "./RangeFields";
+import { ApprovalButton } from "./ApprovalButton";
+import { PricePreview } from "./PricePreview";
+import { rpc } from "./rpc";
 import { useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import { formatUnits, getAddress, zeroAddress, type Address } from "viem";
 import { useSession } from "./session";
-import { read, token, approval, managerData, type Token } from "./contracts";
+import { read, token, managerData, type Token } from "./contracts";
 import { Action, Field } from "./common";
 import type { Descriptor } from "./types";
 type Quote = {
   descriptor: Descriptor;
   initialTick: number;
+  sqrtRatio: bigint;
   tokens: [Token, Token];
   max0: bigint;
   max1: bigint;
@@ -25,10 +31,7 @@ export function CreatePage() {
   const [maxA, setMaxA] = useState("1");
   const [maxB, setMaxB] = useState("1");
   const [fee, setFee] = useState("0.3");
-  const [spacing, setSpacing] = useState(100);
-  const [lower, setLower] = useState(-10000);
-  const [upper, setUpper] = useState(10000);
-  const [initial, setInitial] = useState(0);
+  const [range, setRange] = useState(DEFAULT_RANGE);
   const [slippage, setSlippage] = useState(50);
   const [quote, setQuote] = useState<Quote>();
   const [fallbackA, setFallbackA] = useState("");
@@ -42,10 +45,7 @@ export function CreatePage() {
     maxA,
     maxB,
     fee,
-    spacing,
-    lower,
-    upper,
-    initial,
+    range,
     fallbackA,
     fallbackB,
   ]);
@@ -56,7 +56,13 @@ export function CreatePage() {
       const addresses: [Address, Address] = [getAddress(a), getAddress(b)];
       if (BigInt(addresses[0]) >= BigInt(addresses[1]))
         throw new Error("Token 0 must sort before token 1 by address.");
-      const tokens = await Promise.all([
+      const poolKey = {
+        token0: addresses[0],
+        token1: addresses[1],
+        config: concentratedConfig(fee, range.spacing),
+      };
+      const block = await rpc(settings).getBlockNumber();
+      const [token0, token1, [sqrtRatio]] = await Promise.all([
         token(
           settings,
           addresses[0],
@@ -69,15 +75,19 @@ export function CreatePage() {
           account,
           fallbackB === "" ? undefined : Number(fallbackB),
         ),
+        read<[bigint, number, bigint]>(settings, "poolState", [poolKey], block),
       ]);
+      const tokens: [Token, Token] = [token0, token1];
       const max0 = parseAmount(maxA, tokens[0].decimals),
         max1 = parseAmount(maxB, tokens[1].decimals);
+      const { lower, upper, initial } = rangeTicks(
+        range,
+        tokens[0].decimals,
+        tokens[1].decimals,
+        sqrtRatio !== 0n,
+      );
       const descriptor = {
-        poolKey: {
-          token0: addresses[0],
-          token1: addresses[1],
-          config: concentratedConfig(fee, spacing),
-        },
+        poolKey,
         tickLower: lower,
         tickUpper: upper,
       };
@@ -85,11 +95,13 @@ export function CreatePage() {
         settings,
         "quoteDeposit",
         [descriptor, initial, max0, max1],
+        block,
       );
       setQuote({
         descriptor,
         initialTick: initial,
-        tokens: tokens as [Token, Token],
+        sqrtRatio,
+        tokens,
         max0,
         max1,
         liquidity,
@@ -151,36 +163,6 @@ export function CreatePage() {
         <Field label={<Trans>Pool fee (%)</Trans>}>
           <input value={fee} onChange={(e) => setFee(e.target.value)} />
         </Field>
-        <Field label={<Trans>Tick spacing</Trans>}>
-          <input
-            type="number"
-            min={1}
-            max={698605}
-            value={spacing}
-            onChange={(e) => setSpacing(Number(e.target.value))}
-          />
-        </Field>
-        <Field label={<Trans>Lower tick</Trans>}>
-          <input
-            type="number"
-            value={lower}
-            onChange={(e) => setLower(Number(e.target.value))}
-          />
-        </Field>
-        <Field label={<Trans>Upper tick</Trans>}>
-          <input
-            type="number"
-            value={upper}
-            onChange={(e) => setUpper(Number(e.target.value))}
-          />
-        </Field>
-        <Field label={<Trans>Initial tick (new pools only)</Trans>}>
-          <input
-            type="number"
-            value={initial}
-            onChange={(e) => setInitial(Number(e.target.value))}
-          />
-        </Field>
         <Field label={<Trans>Slippage (basis points)</Trans>}>
           <input
             type="number"
@@ -191,6 +173,7 @@ export function CreatePage() {
           />
         </Field>
       </div>
+      <RangeFields range={range} setRange={setRange} />
       <details>
         <summary>
           <Trans>Token metadata fallback</Trans>
@@ -223,14 +206,6 @@ export function CreatePage() {
         </div>
       </details>
       <p className="row">
-        <button
-          onClick={() => {
-            setLower(-Math.floor(88722835 / spacing) * spacing);
-            setUpper(Math.floor(88722835 / spacing) * spacing);
-          }}
-        >
-          <Trans>Use full range</Trans>
-        </button>
         <button onClick={() => void preview()}>
           <Trans>Preview position</Trans>
         </button>
@@ -240,6 +215,7 @@ export function CreatePage() {
           <h3>
             <Trans>Deposit preview</Trans>
           </h3>
+          <PricePreview {...current} />
           {current.tokens.map((t, i) => (
             <p key={t.address}>
               {t.symbol}:{" "}
@@ -264,29 +240,24 @@ export function CreatePage() {
             <Trans>Liquidity:</Trans> {current.liquidity.toString()}
           </p>
           <div className="row">
-            {current.tokens.map((t, i) => {
-              const amount = i === 0 ? current.max0 : current.max1;
-              return t.allowance < amount ? (
-                <Action
-                  key={t.address}
-                  run={() =>
-                    send(
-                      approval(
-                        t.address,
-                        settings.manager,
-                        t.allowance === 0n ? amount : 0n,
-                      ),
-                    )
-                  }
-                >
-                  <Trans>Approve {t.symbol}</Trans>
-                </Action>
-              ) : null;
-            })}
+            {current.tokens.map((t, i) => (
+              <ApprovalButton
+                key={t.address}
+                token={t}
+                amount={formatUnits(
+                  i === 0 ? current.max0 : current.max1,
+                  t.decimals,
+                )}
+              />
+            ))}
             <Action
-              disabled={current.tokens.some(
-                (t, i) => t.allowance < (i === 0 ? current.max0 : current.max1),
-              )}
+              disabled={
+                current.liquidity === 0n ||
+                current.tokens.some(
+                  (t, i) =>
+                    t.allowance < (i === 0 ? current.max0 : current.max1),
+                )
+              }
               run={create}
             >
               <Trans>Create position</Trans>
