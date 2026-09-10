@@ -102,6 +102,10 @@ msgstr "Connection settings"
 msgid "Constructor Core address:"
 msgstr "Constructor Core address:"
 
+#: src/App.tsx
+msgid "Contract license"
+msgstr "Contract license"
+
 #: src/SettingsPage.tsx
 msgid "Core address"
 msgstr "Core address"
@@ -121,6 +125,10 @@ msgstr "Decimals unavailable: amounts are raw integer units."
 #: src/PositionsPage.tsx
 msgid "Decimals unavailable: displayed and deposit amounts use raw integer units."
 msgstr "Decimals unavailable: displayed and deposit amounts use raw integer units."
+
+#: src/App.tsx
+msgid "Dependency notices"
+msgstr "Dependency notices"
 
 #: src/App.tsx
 msgid "Deploy"
@@ -185,6 +193,10 @@ msgstr "Maximum token 0 amount"
 #: src/CreatePage.tsx
 msgid "Maximum token 1 amount"
 msgstr "Maximum token 1 amount"
+
+#: src/App.tsx
+msgid "MIT license"
+msgstr "MIT license"
 
 #: src/SettingsPage.tsx
 msgid "Native token symbol"

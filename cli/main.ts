@@ -1,4 +1,7 @@
 #!/usr/bin/env bun
+import ownLicense from "../public/licenses/freelp.txt" with { type: "text" };
+import dependencyNotices from "../public/licenses/dependencies.txt" with { type: "text" };
+import runtimeNotices from "../public/licenses/bun-runtime.md" with { type: "text" };
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import {
@@ -41,6 +44,7 @@ const { values } = parseArgs({
     port: { type: "string" },
     "private-build": { type: "boolean" },
     help: { type: "boolean" },
+    licenses: { type: "boolean" },
     "verify-only": { type: "boolean" },
   },
   strict: true,
@@ -281,7 +285,15 @@ async function launch() {
 }
 if (values.help) {
   console.log(
-    "freelp [--version vX.Y.Z | --cid RELEASE_CID [--gateway URL] | --offline] [--bundle DIRECTORY] [--private-build] [--no-browser] [--port 4173]\nRequires GitHub CLI for release discovery and public Sigstore verification. Install the initial CLI from an independently verified official source.",
+    "freelp [--version vX.Y.Z | --cid RELEASE_CID [--gateway URL] | --offline] [--bundle DIRECTORY] [--private-build] [--no-browser] [--port 4173] [--licenses]\nRequires GitHub CLI for release discovery and public Sigstore verification. Install the initial CLI from an independently verified official source.",
+  );
+} else if (values.licenses) {
+  console.log(
+    ownLicense +
+      "\n" +
+      dependencyNotices +
+      "\nBun runtime notices:\n" +
+      runtimeNotices,
   );
 } else {
   try {

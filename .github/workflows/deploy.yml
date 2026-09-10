@@ -20,11 +20,14 @@ jobs:
         with:
           bun-version: 1.4.0
       - run: bun install --frozen-lockfile
+      - run: bun run notices:check
       - run: bun run lint && bun run test && bun run build
       - name: Compile local launcher
         run: |
-          bun build cli/main.ts --compile --target=bun-linux-x64 --outfile release/freelp-linux-x64
-          bun build cli/main.ts --compile --target=bun-darwin-arm64 --outfile release/freelp-darwin-arm64
+          bun build cli/main.ts --compile --no-compile-autoload-dotenv --no-compile-autoload-bunfig --no-compile-autoload-tsconfig --no-compile-autoload-package-json --target=bun-linux-x64 --outfile release/freelp-linux-x64
+          bun build cli/main.ts --compile --no-compile-autoload-dotenv --no-compile-autoload-bunfig --no-compile-autoload-tsconfig --no-compile-autoload-package-json --target=bun-darwin-arm64 --outfile release/freelp-darwin-arm64
+      - name: Verify launcher bootstrap isolation
+        run: bun scripts/check-launcher.ts release/freelp-linux-x64
       - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09
         with:
           version: v1.8.1

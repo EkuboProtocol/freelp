@@ -35,6 +35,17 @@ function BuildPage() {
           launcher reports the authenticated commit and content identifier.
         </Trans>
       </p>
+      <p className="row">
+        <a href="./licenses/freelp.txt">
+          <Trans>MIT license</Trans>
+        </a>
+        <a href="./licenses/contracts.txt">
+          <Trans>Contract license</Trans>
+        </a>
+        <a href="./licenses/dependencies.txt">
+          <Trans>Dependency notices</Trans>
+        </a>
+      </p>
     </section>
   );
 }

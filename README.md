@@ -18,9 +18,10 @@ From a trusted source checkout: `bun cli/main.ts`. Requires GitHub CLI for relea
 - `--cid RELEASE_CID --gateway http://127.0.0.1:8080`: fetch an explicit release from local Kubo and verify its outer CID, provenance, and site. Add `--private-build` for private development proof.
 - `--offline`: reverify and serve the last cached official release.
 - `--bundle PATH --private-build`: verify a downloaded private CI release bundle.
+- `--licenses`: print embedded dependency and runtime notices without fetching or launching an app.
 - `--no-browser --port 4173`: serve on loopback without launching a browser.
 
-The CLI checks repository/workflow identity, source commit, signed artifact digest, every file, and the IPFS CID before serving an in-memory snapshot. GitHub is needed for updates, not for ongoing LP operation. Offline verification cannot discover new revocations. Transactions remain in the user's wallet; the CLI never handles wallet keys.
+Compiled launchers disable automatic loading of working-directory .env, bunfig.toml, tsconfig.json, and package.json files. CI tests that an untrusted local preload hook cannot execute. The CLI checks repository/workflow identity, source commit, signed artifact digest, every file, and the IPFS CID before serving an in-memory snapshot. GitHub is needed for updates, not for ongoing LP operation. Offline verification cannot discover new revocations. Transactions remain in the user's wallet; the CLI never handles wallet keys.
 
 ## IPFS
 
@@ -31,3 +32,15 @@ Each main/tag commit is built and pinned in CI; the complete CAR is retained in 
 ## Licensing
 
 New interface and CLI code are MIT. This independent repository was reduced from the interface checkout and begins with one squashed initial commit. Commit squashing does not change third-party licensing. Contract artifacts and dependencies keep their applicable notices; see THIRD_PARTY_NOTICES.md.
+
+## Rebuilding the launcher runtime
+
+The compiled launcher includes Bun 1.4.0. Its upstream license file and native-library source references are retained in public/licenses/bun-runtime.md and embedded in `freelp --licenses`. FreeLP's source and dependency lockfile are available in this repository.
+
+To use a modified/relinked Bun, follow the upstream Bun/WebKit build instructions in that notice, then compile this application's sources with the rebuilt executable:
+
+```sh
+bun build cli/main.ts --compile --compile-executable-path /absolute/path/to/rebuilt/bun --no-compile-autoload-dotenv --no-compile-autoload-bunfig --no-compile-autoload-tsconfig --no-compile-autoload-package-json --outfile .cache/freelp
+```
+
+Keep all notice files when redistributing source or binaries. Locally rebuilt binaries do not claim official CI provenance.
