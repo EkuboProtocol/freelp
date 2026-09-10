@@ -26,11 +26,15 @@ import {
 } from "./content";
 import { serve } from "./server";
 import { readLimited } from "./files";
+import { releaseDag } from "./release";
+import { downloadCid } from "./gateway";
 const exec = promisify(execFile);
 const cache = join(homedir(), ".cache", "freelp");
 const { values } = parseArgs({
   options: {
     version: { type: "string" },
+    cid: { type: "string" },
+    gateway: { type: "string" },
     offline: { type: "boolean" },
     "no-browser": { type: "boolean" },
     bundle: { type: "string" },
@@ -100,7 +104,11 @@ async function fetchRelease() {
     throw error;
   }
 }
-async function verifyDirectory(dir: string, privateBuild = false) {
+async function verifyDirectory(
+  dir: string,
+  privateBuild = false,
+  expectedCid?: string,
+) {
   const bytes = await readLimited(join(dir, "descriptor.json"), 1024 * 1024);
   const proofBytes = await readLimited(
     join(dir, "provenance.json"),
@@ -117,6 +125,15 @@ async function verifyDirectory(dir: string, privateBuild = false) {
   }
   const app = await readLimited(join(dir, "application.json"), MAX_BYTES);
   const files = await verifyApplication(app, descriptor);
+  if (expectedCid) {
+    const { root } = await releaseDag(files, {
+      "descriptor.json": bytes,
+      "application.json": app,
+      "provenance.json": proofBytes,
+    });
+    if (root.toString() !== expectedCid)
+      throw new Error("Release CID mismatch.");
+  }
   return { descriptor, files, digest: sha256(bytes) };
 }
 function compareVersions(a: string, b: string) {
@@ -177,8 +194,45 @@ async function importBundle(dir: string, privateBuild: boolean) {
     await rm(stage, { recursive: true, force: true });
   }
 }
+async function launchCid(cid: string) {
+  const stage = await mkdtemp(join(cache, ".ipfs-"));
+  const privateBuild = !!values["private-build"];
+  try {
+    await downloadCid(
+      cid,
+      values.gateway ?? "http://127.0.0.1:8080",
+      privateBuild,
+      stage,
+    );
+    const result = await verifyDirectory(stage, privateBuild, cid);
+    await promote(stage, result.digest);
+    await writeFile(
+      join(cache, "selected.json"),
+      JSON.stringify({ digest: result.digest, privateBuild }),
+    );
+    return result;
+  } finally {
+    await rm(stage, { recursive: true, force: true });
+  }
+}
+function validateSelection() {
+  const selections = [
+    values.offline,
+    values.bundle,
+    values.version,
+    values.cid,
+  ].filter(Boolean);
+  if (selections.length > 1)
+    throw new Error(
+      "Select only one of --offline, --bundle, --version, or --cid.",
+    );
+  if (values.gateway && !values.cid)
+    throw new Error("--gateway requires --cid.");
+}
 async function launch() {
+  validateSelection();
   await mkdir(cache, { recursive: true });
+  if (values.cid) return launchCid(values.cid);
   if (values.offline) return launchOffline();
   if (values.bundle)
     return importBundle(resolve(values.bundle), !!values["private-build"]);
@@ -227,7 +281,7 @@ async function launch() {
 }
 if (values.help) {
   console.log(
-    "freelp [--version vX.Y.Z] [--offline] [--bundle DIRECTORY] [--private-build] [--no-browser] [--port 4173]\nRequires GitHub CLI for release discovery and public Sigstore verification. Install the initial CLI from an independently verified official source.",
+    "freelp [--version vX.Y.Z | --cid RELEASE_CID [--gateway URL] | --offline] [--bundle DIRECTORY] [--private-build] [--no-browser] [--port 4173]\nRequires GitHub CLI for release discovery and public Sigstore verification. Install the initial CLI from an independently verified official source.",
   );
 } else {
   try {

@@ -23,7 +23,7 @@ Free means zero recurring operating cost to the project, zero application/positi
 ## Findings from the current code
 
 - Interface baseline: c0197fdd19e49d4582ab9a95b1c7458739159056.
-- Contracts baseline: afc4e9fb5b504a21c8640c966e2161a16d55557a.
+- Contracts PR base: 3aff3503db32ef6df4e748fcaec0d2bf05d7a165 (complexity changes excluded).
 - FreePositions returns zero swap-protocol and withdrawal fees, but inherits owner-controlled NFT metadata and accepts an owner constructor argument.
 - BasePositions already reads current liquidity, principal, and uncollected fees from Core through getPositionFeesAndLiquidity. Its callers must supply the NFT ID, PoolKey, and tick bounds.
 - The interface fetches tokenURI over HTTP to recover position configuration, and uses APIs for ownership/discovery and much of its surrounding LP presentation.
@@ -32,7 +32,7 @@ Free means zero recurring operating cost to the project, zero application/positi
 
 ## 1. Ownerless, self-describing positions contract
 
-Add a standalone FreePositions-derived implementation, provisionally IndexedFreePositions, without changing existing production contracts or their source dependency graph. Preserve proven Core accounting and payment behavior through a focused adaptation; document intentional differences in the PR.
+Add a standalone FreePositions-derived implementation, named FreeLP, without changing existing production contracts or their source dependency graph. Preserve proven Core accounting and payment behavior through a focused adaptation; document intentional differences in the PR.
 
 Use exactly one immutable PoolKey and tick range per NFT. This simplifies enumeration, transfer, burn checks, and rendering. Store that descriptor at creation and require every deposit/withdraw/collect path to use it. Reject unsupported extensions in this initial implementation. Keep pool initialization permissionless and separate from the immutable Core reference.
 
@@ -127,9 +127,9 @@ Distribute versioned CLI artifacts with their own provenance and documented inde
 
 ## 5. Acceptance gates and deliverables
 
-Contracts: unit/fuzz/invariant tests for owner enumeration, safe transfers, authorization, descriptor immutability, all mutation entrypoints, empty/partial/full withdrawals, fee collection, burn/remint, native/ERC-20 settlement, callbacks, slippage, multicall, and fully on-chain JSON/SVG metadata generation. Run forge fmt, bun run lint, forge build --offline, forge test --offline, and forge snapshot --offline before committing/pushing. Test against an existing compatible Core and a fresh deployment.
+Contracts: unit/fuzz/invariant tests for owner enumeration, safe transfers, authorization, descriptor immutability, all mutation entrypoints, empty/partial/full withdrawals, fee collection, burn/remint, native/ERC-20 settlement, callbacks, slippage, multicall, and fully on-chain JSON/SVG metadata generation. Run forge fmt, forge build --offline, forge test --offline, and forge snapshot --offline before committing/pushing. Test against an existing compatible Core and a fresh deployment.
 
-Interface: lint, typecheck, relevant math/transaction tests, English catalog extraction, and production build. Browser end-to-end tests must create, reload/discover, add, collect, partially withdraw, fully withdraw, and transfer positions using the real compiled contracts on a local chain. Test RPC/chain/account switching, provider failures, missing token metadata, large paginated portfolios, and custom deployment recovery.
+Interface: lint, typecheck, relevant math/transaction tests, English catalog extraction, and production build. Browser end-to-end tests must create, reload/discover, add, collect, partially withdraw, fully withdraw, and transfer positions using the real compiled contracts on a local chain. Test RPC/chain/account switching, provider failures, missing token metadata, large complete portfolios without pagination controls, and custom deployment recovery.
 
 Consent tests: assert zero transaction/asset-authorization wallet requests before acceptance across every execution path, including deep links, keyboard submission, multicalls, deployment recovery, and account changes during simulation. Test decline/close, stale terms, changed accounts, cleared/unavailable storage, and renewed acceptance. Verify read-only access remains available and the terms page loads with external network access blocked.
 

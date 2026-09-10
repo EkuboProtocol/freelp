@@ -1,6 +1,6 @@
 import { readdir, readFile, writeFile, mkdir, lstat } from "node:fs/promises";
 import { join } from "node:path";
-import { CarWriter } from "@ipld/car";
+import { writeCar } from "./car";
 import {
   contentDag,
   sha256,
@@ -60,17 +60,5 @@ const descriptor: ReleaseDescriptor = {
 await mkdir("release", { recursive: true });
 await writeFile("release/application.json", application);
 await writeFile("release/descriptor.json", JSON.stringify(descriptor));
-const { writer, out } = CarWriter.create([root]);
-const output = (async () => {
-  const chunks: Uint8Array[] = [];
-  for await (const chunk of out) chunks.push(chunk);
-  await writeFile("release/site.car", Buffer.concat(chunks));
-})();
-for await (const block of blockstore.getAll()) {
-  const chunks: Uint8Array[] = [];
-  for await (const bytes of block.bytes) chunks.push(bytes);
-  await writer.put({ cid: block.cid, bytes: Buffer.concat(chunks) });
-}
-await writer.close();
-await output;
+await writeCar("release/site.car", { root, blockstore });
 console.log(`Application CID: ${root}`);

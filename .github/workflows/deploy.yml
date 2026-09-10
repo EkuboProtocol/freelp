@@ -52,11 +52,30 @@ jobs:
         env:
           BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
         run: cp "$BUNDLE_PATH" release/provenance.json
+      - name: Package site with verification proof
+        run: bun scripts/package-proof.ts
+      - name: Verify release through an isolated IPFS gateway
+        env:
+          PRIVATE_BUILD: ${{ github.event.repository.private }}
+          IPFS_PATH: ${{ github.workspace }}/.cache/ipfs
+        run: |
+          bash scripts/install-ipfs.sh
+          bash scripts/pin-release.sh
+          .cache/bin/ipfs daemon --offline > /tmp/freelp-ipfs.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:5001/api/v0/version -X POST > /dev/null; then break; fi
+            sleep 1
+          done
+          release_cid=$(bun -e 'console.log((await Bun.file("release/deployment.json").json()).releaseCid)')
+          options=()
+          if [[ "$PRIVATE_BUILD" == true ]]; then options+=(--private-build); fi
+          release/freelp-linux-x64 --cid "$release_cid" --gateway http://127.0.0.1:8080 "${options[@]}" --verify-only
+          bun scripts/check-gateway.ts "$release_cid"
       - name: Import and pin IPFS deployment
         env:
           FREELP_PUBLIC_RELEASE: ${{ !github.event.repository.private }}
           FREELP_PIN_API: ${{ secrets.FREELP_PIN_API }}
-        run: bash scripts/install-ipfs.sh && bash scripts/pin-release.sh
+        run: bash scripts/pin-release.sh
       - name: Retain deployment artifacts privately before launch
         env:
           GH_TOKEN: ${{ github.token }}
