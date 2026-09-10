@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import { parseAmount } from "./amounts";
 import { concentratedConfig } from "./pools";
 import { DEFAULT_RANGE, rangeTicks } from "./prices";
@@ -52,10 +53,10 @@ export function CreatePage() {
   const current = quote?.key === key ? quote : undefined;
   async function preview() {
     try {
-      if (!account) throw new Error("Connect a wallet to preview balances.");
+      if (!account) throw new Error(t`Connect a wallet to preview balances.`);
       const addresses: [Address, Address] = [getAddress(a), getAddress(b)];
       if (BigInt(addresses[0]) >= BigInt(addresses[1]))
-        throw new Error("Token 0 must sort before token 1 by address.");
+        throw new Error(t`Token 0 must sort before token 1 by address.`);
       const poolKey = {
         token0: addresses[0],
         token1: addresses[1],
@@ -114,9 +115,9 @@ export function CreatePage() {
     }
   }
   async function create() {
-    if (!current) throw new Error("Refresh the preview.");
+    if (!current) throw new Error(t`Refresh the preview.`);
     if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
-      throw new Error("Slippage must be between 0 and 1000 basis points.");
+      throw new Error(t`Slippage must be between 0 and 1000 basis points.`);
     const limits = {
       maxAmount0: current.max0,
       maxAmount1: current.max1,

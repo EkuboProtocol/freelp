@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import { useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import { getAddress } from "viem";
@@ -17,8 +18,8 @@ export function SettingsPage() {
       validateSettings(draft);
       const chain = await rpc(draft).getChainId();
       if (chain !== draft.chainId)
-        throw new Error(`RPC reports chain ${chain}.`);
-      setStatus(`Connected to chain ${chain}.`);
+        throw new Error(t`RPC reports chain ${chain}.`);
+      setStatus(t`Connected to chain ${chain}.`);
     } catch (e) {
       setStatus(String(e));
     }
@@ -31,7 +32,7 @@ export function SettingsPage() {
         manager: getAddress(draft.manager),
       });
       configure(value);
-      setStatus("Settings saved.");
+      setStatus(t`Settings saved.`);
     } catch (e) {
       setStatus(String(e));
     }
@@ -41,7 +42,7 @@ export function SettingsPage() {
       await verifyCode(draft, draft.core, "Core");
       await verifyCode(draft, draft.manager, "FreeLP");
       setStatus(
-        "Core and position manager match the bundled contract artifacts.",
+        t`Core and position manager match the bundled contract artifacts.`,
       );
     } catch (e) {
       setStatus(String(e));
@@ -51,7 +52,7 @@ export function SettingsPage() {
     const url = new URL(draft.rpcUrl);
     if (url.username || url.password || url.search || url.pathname !== "/") {
       setStatus(
-        "RPC URLs can contain credentials. Copy a configuration with a public RPC URL for sharing.",
+        t`RPC URLs can contain credentials. Copy a configuration with a public RPC URL for sharing.`,
       );
       return;
     }
@@ -131,7 +132,7 @@ export function SettingsPage() {
         <Trans>Configuration file</Trans>
       </h3>
       <textarea
-        aria-label="Configuration JSON"
+        aria-label={t`Configuration JSON`}
         rows={6}
         style={{ width: "100%" }}
         value={importText}

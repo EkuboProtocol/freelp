@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import { zeroAddress } from "viem";
 import { useSession } from "./session";
@@ -8,24 +9,24 @@ export function DeployPage() {
   async function deployCore() {
     const receipt = await send({ data: deployment("Core", zeroAddress) });
     if (!receipt.contractAddress)
-      throw new Error("Deployment receipt has no address.");
+      throw new Error(t`Deployment receipt has no address.`);
     await verifyCode(settings, receipt.contractAddress, "Core");
     configure({
       ...settings,
       core: receipt.contractAddress,
       manager: zeroAddress,
     });
-    setStatus(`Core deployed and verified: ${receipt.contractAddress}`);
+    setStatus(t`Core deployed and verified: ${receipt.contractAddress}`);
   }
   async function deployManager() {
     await verifyCode(settings, settings.core, "Core");
     const receipt = await send({ data: deployment("FreeLP", settings.core) });
     if (!receipt.contractAddress)
-      throw new Error("Deployment receipt has no address.");
+      throw new Error(t`Deployment receipt has no address.`);
     await verifyCode(settings, receipt.contractAddress, "FreeLP");
     configure({ ...settings, manager: receipt.contractAddress });
     setStatus(
-      `Position manager deployed and verified: ${receipt.contractAddress}`,
+      t`Position manager deployed and verified: ${receipt.contractAddress}`,
     );
   }
   return (

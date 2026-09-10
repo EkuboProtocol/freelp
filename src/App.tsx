@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import { useEffect, useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import { useSession } from "./session";
@@ -78,7 +79,7 @@ export function App() {
     <main>
       <header>
         <h1>FreeLP</h1>
-        <nav aria-label="Main navigation">
+        <nav aria-label={t`Main navigation`}>
           <a href="#/positions">
             <Trans>Positions</Trans>
           </a>

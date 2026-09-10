@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import { parseAmount } from "./amounts";
 import { ApprovalButton } from "./ApprovalButton";
 import { PricePreview } from "./PricePreview";
@@ -165,12 +166,12 @@ function PositionDetail({ position: p }: { position: Position }) {
   }
   function factor() {
     if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
-      throw new Error("Invalid slippage.");
+      throw new Error(t`Invalid slippage.`);
     return BigInt(10000 - slippage);
   }
   async function withdraw(feesOnly: boolean) {
     if (!Number.isInteger(portion) || portion < 1 || portion > 100)
-      throw new Error("Withdrawal percentage must be 1–100.");
+      throw new Error(t`Withdrawal percentage must be 1–100.`);
     const liquidity = feesOnly
       ? 0n
       : (p.amounts.liquidity * BigInt(portion)) / 100n;
@@ -196,7 +197,7 @@ function PositionDetail({ position: p }: { position: Position }) {
     });
   }
   async function add() {
-    if (!tokens) throw new Error("Token metadata unavailable.");
+    if (!tokens) throw new Error(t`Token metadata unavailable.`);
     const max0 = parseAmount(amount0, tokens[0].decimals),
       max1 = parseAmount(amount1, tokens[1].decimals);
     const [liquidity] = await read<[bigint, bigint, bigint]>(

@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro";
 import {
   createContext,
   useContext,
@@ -44,7 +45,7 @@ function useSessionState() {
     const changed = () => {
       setAccount(undefined);
       setConsent(false);
-      setStatus("Wallet changed. Connect again to review the active account.");
+      setStatus(t`Wallet changed. Connect again to review the active account.`);
     };
     wallet.provider.on?.("accountsChanged", changed);
     wallet.provider.on?.("chainChanged", changed);
@@ -55,12 +56,12 @@ function useSessionState() {
   }, [wallet]);
   async function connect(selected: Wallet) {
     if (transactionLock.current)
-      throw new Error("Finish the pending transaction first.");
+      throw new Error(t`Finish the pending transaction first.`);
     const addresses = await selected.provider.request({
       method: "eth_requestAccounts",
     });
     if (!Array.isArray(addresses) || typeof addresses[0] !== "string")
-      throw new Error("Wallet has no account.");
+      throw new Error(t`Wallet has no account.`);
     const address = getAddress(addresses[0]);
     setWallet(selected);
     setAccount(address);
@@ -69,7 +70,7 @@ function useSessionState() {
   const configure = useCallback((next: Settings) => {
     if (transactionLock.current)
       throw new Error(
-        "Finish the pending transaction before changing settings.",
+        t`Finish the pending transaction before changing settings.`,
       );
     validateSettings(next);
     setSettings(next);
@@ -77,12 +78,12 @@ function useSessionState() {
     setRevision((n) => n + 1);
   }, []);
   async function send(tx: Transaction) {
-    if (!wallet || !account) throw new Error("Connect a wallet first.");
+    if (!wallet || !account) throw new Error(t`Connect a wallet first.`);
     if (transactionLock.current)
-      throw new Error("A transaction is already pending.");
+      throw new Error(t`A transaction is already pending.`);
     transactionLock.current = true;
     setBusy(true);
-    setStatus("Simulating and requesting wallet confirmation…");
+    setStatus(t`Simulating and requesting wallet confirmation…`);
     try {
       const receipt = await executeTransaction(
         wallet.provider,
@@ -90,7 +91,7 @@ function useSessionState() {
         settings,
         tx,
       );
-      setStatus(`Confirmed: ${receipt.transactionHash}`);
+      setStatus(t`Confirmed: ${receipt.transactionHash}`);
       setRevision((n) => n + 1);
       return receipt;
     } finally {
