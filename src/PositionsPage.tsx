@@ -1,3 +1,5 @@
+import { parseAmount } from "./amounts";
+import { ApprovalButton } from "./ApprovalButton";
 import { useEffect, useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import {
@@ -5,18 +7,10 @@ import {
   erc721Abi,
   formatUnits,
   getAddress,
-  parseUnits,
   zeroAddress,
 } from "viem";
 import { useSession } from "./session";
-import {
-  positions,
-  read,
-  token,
-  approval,
-  managerData,
-  type Token,
-} from "./contracts";
+import { positions, read, token, managerData, type Token } from "./contracts";
 import { Action, Field } from "./common";
 import type { Position } from "./types";
 function metadataImage(uri: string) {
@@ -33,17 +27,21 @@ function metadataImage(uri: string) {
 }
 export function PositionsPage() {
   const { settings, account, revision, setStatus } = useSession();
-  const [items, setItems] = useState<Position[]>([]);
+  const scope = JSON.stringify([settings, account]);
+  const [loaded, setLoaded] = useState<{ scope: string; items: Position[] }>({
+    scope: "",
+    items: [],
+  });
+  const items = loaded.scope === scope ? loaded.items : [];
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string>();
   useEffect(() => {
     let active = true;
-    setItems([]);
     if (!account || settings.manager === zeroAddress) return;
     setLoading(true);
     positions(settings, account)
       .then((data) => {
-        if (active) setItems(data);
+        if (active) setLoaded({ scope, items: data });
       })
       .catch((e) => {
         if (active) setStatus(String(e));
@@ -54,7 +52,7 @@ export function PositionsPage() {
     return () => {
       active = false;
     };
-  }, [settings, account, revision, setStatus]);
+  }, [settings, account, revision, setStatus, scope]);
   const item = items.find((p) => p.id.toString() === selected);
   return (
     <section>
@@ -124,7 +122,7 @@ export function PositionsPage() {
         </p>
       ) : null}
       {item ? (
-        <PositionDetail key={`${item.id}:${revision}`} position={item} />
+        <PositionDetail key={`${scope}:${item.id}`} position={item} />
       ) : null}
     </section>
   );
@@ -191,8 +189,8 @@ function PositionDetail({ position: p }: { position: Position }) {
   }
   async function add() {
     if (!tokens) throw new Error("Token metadata unavailable.");
-    const max0 = parseUnits(amount0, tokens[0].decimals),
-      max1 = parseUnits(amount1, tokens[1].decimals);
+    const max0 = parseAmount(amount0, tokens[0].decimals),
+      max1 = parseAmount(amount1, tokens[1].decimals);
     const [liquidity] = await read<[bigint, bigint, bigint]>(
       settings,
       "quoteDeposit",
@@ -298,25 +296,13 @@ function PositionDetail({ position: p }: { position: Position }) {
           </Field>
         </div>
         <p className="row">
-          {tokens?.map((t, i) => {
-            const amount = i === 0 ? amount0 : amount1;
-            return t.address !== zeroAddress ? (
-              <Action
-                key={t.address}
-                run={() =>
-                  send(
-                    approval(
-                      t.address,
-                      settings.manager,
-                      t.allowance === 0n ? parseUnits(amount, t.decimals) : 0n,
-                    ),
-                  )
-                }
-              >
-                <Trans>Approve/reset {t.symbol}</Trans>
-              </Action>
-            ) : null;
-          })}
+          {tokens?.map((t, i) => (
+            <ApprovalButton
+              key={t.address}
+              token={t}
+              amount={i === 0 ? amount0 : amount1}
+            />
+          ))}
           <Action run={add}>
             <Trans>Add liquidity</Trans>
           </Action>

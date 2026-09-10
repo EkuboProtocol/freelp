@@ -25,6 +25,7 @@ import {
   type ReleaseDescriptor,
 } from "./content";
 import { serve } from "./server";
+import { readLimited } from "./files";
 const exec = promisify(execFile);
 const cache = join(homedir(), ".cache", "freelp");
 const { values } = parseArgs({
@@ -100,23 +101,21 @@ async function fetchRelease() {
   }
 }
 async function verifyDirectory(dir: string, privateBuild = false) {
-  const bytes = await readFile(join(dir, "descriptor.json"));
-  if (bytes.length > 1024 * 1024) throw new Error("Descriptor too large.");
+  const bytes = await readLimited(join(dir, "descriptor.json"), 1024 * 1024);
+  const proofBytes = await readLimited(
+    join(dir, "provenance.json"),
+    1024 * 1024,
+  );
   let descriptor: ReleaseDescriptor;
   if (privateBuild) {
-    const proof = JSON.parse(
-      await readFile(join(dir, "provenance.json"), "utf8"),
-    ) as PrivateProof;
+    const proof = JSON.parse(proofBytes.toString("utf8")) as PrivateProof;
     if (proof.type !== "github-oidc")
       throw new Error("Missing private CI proof.");
     descriptor = await verifyPrivateProof(bytes, proof);
   } else {
-    descriptor = await verifyPublicProof(
-      join(dir, "descriptor.json"),
-      join(dir, "provenance.json"),
-    );
+    descriptor = await verifyPublicProof(bytes, proofBytes);
   }
-  const app = await readFile(join(dir, "application.json"));
+  const app = await readLimited(join(dir, "application.json"), MAX_BYTES);
   const files = await verifyApplication(app, descriptor);
   return { descriptor, files, digest: sha256(bytes) };
 }
@@ -155,7 +154,6 @@ async function promote(stage: string, digest: string) {
   }
 }
 async function importBundle(dir: string, privateBuild: boolean) {
-  const result = await verifyDirectory(dir, privateBuild);
   const stage = await mkdtemp(join(cache, ".import-"));
   try {
     for (const name of [
@@ -163,9 +161,12 @@ async function importBundle(dir: string, privateBuild: boolean) {
       "application.json",
       "provenance.json",
     ])
-      await writeFile(join(stage, name), await readFile(join(dir, name)));
+      await writeFile(
+        join(stage, name),
+        await readLimited(join(dir, name), MAX_BYTES),
+      );
     // Reverify the copied bytes before caching; source files may have changed during the import.
-    await verifyDirectory(stage, privateBuild);
+    const result = await verifyDirectory(stage, privateBuild);
     await promote(stage, result.digest);
     await writeFile(
       join(cache, "selected.json"),

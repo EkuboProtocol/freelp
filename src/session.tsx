@@ -7,7 +7,8 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { createPublicClient, http, getAddress, type Address } from "viem";
+import { getAddress, type Address } from "viem";
+export { rpc } from "./rpc";
 import { DEFAULT_SETTINGS, validateSettings } from "./config";
 import { load, save } from "./storage";
 import { executeTransaction } from "./transactions";
@@ -131,10 +132,4 @@ export function useSession() {
   const context = useContext(Context);
   if (!context) throw new Error("Session missing");
   return context;
-}
-export function rpc(settings: Settings) {
-  return createPublicClient({
-    ccipRead: false,
-    transport: http(settings.rpcUrl, { retryCount: 1, timeout: 15000 }),
-  });
 }

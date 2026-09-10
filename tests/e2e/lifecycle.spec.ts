@@ -1,6 +1,7 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import {
   createPublicClient,
+  erc20Abi,
   createWalletClient,
   http,
   zeroAddress,
@@ -36,9 +37,38 @@ async function deploy(
   if (!receipt.contractAddress) throw new Error("Deploy failed");
   return receipt.contractAddress;
 }
+async function approveDeposits(page: Page, manager: Hex, tokens: Hex[]) {
+  const buttons = page.getByRole("button", {
+    name: /^(Reset TT approval|Approve TT)$/,
+  });
+  for (let i = 0; i < 5; i++) {
+    const allowances = await Promise.all(
+      tokens.map((address) =>
+        client.readContract({
+          address,
+          abi: erc20Abi,
+          functionName: "allowance",
+          args: [account.address, manager],
+        }),
+      ),
+    );
+    const labels = allowances
+      .filter((amount) => amount < 2n * 10n ** 18n)
+      .map((amount) => (amount === 0n ? "Approve TT" : "Reset TT approval"));
+    await expect(buttons).toHaveText(labels);
+    if (!labels.length) return;
+    const status = page.locator(".status[role=status]");
+    const previous = (await status.allTextContents()).join("");
+    await buttons.first().click();
+    await expect(status).not.toHaveText(previous);
+    await expect(status).toContainText("Confirmed:", { timeout: 30000 });
+    await expect(page.getByLabel("Token 0 maximum")).toHaveValue("2");
+  }
+  throw new Error("Approvals did not converge");
+}
 test("RPC-only LP lifecycle with terms enforced", async ({ page }) => {
-  const core = await deploy(coreArtifact);
-  const manager = await deploy(managerArtifact, [core]);
+  const core = zeroAddress;
+  const manager = zeroAddress;
   const tokens = [
     await deploy(tokenArtifact, [account.address]),
     await deploy(tokenArtifact, [account.address]),
@@ -62,16 +92,17 @@ test("RPC-only LP lifecycle with terms enforced", async ({ page }) => {
   });
   await page.addInitScript(
     ({ rpcUrl, account, core, manager }) => {
-      localStorage.setItem(
-        "freelp:settings",
-        JSON.stringify({
-          rpcUrl,
-          chainId: 31337,
-          core,
-          manager,
-          nativeSymbol: "ETH",
-        }),
-      );
+      if (!localStorage.getItem("freelp:settings"))
+        localStorage.setItem(
+          "freelp:settings",
+          JSON.stringify({
+            rpcUrl,
+            chainId: 31337,
+            core,
+            manager,
+            nativeSymbol: "ETH",
+          }),
+        );
       const provider = {
         request: async ({
           method,
@@ -119,6 +150,24 @@ test("RPC-only LP lifecycle with terms enforced", async ({ page }) => {
   await page.getByRole("link", { name: "Terms", exact: true }).click();
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Accept terms", exact: true }).click();
+  await page.getByRole("link", { name: "Deploy", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Review and deploy new Core" })
+    .click();
+  await expect(page.locator(".status[role=status]")).toContainText(
+    "Core deployed and verified:",
+    { timeout: 30000 },
+  );
+  await page
+    .getByRole("button", { name: "Review and deploy position manager" })
+    .click();
+  await expect(page.locator(".status[role=status]")).toContainText(
+    "Position manager deployed and verified:",
+    { timeout: 30000 },
+  );
+  const deployedManager = await page.evaluate(
+    () => JSON.parse(localStorage.getItem("freelp:settings")!).manager as Hex,
+  );
   await page.getByRole("link", { name: "Create", exact: true }).click();
   await page.getByLabel("Token 0 address").fill(tokens[0]);
   await page.getByLabel("Token 1 address").fill(tokens[1]);
@@ -148,6 +197,59 @@ test("RPC-only LP lifecycle with terms enforced", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "#1", exact: true }),
   ).toBeVisible({ timeout: 30000 });
+  await page.reload();
+  await page.getByRole("button", { name: "Connect Local wallet" }).click();
+  await page.getByRole("button", { name: "#1", exact: true }).click();
+  const before = (await client.readContract({
+    address: deployedManager,
+    abi: managerArtifact.abi as Abi,
+    functionName: "positionAmounts",
+    args: [1n],
+  })) as { liquidity: bigint };
+  await page.getByLabel("Token 0 maximum").fill("2");
+  await page.getByLabel("Token 1 maximum").fill("2");
+  await approveDeposits(page, deployedManager, tokens);
+  await page
+    .getByRole("button", { name: "Add liquidity", exact: true })
+    .click();
+  await expect(page.locator(".status[role=status]")).toContainText(
+    "Confirmed:",
+    { timeout: 30000 },
+  );
+  await expect
+    .poll(
+      async () => {
+        const result = (await client.readContract({
+          address: deployedManager,
+          abi: managerArtifact.abi as Abi,
+          functionName: "positionAmounts",
+          args: [1n],
+        })) as { liquidity: bigint };
+        return result.liquidity;
+      },
+      { timeout: 30000 },
+    )
+    .toBeGreaterThan(before.liquidity);
+  const recipient = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+  await page.getByLabel("Recipient address").fill(recipient);
+  await page.getByRole("button", { name: "Transfer NFT to recipient" }).click();
+  await expect(page.getByText("No positions in this manager.")).toBeVisible();
+  expect(
+    await client.readContract({
+      address: deployedManager,
+      abi: managerArtifact.abi as Abi,
+      functionName: "ownerOf",
+      args: [1n],
+    }),
+  ).toBe(recipient);
+  const returned = await wallet.writeContract({
+    account: recipient,
+    address: deployedManager,
+    abi: managerArtifact.abi as Abi,
+    functionName: "transferFrom",
+    args: [recipient, account.address, 1n],
+  });
+  await client.waitForTransactionReceipt({ hash: returned });
   await page.reload();
   await page.getByRole("button", { name: "Connect Local wallet" }).click();
   await page.getByRole("button", { name: "#1", exact: true }).click();

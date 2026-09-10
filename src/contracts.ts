@@ -1,3 +1,4 @@
+import { assertRuntime } from "./runtime";
 import {
   encodeFunctionData,
   encodeDeployData,
@@ -9,7 +10,7 @@ import {
 } from "viem";
 import managerArtifact from "../artifacts/FreeLP.json" with { type: "json" };
 import coreArtifact from "../artifacts/Core.json" with { type: "json" };
-import { rpc } from "./session";
+import { rpc } from "./rpc";
 import type { Amounts, Descriptor, Position, Settings } from "./types";
 export const managerAbi = managerArtifact.abi as Abi;
 export const managerData = (
@@ -44,17 +45,21 @@ export async function positions(
 ): Promise<Position[]> {
   const block = await rpc(settings).getBlockNumber();
   const ids: bigint[] = [];
-  for (let offset = 0n; ; offset += 100n) {
-    const [page, total] = await read<[bigint[], bigint]>(
-      settings,
-      "ownedIds",
-      [holder, offset, 100n],
-      block,
+  const total = await read<bigint>(settings, "balanceOf", [holder], block);
+  for (let offset = 0n; offset < total; offset += 5n) {
+    const indexes = Array.from(
+      { length: Number(total - offset < 5n ? total - offset : 5n) },
+      (_, i) => offset + BigInt(i),
     );
-    ids.push(...page);
-    if (BigInt(ids.length) >= total) break;
-    if (!page.length) throw new Error("Invalid ownership page.");
+    ids.push(
+      ...(await Promise.all(
+        indexes.map((index) =>
+          read<bigint>(settings, "tokenOfOwnerByIndex", [holder, index], block),
+        ),
+      )),
+    );
   }
+  ids.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   const rows: Position[] = [];
   for (let offset = 0; offset < ids.length; offset += 5) {
     rows.push(
@@ -136,16 +141,6 @@ export function approval(address: Address, spender: Address, amount: bigint) {
     }),
   };
 }
-function normalizedCode(
-  code: Hex,
-  refs: Record<string, { start: number; length: number }[]>,
-) {
-  const bytes = code.slice(2).split("");
-  for (const ranges of Object.values(refs))
-    for (const { start, length } of ranges)
-      bytes.fill("0", start * 2, (start + length) * 2);
-  return bytes.join("").toLowerCase();
-}
 export async function verifyCode(
   settings: Settings,
   address: Address,
@@ -154,15 +149,7 @@ export async function verifyCode(
   const artifact = kind === "Core" ? coreArtifact : managerArtifact;
   const code = await rpc(settings).getCode({ address });
   if (!code) throw new Error("No contract at this address.");
-  const refs = artifact.immutableReferences as Record<
-    string,
-    { start: number; length: number }[]
-  >;
-  if (
-    normalizedCode(code, refs) !==
-    normalizedCode(artifact.deployedBytecode as Hex, refs)
-  )
-    throw new Error("Contract code does not match this build.");
+  assertRuntime(artifact, code, settings.core);
   if (kind === "FreeLP") {
     const core = await read<Address>({ ...settings, manager: address }, "CORE");
     if (core.toLowerCase() !== settings.core.toLowerCase())

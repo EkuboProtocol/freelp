@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readLimited } from "../cli/files";
 import { join, basename } from "node:path";
 import {
   verifyPrivateProof,
@@ -13,17 +13,19 @@ if (!dir || !binary)
   );
 const descriptorPath = join(dir, "descriptor.json");
 const proofPath = join(dir, "provenance.json");
+const descriptorBytes = await readLimited(descriptorPath, 1024 * 1024);
+const proofBytes = await readLimited(proofPath, 1024 * 1024);
 const descriptor =
   mode === "private"
     ? await verifyPrivateProof(
-        await readFile(descriptorPath),
-        JSON.parse(await readFile(proofPath, "utf8")) as PrivateProof,
+        descriptorBytes,
+        JSON.parse(proofBytes.toString("utf8")) as PrivateProof,
       )
-    : await verifyPublicProof(descriptorPath, proofPath);
+    : await verifyPublicProof(descriptorBytes, proofBytes);
 const expected = descriptor.launchers?.find(
   (entry) => entry.name === basename(binary),
 );
-const bytes = await readFile(binary);
+const bytes = await readLimited(binary, 256 * 1024 * 1024);
 if (
   !expected ||
   expected.size !== bytes.length ||

@@ -1,10 +1,6 @@
-import {
-  createPublicClient,
-  http,
-  toHex,
-  isAddressEqual,
-  type Address,
-} from "viem";
+import { rpc } from "./rpc";
+import { verifyCode } from "./contracts";
+import { toHex, isAddressEqual, type Address } from "viem";
 import { requireConsent } from "./terms";
 import type { Provider, Settings, Transaction } from "./types";
 export async function assertWallet(
@@ -33,13 +29,16 @@ export async function executeTransaction(
   tx: Transaction,
 ) {
   requireConsent(account);
-  const client = createPublicClient({
-    ccipRead: false,
-    transport: http(settings.rpcUrl, { retryCount: 1, timeout: 15000 }),
-  });
+  const client = rpc(settings);
   if ((await client.getChainId()) !== settings.chainId)
     throw new Error("RPC chain ID does not match settings.");
   await assertWallet(provider, account, settings.chainId);
+  if (tx.to) {
+    await Promise.all([
+      verifyCode(settings, settings.core, "Core"),
+      verifyCode(settings, settings.manager, "FreeLP"),
+    ]);
+  }
   await client.call({ ...tx, account });
   const gas = await client.estimateGas({ ...tx, account });
   await assertWallet(provider, account, settings.chainId);

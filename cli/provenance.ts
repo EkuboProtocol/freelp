@@ -7,7 +7,7 @@ import {
 } from "jose";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { readFile, writeFile, mkdtemp, rm } from "node:fs/promises";
+import { writeFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sigstoreRoots from "./trust/sigstore-public.json" with { type: "json" };
@@ -85,17 +85,21 @@ export function assertIdentity(descriptor: ReleaseDescriptor) {
     throw new Error("Unapproved build ref.");
 }
 export async function verifyPublicProof(
-  descriptorPath: string,
-  bundlePath: string,
+  descriptorBytes: Uint8Array,
+  bundleBytes: Uint8Array,
 ) {
   const descriptor = JSON.parse(
-    await readFile(descriptorPath, "utf8"),
+    new TextDecoder().decode(descriptorBytes),
   ) as ReleaseDescriptor;
   assertIdentity(descriptor);
   const temp = await mkdtemp(join(tmpdir(), "freelp-trust-"));
   const trustedRootPath = join(temp, "roots.json");
-  await writeFile(trustedRootPath, JSON.stringify(sigstoreRoots));
+  const descriptorPath = join(temp, "descriptor.json");
+  const bundlePath = join(temp, "provenance.json");
   try {
+    await writeFile(trustedRootPath, JSON.stringify(sigstoreRoots));
+    await writeFile(descriptorPath, descriptorBytes);
+    await writeFile(bundlePath, bundleBytes);
     await exec(
       "gh",
       [

@@ -14,7 +14,7 @@ All new Solidity source, interfaces, tests, and deployment scripts belong in a P
 
 Keep: wallet connection, owned position list, position creation, pool initialization when needed, adding liquidity, partial/full withdrawal, fee collection, NFT transfer, RPC settings, and permissionless deployment/configuration.
 
-Initial scope: the current EVM Core version and extension-free concentrated-liquidity pools, including full-range positions. Existing older managers, Starknet, stableswap-specific UI, TWAMM pools, boosted/reward extensions, and migration are outside the initial release. The underlying Core can still support swaps; this application provides no swap execution or order interface.
+Initial scope: the current EVM Core version and extension-free concentrated-liquidity pools, including full-range positions. This project is EVM-only; no Starknet code, dependencies, configuration, or wallet integrations are included. Existing older managers, stableswap-specific UI, TWAMM pools, boosted/reward extensions, and migration are outside the initial release. The underlying Core can still support swaps; this application provides no swap execution or order interface.
 
 Delete swaps, TWAMM orders, routing/quotes, bridges, zaps, governance, incentives, rewards, campaigns, USD valuation, APR, historical charts, transaction-history indexing, global pool rankings, hosted token search, remote NFT metadata, analytics, telemetry, geolocation, server functions, and service-dependent wallet connectors. Retain transaction receipts/status for transactions initiated in the current browser.
 
@@ -36,7 +36,7 @@ Add a standalone FreePositions-derived implementation, provisionally IndexedFree
 
 Use exactly one immutable PoolKey and tick range per NFT. This simplifies enumeration, transfer, burn checks, and rendering. Store that descriptor at creation and require every deposit/withdraw/collect path to use it. Reject unsupported extensions in this initial implementation. Keep pool initialization permissionless and separate from the immutable Core reference.
 
-Maintain current-owner NFT enumeration with constant-time updates on mint, transfer, and burn, and bounded paginated getters. Transfer-to-self and safe-transfer callbacks must preserve indexes. Return descriptors directly through RPC; do not reconstruct them from events or duplicate live balances/fees already stored in Core. Read pages at the same block number to avoid pagination races.
+Implement the ERC-721 Enumerable and Metadata standards, maintaining owner and global token indexes with constant-time updates on mint, transfer, and burn. List all owned tokens and sort by token ID in the client, without pagination controls. Batch RPC reads to respect endpoint limits. Transfer-to-self and safe-transfer callbacks must preserve indexes. Return descriptors directly through RPC; do not reconstruct them from events or duplicate live balances/fees already stored in Core. Read counts, token indexes, descriptors, and balances at the same block number for a consistent snapshot.
 
 Deploy with no administrator, fee setter, upgrade mechanism, mutable metadata service, or ownership-acquisition path. Provide fixed collection identity and mandatory fully on-chain NFT metadata generation: tokenURI returns a data:application/json URI whose image is an embedded data:image/svg+xml URI. Generate the JSON, attributes, and SVG from on-chain position descriptors and contract state, with no HTTP/IPFS image or metadata fetch, external fonts, or hosted renderer. An immutable renderer contract is acceptable if needed for bytecode size and must be bundled into the permissionless deployment flow. Handle token metadata failures and escape untrusted token strings correctly for JSON and SVG; cap external read gas and returned data. Prefer address-based fallback labels. Test tokenURI for nonexistent/burned IDs, long or malicious token symbols, and contract size/gas limits. Keep zero fee calculations explicit. Prevent burns while principal or collectible fees remain. Define clean burn/remint semantics if deterministic salts are retained.
 
@@ -58,14 +58,14 @@ Use a black-and-white interface with neutral grays, system fonts, simple borders
 
 Data requirements:
 
-| UI data | Source |
-| --- | --- |
-| Owned NFT IDs and pool/range descriptors | New manager paginated getters |
-| Liquidity, principal, uncollected fees | Manager/Core eth_call |
-| Spot price and pool initialization state | Core state through RPC |
-| Token metadata, balances, allowances | ERC-20 calls; native-token chain config |
-| Token choices | Bundled minimal list plus address import |
-| Pending transaction status | Wallet response and RPC receipts |
+| UI data                                  | Source                                   |
+| ---------------------------------------- | ---------------------------------------- |
+| Owned NFT IDs and pool/range descriptors | New manager paginated getters            |
+| Liquidity, principal, uncollected fees   | Manager/Core eth_call                    |
+| Spot price and pool initialization state | Core state through RPC                   |
+| Token metadata, balances, allowances     | ERC-20 calls; native-token chain config  |
+| Token choices                            | Bundled minimal list plus address import |
+| Pending transaction status               | Wallet response and RPC receipts         |
 
 Missing/nonstandard ERC-20 metadata must fall back to addresses and explicit user-supplied decimals, not a hosted lookup. Bundle fonts/icons/token assets locally. Show token-denominated amounts and pair prices only. Users select token addresses, fee, tick spacing, range, and initial price for new pools; no global pool discovery is necessary.
 

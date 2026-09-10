@@ -1,3 +1,4 @@
+import { parseAmount } from "./amounts";
 import { useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import {
@@ -65,8 +66,8 @@ export function CreatePage() {
         token(settings, addresses[0], account, fallbackA),
         token(settings, addresses[1], account, fallbackB),
       ]);
-      const max0 = parseUnits(maxA, tokens[0].decimals),
-        max1 = parseUnits(maxB, tokens[1].decimals);
+      const max0 = parseAmount(maxA, tokens[0].decimals),
+        max1 = parseAmount(maxB, tokens[1].decimals);
       const feeValue = (parseUnits(fee, 6) * 2n ** 64n) / 100_000_000n;
       if (feeValue < 0n || feeValue >= 2n ** 64n)
         throw new Error("Invalid pool fee.");

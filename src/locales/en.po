@@ -34,14 +34,11 @@ msgid "Add liquidity"
 msgstr "Add liquidity"
 
 #. placeholder {0}: t.symbol
+#. placeholder {0}: token.symbol
+#: src/ApprovalButton.tsx
 #: src/CreatePage.tsx
 msgid "Approve {0}"
 msgstr "Approve {0}"
-
-#. placeholder {0}: t.symbol
-#: src/PositionsPage.tsx
-msgid "Approve/reset {0}"
-msgstr "Approve/reset {0}"
 
 #: src/CreatePage.tsx
 msgid "Balance:"
@@ -237,6 +234,11 @@ msgstr "Reading positions…"
 #: src/PositionsPage.tsx
 msgid "Recipient address"
 msgstr "Recipient address"
+
+#. placeholder {0}: token.symbol
+#: src/ApprovalButton.tsx
+msgid "Reset {0} approval"
+msgstr "Reset {0} approval"
 
 #: src/DeployPage.tsx
 msgid "Review and deploy new Core"
