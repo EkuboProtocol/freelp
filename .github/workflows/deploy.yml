@@ -80,11 +80,11 @@ jobs:
           if [[ "$PRIVATE_BUILD" == true ]]; then options+=(--private-build); fi
           release/freelp-linux-x64 --cid "$release_cid" --gateway http://127.0.0.1:8080 "${options[@]}" --verify-only
           bun scripts/check-gateway.ts "$release_cid"
-      - name: Import and pin IPFS deployment
+      - name: Seed public IPFS deployment from CI
+        if: '!github.event.repository.private'
         env:
-          FREELP_PUBLIC_RELEASE: ${{ !github.event.repository.private }}
-          FREELP_PIN_API: ${{ secrets.FREELP_PIN_API }}
-        run: bash scripts/pin-release.sh
+          FREELP_PUBLIC_RELEASE: "true"
+        run: bash scripts/seed-release.sh
       - name: Retain deployment artifacts privately before launch
         env:
           GH_TOKEN: ${{ github.token }}
