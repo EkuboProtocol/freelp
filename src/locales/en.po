@@ -114,6 +114,14 @@ msgstr "Create"
 msgid "Create position"
 msgstr "Create position"
 
+#: src/CreatePage.tsx
+msgid "Decimals unavailable: amounts are raw integer units."
+msgstr "Decimals unavailable: amounts are raw integer units."
+
+#: src/PositionsPage.tsx
+msgid "Decimals unavailable: displayed and deposit amounts use raw integer units."
+msgstr "Decimals unavailable: displayed and deposit amounts use raw integer units."
+
 #: src/App.tsx
 msgid "Deploy"
 msgstr "Deploy"
@@ -147,8 +155,8 @@ msgid "I have read and agree to the Terms of Service and understand that I use F
 msgstr "I have read and agree to the Terms of Service and understand that I use FreeLP at my own risk."
 
 #: src/CreatePage.tsx
-msgid "If a token has no decimals method, confirm its decimals here before entering amounts."
-msgstr "If a token has no decimals method, confirm its decimals here before entering amounts."
+msgid "If a token has no decimals method, amounts use raw integer units. You can supply known decimals here to enter human-readable amounts."
+msgstr "If a token has no decimals method, amounts use raw integer units. You can supply known decimals here to enter human-readable amounts."
 
 #: src/SettingsPage.tsx
 msgid "Import settings"
@@ -357,9 +365,10 @@ msgstr "Use full range"
 msgid "Use the FreeLP CLI to verify GitHub CI provenance and all application files before opening this app. A website cannot independently prove its own authenticity."
 msgstr "Use the FreeLP CLI to verify GitHub CI provenance and all application files before opening this app. A website cannot independently prove its own authenticity."
 
+#. placeholder {0}: t.decimals
 #: src/CreatePage.tsx
-msgid "Using fallback decimals"
-msgstr "Using fallback decimals"
+msgid "Using manually supplied decimals: {0}"
+msgstr "Using manually supplied decimals: {0}"
 
 #: src/SettingsPage.tsx
 msgid "Verify contracts"

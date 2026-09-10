@@ -85,12 +85,22 @@ export type Token = {
   allowance: bigint;
   metadataMissing: boolean;
 };
+function validateDecimals(decimalsFallback?: number) {
+  if (
+    decimalsFallback !== undefined &&
+    (!Number.isInteger(decimalsFallback) ||
+      decimalsFallback < 0 ||
+      decimalsFallback > 255)
+  )
+    throw new Error("Decimals must be an integer between 0 and 255.");
+}
 export async function token(
   settings: Settings,
   address: Address,
   holder: Address,
-  decimalsFallback = 18,
+  decimalsFallback?: number,
 ): Promise<Token> {
+  validateDecimals(decimalsFallback);
   const client = rpc(settings);
   if (address === zeroAddress)
     return {
@@ -125,7 +135,9 @@ export async function token(
     address,
     symbol: symbol.status === "fulfilled" ? symbol.value.slice(0, 32) : address,
     decimals:
-      decimals.status === "fulfilled" ? decimals.value : decimalsFallback,
+      decimals.status === "fulfilled"
+        ? decimals.value
+        : (decimalsFallback ?? 0),
     balance: balance.value,
     allowance: allowance.value,
     metadataMissing: decimals.status === "rejected",

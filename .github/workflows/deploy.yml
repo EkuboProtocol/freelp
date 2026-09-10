@@ -61,11 +61,17 @@ jobs:
         run: |
           bash scripts/install-ipfs.sh
           bash scripts/pin-release.sh
+          .cache/bin/ipfs config Addresses.API /ip4/127.0.0.1/tcp/5001
+          .cache/bin/ipfs config Addresses.Gateway /ip4/127.0.0.1/tcp/8080
           .cache/bin/ipfs daemon --offline > /tmp/freelp-ipfs.log 2>&1 &
           for attempt in {1..30}; do
             if curl --fail --silent http://127.0.0.1:5001/api/v0/version -X POST > /dev/null; then break; fi
             sleep 1
           done
+          if ! curl --fail --silent http://127.0.0.1:5001/api/v0/version -X POST > /dev/null; then
+            cat /tmp/freelp-ipfs.log
+            exit 1
+          fi
           release_cid=$(bun -e 'console.log((await Bun.file("release/deployment.json").json()).releaseCid)')
           options=()
           if [[ "$PRIVATE_BUILD" == true ]]; then options+=(--private-build); fi

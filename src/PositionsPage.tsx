@@ -224,6 +224,14 @@ function PositionDetail({ position: p }: { position: Position }) {
           {tokens.map((t, i) => (
             <p key={t.address}>
               <strong>{t.symbol}</strong>
+              {t.metadataMissing ? (
+                <small>
+                  <Trans>
+                    Decimals unavailable: displayed and deposit amounts use raw
+                    integer units.
+                  </Trans>
+                </small>
+              ) : null}
               <br />
               <Trans>Principal:</Trans>{" "}
               {formatUnits(

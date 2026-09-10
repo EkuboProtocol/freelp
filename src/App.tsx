@@ -39,11 +39,12 @@ function BuildPage() {
   );
 }
 function Page({ route }: { route: string }) {
+  const { account } = useSession();
   switch (route) {
     case "#/settings":
       return <SettingsPage />;
     case "#/terms":
-      return <TermsPage />;
+      return <TermsPage key={account ?? "disconnected"} />;
     case "#/deploy":
       return <DeployPage />;
     case "#/create":

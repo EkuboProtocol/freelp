@@ -13,6 +13,9 @@ Development remains private. This is a record of observed checks, not a launch a
 - The outer release package was imported into offline Kubo. The launcher fetched it through a loopback gateway, verified both CIDs and the signed descriptor, and reverified the cached application offline. A valid signed application served under a different requested release CID was rejected before launch.
 - Path and subdomain gateway layouts passed browser checks for relative assets, terms deep links/reloads, settings navigation, and no outside network requests. These checks are included in the release workflow.
 - Source/dependency scan found no Starknet code or packages.
+- The complete browser lifecycle also passes when token decimals calls revert. Amounts are explicitly labeled raw integer units rather than silently assuming 18 decimals.
+- Terms browser tests pass with normal and unavailable local storage, stale stored terms, account changes, and cleared storage. Switching accounts resets the checkbox. Unit tests confirm the transaction entrypoint makes no wallet request before acceptance and refuses an account change during gas estimation.
+- Pool input tests reject spacing overflow into fee bits and unsupported fee precision before constructing calldata.
 
 ## Limits and remaining checks
 
@@ -20,4 +23,4 @@ The first full contracts run passed 965 tests and failed four existing ExposedSt
 
 Private builds use GitHub-signed OIDC issuance evidence with a descriptor-bound audience, because standard private GitHub artifact attestations require an entitlement unavailable to this project. Public Sigstore verification is implemented but still needs a real public release verification exercise before public launch.
 
-The latest release-packaging workflow changes require an actual successful CI run. Broader wallet/account/chain failure coverage, token-metadata failure handling, CLI stable-release/rollback integration, dependency notice review, and a final usability/requirements audit remain.
+The first release-packaging CI run reached the offline gateway check, then failed because the test profile did not bind its expected ports. The workflow now explicitly binds loopback API/gateway ports; the correction requires a successful CI run. Broader RPC/chain failure coverage, CLI stable-release/rollback integration, dependency notice review, and a final usability/requirements audit remain.

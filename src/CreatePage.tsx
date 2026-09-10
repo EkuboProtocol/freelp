@@ -1,14 +1,8 @@
 import { parseAmount } from "./amounts";
+import { concentratedConfig } from "./pools";
 import { useState } from "react";
 import { Trans } from "@lingui/react/macro";
-import {
-  formatUnits,
-  getAddress,
-  parseUnits,
-  toHex,
-  zeroAddress,
-  type Address,
-} from "viem";
+import { formatUnits, getAddress, zeroAddress, type Address } from "viem";
 import { useSession } from "./session";
 import { read, token, approval, managerData, type Token } from "./contracts";
 import { Action, Field } from "./common";
@@ -37,8 +31,8 @@ export function CreatePage() {
   const [initial, setInitial] = useState(0);
   const [slippage, setSlippage] = useState(50);
   const [quote, setQuote] = useState<Quote>();
-  const [fallbackA, setFallbackA] = useState(18);
-  const [fallbackB, setFallbackB] = useState(18);
+  const [fallbackA, setFallbackA] = useState("");
+  const [fallbackB, setFallbackB] = useState("");
   const key = JSON.stringify([
     settings,
     account,
@@ -63,21 +57,26 @@ export function CreatePage() {
       if (BigInt(addresses[0]) >= BigInt(addresses[1]))
         throw new Error("Token 0 must sort before token 1 by address.");
       const tokens = await Promise.all([
-        token(settings, addresses[0], account, fallbackA),
-        token(settings, addresses[1], account, fallbackB),
+        token(
+          settings,
+          addresses[0],
+          account,
+          fallbackA === "" ? undefined : Number(fallbackA),
+        ),
+        token(
+          settings,
+          addresses[1],
+          account,
+          fallbackB === "" ? undefined : Number(fallbackB),
+        ),
       ]);
       const max0 = parseAmount(maxA, tokens[0].decimals),
         max1 = parseAmount(maxB, tokens[1].decimals);
-      const feeValue = (parseUnits(fee, 6) * 2n ** 64n) / 100_000_000n;
-      if (feeValue < 0n || feeValue >= 2n ** 64n)
-        throw new Error("Invalid pool fee.");
       const descriptor = {
         poolKey: {
           token0: addresses[0],
           token1: addresses[1],
-          config: toHex((feeValue << 32n) | 0x80000000n | BigInt(spacing), {
-            size: 32,
-          }),
+          config: concentratedConfig(fee, spacing),
         },
         tickLower: lower,
         tickUpper: upper,
@@ -104,7 +103,7 @@ export function CreatePage() {
   }
   async function create() {
     if (!current) throw new Error("Refresh the preview.");
-    if (slippage < 0 || slippage > 1000)
+    if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
       throw new Error("Slippage must be between 0 and 1000 basis points.");
     const limits = {
       maxAmount0: current.max0,
@@ -198,8 +197,8 @@ export function CreatePage() {
         </summary>
         <p>
           <Trans>
-            If a token has no decimals method, confirm its decimals here before
-            entering amounts.
+            If a token has no decimals method, amounts use raw integer units.
+            You can supply known decimals here to enter human-readable amounts.
           </Trans>
         </p>
         <div className="grid">
@@ -209,7 +208,7 @@ export function CreatePage() {
               min={0}
               max={255}
               value={fallbackA}
-              onChange={(e) => setFallbackA(Number(e.target.value))}
+              onChange={(e) => setFallbackA(e.target.value)}
             />
           </Field>
           <Field label={<Trans>Token 1 fallback decimals</Trans>}>
@@ -218,7 +217,7 @@ export function CreatePage() {
               min={0}
               max={255}
               value={fallbackB}
-              onChange={(e) => setFallbackB(Number(e.target.value))}
+              onChange={(e) => setFallbackB(e.target.value)}
             />
           </Field>
         </div>
@@ -248,7 +247,15 @@ export function CreatePage() {
               / <Trans>Balance:</Trans> {formatUnits(t.balance, t.decimals)}{" "}
               {t.metadataMissing ? (
                 <strong>
-                  <Trans>Using fallback decimals</Trans>
+                  {(i === 0 ? fallbackA : fallbackB) === "" ? (
+                    <Trans>
+                      Decimals unavailable: amounts are raw integer units.
+                    </Trans>
+                  ) : (
+                    <Trans>
+                      Using manually supplied decimals: {t.decimals}
+                    </Trans>
+                  )}
                 </strong>
               ) : null}
             </p>
