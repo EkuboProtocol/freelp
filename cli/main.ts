@@ -4,15 +4,8 @@ import dependencyNotices from "../public/licenses/dependencies.txt" with { type:
 import runtimeNotices from "../public/licenses/bun-runtime.md" with { type: "text" };
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import {
-  readFile,
-  writeFile,
-  mkdir,
-  mkdtemp,
-  rename,
-  rm,
-} from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { writeFile, mkdir, mkdtemp, rename, rm, lstat } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { homedir } from "node:os";
 import { parseArgs } from "node:util";
 import {
@@ -31,6 +24,16 @@ import { serve } from "./server";
 import { readLimited } from "./files";
 import { releaseDag } from "./release";
 import { downloadCid } from "./gateway";
+import {
+  isVersion,
+  compareVersions,
+  writeAtomic,
+  selectBundle,
+  bundleDirectory,
+  readHighest,
+  recordVersion,
+} from "./cache";
+import { BUNDLE_FILES } from "./release";
 const exec = promisify(execFile);
 const cache = join(homedir(), ".cache", "freelp");
 const { values } = parseArgs({
@@ -61,14 +64,25 @@ async function github(path: string) {
   });
   return JSON.parse(stdout);
 }
+function validAsset(asset: Release["assets"][number] | undefined) {
+  return (
+    !!asset &&
+    Number.isSafeInteger(asset.id) &&
+    asset.id > 0 &&
+    Number.isSafeInteger(asset.size) &&
+    asset.size >= 0 &&
+    asset.size <= MAX_BYTES
+  );
+}
 async function downloadAssets(release: Release, stage: string) {
   for (const name of [
     "descriptor.json",
     "application.json",
     "provenance.json",
   ]) {
-    const asset = release.assets.find((a) => a.name === name);
-    if (!asset || asset.size > MAX_BYTES)
+    const matches = release.assets.filter((a) => a.name === name);
+    const asset = matches[0];
+    if (matches.length !== 1 || !validAsset(asset))
       throw new Error(`Missing or oversized ${name}.`);
     const { stdout } = await exec(
       "gh",
@@ -85,17 +99,15 @@ async function downloadAssets(release: Release, stage: string) {
 }
 async function fetchRelease() {
   const version = values.version;
-  if (version && !/^v\d+\.\d+\.\d+$/.test(version))
+  if (version && !isVersion(version))
     throw new Error("Version must be vMAJOR.MINOR.PATCH.");
   const release = (await github(
     `repos/${REPOSITORY}/releases/${version ? "tags/" + version : "latest"}`,
   )) as Release;
-  if (
-    release.draft ||
-    release.prerelease ||
-    !/^v\d+\.\d+\.\d+$/.test(release.tag_name)
-  )
+  if (release.draft || release.prerelease || !isVersion(release.tag_name))
     throw new Error("Not an official stable release.");
+  if (version && release.tag_name !== version)
+    throw new Error("Requested release version mismatch.");
   const stage = await mkdtemp(join(cache, ".download-"));
   try {
     await downloadAssets(release, stage);
@@ -140,27 +152,32 @@ async function verifyDirectory(
   }
   return { descriptor, files, digest: sha256(bytes) };
 }
-function compareVersions(a: string, b: string) {
-  const left = a.slice(1).split(".").map(Number),
-    right = b.slice(1).split(".").map(Number);
-  for (let i = 0; i < 3; i++) {
-    if (left[i] !== right[i]) return left[i] - right[i];
-  }
-  return 0;
-}
 async function launchOffline() {
   const latest = JSON.parse(
-    await readFile(join(cache, "selected.json"), "utf8"),
-  ) as { digest: string; privateBuild: boolean };
-  if (!/^[a-f0-9]{64}$/.test(latest.digest))
+    (await readLimited(join(cache, "selected.json"), 4096)).toString("utf8"),
+  ) as { digest: string; privateBuild: boolean; layout?: number };
+  if (
+    !latest ||
+    !/^[a-f0-9]{64}$/.test(latest.digest) ||
+    typeof latest.privateBuild !== "boolean" ||
+    (latest.layout !== undefined && latest.layout !== 2)
+  )
     throw new Error("Invalid cache selection.");
   console.log(
     "Offline: verifying cached build; update/revocation freshness is unknown.",
   );
-  return verifyDirectory(join(cache, latest.digest), latest.privateBuild);
+  const directory =
+    latest.layout === 2
+      ? bundleDirectory(cache, latest.digest, latest.privateBuild)
+      : join(cache, latest.digest);
+  const result = await verifyDirectory(directory, latest.privateBuild);
+  if (result.digest !== latest.digest)
+    throw new Error("Cached descriptor identity mismatch.");
+  return result;
 }
-async function promote(stage: string, digest: string) {
-  const destination = join(cache, digest);
+async function promote(stage: string, digest: string, privateBuild: boolean) {
+  const destination = bundleDirectory(cache, digest, privateBuild);
+  await mkdir(dirname(destination), { recursive: true, mode: 0o700 });
   try {
     await rename(stage, destination);
   } catch (error) {
@@ -170,8 +187,17 @@ async function promote(stage: string, digest: string) {
       )
     )
       throw error;
-    await rm(destination, { recursive: true, force: true });
-    await rename(stage, destination);
+    if (!(await lstat(destination)).isDirectory())
+      throw new Error("Cache destination must be a directory.", {
+        cause: error,
+      });
+    // The descriptor digest fixes the app bytes. Atomic per-file replacement repairs
+    // corrupt caches without deleting an existing valid offline copy first.
+    for (const name of BUNDLE_FILES)
+      await writeAtomic(
+        join(destination, name),
+        await readLimited(join(stage, name), MAX_BYTES),
+      );
   }
 }
 async function importBundle(dir: string, privateBuild: boolean) {
@@ -188,11 +214,8 @@ async function importBundle(dir: string, privateBuild: boolean) {
       );
     // Reverify the copied bytes before caching; source files may have changed during the import.
     const result = await verifyDirectory(stage, privateBuild);
-    await promote(stage, result.digest);
-    await writeFile(
-      join(cache, "selected.json"),
-      JSON.stringify({ digest: result.digest, privateBuild }),
-    );
+    await promote(stage, result.digest, privateBuild);
+    await selectBundle(cache, result.digest, privateBuild);
     return result;
   } finally {
     await rm(stage, { recursive: true, force: true });
@@ -209,11 +232,8 @@ async function launchCid(cid: string) {
       stage,
     );
     const result = await verifyDirectory(stage, privateBuild, cid);
-    await promote(stage, result.digest);
-    await writeFile(
-      join(cache, "selected.json"),
-      JSON.stringify({ digest: result.digest, privateBuild }),
-    );
+    await promote(stage, result.digest, privateBuild);
+    await selectBundle(cache, result.digest, privateBuild);
     return result;
   } finally {
     await rm(stage, { recursive: true, force: true });
@@ -235,7 +255,7 @@ function validateSelection() {
 }
 async function launch() {
   validateSelection();
-  await mkdir(cache, { recursive: true });
+  await mkdir(cache, { recursive: true, mode: 0o700 });
   if (values.cid) return launchCid(values.cid);
   if (values.offline) return launchOffline();
   if (values.bundle)
@@ -251,33 +271,15 @@ async function launch() {
       result.descriptor.ref !== `refs/tags/${release.tag}`
     )
       throw new Error("Release tag and attested source do not match.");
-    let highest = "v0.0.0";
-    try {
-      highest = (
-        JSON.parse(await readFile(join(cache, "highest.json"), "utf8")) as {
-          tag: string;
-        }
-      ).tag;
-    } catch {
-      /* First launch. */
-    }
+    const highest = values.version ? "v0.0.0" : await readHighest(cache);
     if (!values.version && compareVersions(release.tag, highest) < 0)
       throw new Error(
         "Release rollback detected. Select an older version explicitly.",
       );
-    await promote(release.stage, result.digest);
-    await writeFile(
-      join(cache, "selected.json"),
-      JSON.stringify({
-        digest: result.digest,
-        privateBuild: !!values["private-build"],
-      }),
-    );
-    if (compareVersions(release.tag, highest) > 0)
-      await writeFile(
-        join(cache, "highest.json"),
-        JSON.stringify({ tag: release.tag }),
-      );
+    const privateBuild = !!values["private-build"];
+    await promote(release.stage, result.digest, privateBuild);
+    await recordVersion(cache, release.tag);
+    await selectBundle(cache, result.digest, privateBuild);
     return result;
   } finally {
     await rm(release.stage, { recursive: true, force: true });

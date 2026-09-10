@@ -19,6 +19,8 @@ Development remains private. This is a record of observed checks, not a launch a
 - Terms browser tests pass with normal and unavailable local storage, stale stored terms, account changes, and cleared storage. Switching accounts resets the checkbox. Unit tests confirm the transaction entrypoint makes no wallet request before acceptance and refuses an account change during gas estimation.
 - Pool input tests reject spacing overflow into fee bits and unsupported fee precision before constructing calldata.
 - Price inputs convert token decimal scales and round range bounds to valid ticks, with raw ticks and full-range options retained. Previews show chain-derived initialization state, price, and actual bounds. Existing pools ignore the initial-price input. Seventeen unit tests and all four browser tests pass after this change.
+- The launcher now preserves existing offline copies during cache repair, separates private/public proof caches, writes selection atomically, and uses immutable version markers with exact integer comparison. Nineteen unit tests pass; an authentic private CI bundle passed initial import, repeated import into the existing cache, and offline verification with the compiled launcher.
+- Private app commit 746ffb7fb5bc42d3031ae2a430187a55c065c49c passed complete CI run 34526524892.
 - The desktop creation form was visually checked for plain monochrome styling, labeled fields, and the terms gate.
 
 ## Limits and remaining checks
