@@ -8,7 +8,7 @@ EVM liquidity position management using only RPC endpoints and an injected walle
 
 Once published, `bunx @ekubo/freelp` or `npx @ekubo/freelp` serves the complete installed application on localhost and opens your browser. Use `--no-browser` or `--port 4173` as needed. A specific version can be selected with `bunx @ekubo/freelp@VERSION`.
 
-Trust the package publisher and your package manager's integrity checks. The package contains its static assets and has no runtime package dependencies. The launcher does not contact GitHub, download a second build, or handle wallet keys. Use Node 22+ for npx, or Bun for bunx. No runtime binary is distributed.
+Trust the package publisher and your package manager's integrity checks. The package contains its static assets and has no runtime package dependencies. The launcher does not contact GitHub, download a second build, or handle wallet keys. The launcher requires Node 22+; the bunx command additionally requires Bun. No runtime binary is distributed.
 
 During private development, build with `bun install --frozen-lockfile && bun run pack:app`. Test the resulting tarball with `bun scripts/check-package.ts ekubo-freelp-0.1.1.tgz`, or run `node cli-dist/main.js` from the built checkout. Packing does not publish; `private: true` prevents accidental npm publication.
 

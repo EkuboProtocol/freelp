@@ -2,7 +2,7 @@
 
 Skills installed for this revision: Anthropic frontend-design and webapp-testing. Review also used Vercel Web Interface Guidelines and React performance guidance. The visual brief remains monochrome, unbranded, and based on system fonts.
 
-Local Lighthouse baseline: mobile performance 98, accessibility 95, best practices 96, SEO 82. After fixes: mobile 97/100/100/100; desktop 100/100/100/100. Scores measure these audit categories, not an overall UX certification, and performance can vary between machines.
+Local Lighthouse baseline: mobile performance 98, accessibility 95, best practices 96, SEO 82. After fixes: mobile 97/100/100/100; desktop 100/100/100/100. The private v0.1.1 CI release scored mobile 96/100/100/100 and desktop 100/100/100/100. Scores measure these audit categories, not an overall UX certification, and performance can vary between machines.
 
 Axe reports zero violations for WCAG A/AA checks through 2.2 and applicable best practices across Positions, Create, Settings, Deploy, Terms, About, and the token dialog at 390px and 1440px. No horizontal overflow was found. The populated position-management UI is also checked within each real local-chain transaction lifecycle.
 
