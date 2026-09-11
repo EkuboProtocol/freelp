@@ -1,4 +1,4 @@
-FreeLP 0.1.7 simplifies navigation and position management.
+FreeLP 0.1.8 simplifies navigation and position management.
 
 - Ship every page and transaction flow in one JavaScript bundle, reducing IPFS requests.
 - Rename Settings to Networks and show the full network catalog with consistent spacing and borders.

@@ -19,7 +19,7 @@ async function check(browser: Browser, base: string) {
     await expect(
       page.getByRole("heading", { name: "Terms of Service" }),
     ).toBeVisible();
-    await page.getByRole("link", { name: "Settings", exact: true }).click();
+    await page.getByRole("link", { name: "Networks", exact: true }).click();
     await expect(
       page.getByRole("heading", { name: "Networks" }),
     ).toBeVisible();

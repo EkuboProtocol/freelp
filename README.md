@@ -18,7 +18,7 @@ You can also open an IPFS build from the **IPFS preview** commit status or GitHu
 
 Connect your wallet to view positions across enabled networks. Create a position by selecting a network, tokens, pool, and price range. Deposit amounts are calculated locally; the liquidity chart supports hover, zoom, and range selection. Add liquidity, withdraw, or claim fees from your positions.
 
-Ethereum, Arbitrum, Base, Robinhood Chain, Optimism, BNB Smart Chain, Gnosis, Unichain, Polygon, Monad, and Ink are enabled by default. Enable other mainnets or override their RPC URLs in Settings. Import tokens by address using their on-chain metadata.
+Ethereum, Arbitrum, Base, Robinhood Chain, Optimism, BNB Smart Chain, Gnosis, Unichain, Polygon, Monad, and Ink are enabled by default. Enable other mainnets or override their RPC URLs in Networks. Import tokens by address using their on-chain metadata.
 
 If required contracts are missing on a network, the Deploy page can deploy Core, FreeLP, and FreeLPDataFetcher at their fixed addresses.
 
