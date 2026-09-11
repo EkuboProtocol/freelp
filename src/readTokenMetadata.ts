@@ -1,4 +1,3 @@
-import { t } from "@lingui/core/macro";
 import { erc20Abi, getAddress } from "viem";
 import { rpc } from "./rpc";
 import type { Settings } from "./types";
@@ -16,7 +15,7 @@ export async function readTokenMetadata(
     client.getCode({ address }),
   ]);
   if (!code || code === "0x")
-    throw new Error(t`No token contract at this address.`);
+    throw new Error("No token contract at this address.");
   if (
     !symbol.trim() ||
     !name.trim() ||
@@ -25,7 +24,7 @@ export async function readTokenMetadata(
     decimals > 255
   )
     throw new Error(
-      t`This token must provide a name, symbol, and valid decimals on chain.`,
+      "This token must provide a name, symbol, and valid decimals on chain.",
     );
   return { address, symbol, name, decimals };
 }

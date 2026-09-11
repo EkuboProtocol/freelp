@@ -14,9 +14,11 @@ if [[ -z "$tag" ]]; then tag=$(gh release view --repo "$repo" --json tagName --j
 mkdir -p .cache/ipns-release
 release_dir="$PWD/.cache/ipns-release"
 gh release view "$tag" --repo "$repo" --json isDraft,isPrerelease --jq 'select(.isDraft == false and .isPrerelease == false)' | jq -e . >/dev/null
-gh release download "$tag" --repo "$repo" --pattern site.car --pattern deployment.json --dir "$release_dir" --clobber
 commit=$(gh api "repos/$repo/commits/$tag" --jq .sha)
 [[ "$commit" =~ ^[a-f0-9]{40}$ ]]
+run_id=$(gh run list --repo "$repo" --workflow deploy.yml --commit "$commit" --status success --json databaseId --jq '.[0].databaseId')
+[[ "$run_id" =~ ^[0-9]+$ ]]
+gh run download "$run_id" --repo "$repo" --name verified-release --dir "$release_dir"
 jq -e --arg repo "$repo" --arg commit "$commit" '.repository == $repo and .commit == $commit' "$release_dir/deployment.json" >/dev/null
 site_cid=$(jq -r .siteCid "$release_dir/deployment.json")
 [[ "$site_cid" =~ ^bafy[a-z2-7]{55}$ ]]

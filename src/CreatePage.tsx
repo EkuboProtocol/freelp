@@ -15,13 +15,11 @@ import { TokenBalance } from "./TokenBalance";
 import { PoolPicker } from "./PoolPicker";
 import { networkCurrencies, type Currency } from "./tokens";
 import { CurrencySelect } from "./CurrencySelect";
-import { t } from "@lingui/core/macro";
 import { RangeFields } from "./RangeFields";
 import { ApprovalButton } from "./ApprovalButton";
 import { PricePreview } from "./PricePreview";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { loadDepositQuote } from "./loadDepositQuote";
-import { Trans } from "@lingui/react/macro";
 import { formatUnits, isAddress, zeroAddress } from "viem";
 import { useCreateForm, formField } from "./useCreateForm";
 import type { CreateForm } from "./createForm";
@@ -51,18 +49,16 @@ export function CreatePage() {
   if (!network)
     return (
       <p role="alert">
-        <Trans>Enable this network in Settings before using this link.</Trans>
+        Enable this network in Settings before using this link.
       </p>
     );
   return (
     <NetworkScope settings={network}>
       <section className="create-position">
-        <h2>
-          <Trans>Create position</Trans>
-        </h2>
-        <Field label={<Trans>Network</Trans>}>
+        <h2>Create position</h2>
+        <Field label={"Network"}>
           <select
-            aria-label={t`Network`}
+            aria-label={"Network"}
             disabled={busy}
             value={form.chain}
             onChange={(event) => {
@@ -158,7 +154,7 @@ function CreatePositionForm({
     (address, index) =>
       networkCurrencies(settings).find(
         (token) => token.address.toLowerCase() === address.toLowerCase(),
-      )?.symbol ?? (index === 0 ? t`First token` : t`Second token`),
+      )?.symbol ?? (index === 0 ? "First token" : "Second token"),
   );
   async function preview() {
     const id = ++request.current;
@@ -209,9 +205,9 @@ function CreatePositionForm({
     };
   }, [key, pool.data]);
   async function create() {
-    if (!current) throw new Error(t`Enter a deposit amount.`);
+    if (!current) throw new Error("Enter a deposit amount.");
     if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
-      throw new Error(t`Slippage must be between 0 and 1000 basis points.`);
+      throw new Error("Slippage must be between 0 and 1000 basis points.");
     const limits = {
       maxAmount0: current.max0,
       maxAmount1: current.max1,
@@ -243,20 +239,18 @@ function CreatePositionForm({
   return (
     <div>
       <p>
-        <Trans>
-          Choose your tokens and pool, set a price range, and enter either
-          deposit amount. The matching amount and preview update automatically.
-        </Trans>
+        Choose your tokens and pool, set a price range, and enter either deposit
+        amount. The matching amount and preview update automatically.
       </p>
       <div className="grid currency-pair">
         <CurrencySelect
           value={a}
-          label={t`Select first token`}
+          label={"Select first token"}
           onChange={(token) => chooseCurrency(0, token)}
         />
         <CurrencySelect
           value={b}
-          label={t`Select second token`}
+          label={"Select second token"}
           onChange={(token) => chooseCurrency(1, token)}
         />
       </div>
@@ -265,9 +259,7 @@ function CreatePositionForm({
       {pool.data ? (
         <>
           <section className="range-section">
-            <h3>
-              <Trans>Price range and liquidity</Trans>
-            </h3>
+            <h3>Price range and liquidity</h3>
             <PoolChart
               symbols={symbols}
               data={pool.data}
@@ -286,15 +278,13 @@ function CreatePositionForm({
               initialized={pool.data.state.sqrtRatio !== 0n}
             />
           </section>
-          <h3>
-            <Trans>Deposit amounts</Trans>
-          </h3>
+          <h3>Deposit amounts</h3>
           <div className="grid deposit-inputs">
             <div className="deposit-input">
               <strong className="deposit-token">{symbols[0]}</strong>
               <SnappedInput
                 snapped={maxA}
-                aria-label={t`${symbols[0]} amount`}
+                aria-label={`${symbols[0]} amount`}
                 inputMode="decimal"
                 placeholder="0"
                 disabled={!!current?.inactive[0]}
@@ -318,7 +308,7 @@ function CreatePositionForm({
               <strong className="deposit-token">{symbols[1]}</strong>
               <SnappedInput
                 snapped={maxB}
-                aria-label={t`${symbols[1]} amount`}
+                aria-label={`${symbols[1]} amount`}
                 inputMode="decimal"
                 placeholder="0"
                 disabled={!!current?.inactive[1]}
@@ -340,9 +330,9 @@ function CreatePositionForm({
             </div>
           </div>
           <div className="slippage-control">
-            <Field label={<Trans>Slippage (basis points)</Trans>}>
+            <Field label={"Slippage (basis points)"}>
               <SnappedInput
-                aria-label={t`Slippage (basis points)`}
+                aria-label={"Slippage (basis points)"}
                 snapped={slippage}
                 type="number"
                 min={0}
@@ -353,16 +343,10 @@ function CreatePositionForm({
             </Field>
           </div>
           <ErrorText error={previewError} />
-          {previewBusy ? (
-            <p role="status">
-              <Trans>Updating deposit preview…</Trans>
-            </p>
-          ) : null}
+          {previewBusy ? <p role="status">Updating deposit preview…</p> : null}
           {current ? (
             <div className="panel">
-              <h3>
-                <Trans>Deposit preview</Trans>
-              </h3>
+              <h3>Deposit preview</h3>
               <PricePreview {...current} />
               {current.tokens.map((t, i) => (
                 <p key={t.address}>
@@ -371,27 +355,21 @@ function CreatePositionForm({
                     i === 0 ? current.used0 : current.used1,
                     t.decimals,
                   )}{" "}
-                  / <Trans>Balance:</Trans>{" "}
+                  / Balance:{" "}
                   <span title={formatUnits(t.balance, t.decimals)}>
                     {displayAmount(t.balance, t.decimals)}
                   </span>{" "}
                   {t.balance < (i === 0 ? current.max0 : current.max1) ? (
-                    <strong>
-                      <Trans>Insufficient {t.symbol} balance</Trans>
-                    </strong>
+                    <strong>Insufficient {t.symbol} balance</strong>
                   ) : null}
                   {current.inactive[i] ? (
                     <small>
-                      <Trans>
-                        This token is not needed for the selected range.
-                      </Trans>
+                      This token is not needed for the selected range.
                     </small>
                   ) : null}
                 </p>
               ))}
-              <p>
-                <Trans>Liquidity:</Trans> {current.liquidity.toString()}
-              </p>
+              <p>Liquidity: {current.liquidity.toString()}</p>
               <div className="row">
                 {current.tokens.map((t, i) => (
                   <ApprovalButton
@@ -417,7 +395,7 @@ function CreatePositionForm({
                   }
                   run={create}
                 >
-                  <Trans>Create position</Trans>
+                  Create position
                 </Action>
               </div>
             </div>
@@ -445,16 +423,10 @@ function PoolLoadStatus({
 }) {
   return (
     <>
-      {pool.loading ? (
-        <p role="status">
-          <Trans>Loading pool…</Trans>
-        </p>
-      ) : null}
+      {pool.loading ? <p role="status">Loading pool…</p> : null}
       <ErrorText error={pool.error || ""} />
       {pool.error ? (
-        <button onClick={pool.refresh}>
-          <Trans>Retry pool data</Trans>
-        </button>
+        <button onClick={pool.refresh}>Retry pool data</button>
       ) : null}
     </>
   );

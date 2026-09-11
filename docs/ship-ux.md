@@ -10,4 +10,4 @@ The fixed addresses are Core `0x00000000000014aA86C5d3c41765bb24e11bd701`, FreeL
 
 Validation covers SDK/contract parity, standard and batched ERC20 lifecycles, native-token positions, stableswap, collection, withdrawal, burn, URL handling, chain settings, token import and balance caching. Production checks also run Axe at mobile/desktop sizes, Lighthouse thresholds, and the packaged bunx/npx launcher. Route and transaction code loads on demand to reduce initial loading work. See release artifacts for the exact reports for a build.
 
-The npm package is public; the GitHub source remains private. Launch with `bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest`. CI publishes immutable IPFS previews and attaches their links to commits. IPFS information is kept out of the application itself.
+The npm package is public. Launch with `bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest`. CI publishes immutable IPFS previews and attaches their links to commits. IPFS information is kept out of the application itself.

@@ -1,5 +1,3 @@
-import { t } from "@lingui/core/macro";
-import { Trans } from "@lingui/react/macro";
 import { useMemo, useState, useRef } from "react";
 import { formatUnits } from "viem";
 import { liquidityBuckets } from "./liquidityBuckets";
@@ -66,14 +64,14 @@ export function LiquidityChart({
         </small>
         <div className="row">
           <button
-            aria-label={t`Zoom out`}
+            aria-label={"Zoom out"}
             disabled={zoom >= 256}
             onClick={() => setZoom(Math.min(256, zoom * 2))}
           >
             −
           </button>
           <button
-            aria-label={t`Zoom in`}
+            aria-label={"Zoom in"}
             disabled={zoom <= 4}
             onClick={() => setZoom(Math.max(4, zoom / 2))}
           >
@@ -85,7 +83,7 @@ export function LiquidityChart({
         viewBox="0 0 800 210"
         preserveAspectRatio="none"
         role="img"
-        aria-label={t`Pool token amounts by price`}
+        aria-label={"Pool token amounts by price"}
         className="depth-chart"
         onPointerLeave={() => setHover(undefined)}
         onPointerDown={(event) => {
@@ -169,24 +167,18 @@ export function LiquidityChart({
           </>
         ) : (
           <small>
-            <Trans>
-              Hover for token amounts. Drag across the chart to select a range.
-            </Trans>
+            Hover for token amounts. Drag across the chart to select a range.
           </small>
         )}
       </div>
       {selection ? (
         <div className="row spread">
           <span>{price(selection.lower)}</span>
-          <small>
-            <Trans>Selected range</Trans>
-          </small>
+          <small>Selected range</small>
           <span>{price(selection.upper)}</span>
         </div>
       ) : null}
-      <small>
-        <Trans>Only the range read from chain is shown.</Trans>
-      </small>
+      <small>Only the range read from chain is shown.</small>
     </div>
   );
 }

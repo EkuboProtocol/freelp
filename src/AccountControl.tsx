@@ -1,6 +1,4 @@
 import { useCopied } from "./useCopied";
-import { Trans } from "@lingui/react/macro";
-import { t } from "@lingui/core/macro";
 import { keccak256, type Address } from "viem";
 import { useSession } from "./session";
 import { errorMessage } from "./errors";
@@ -46,7 +44,7 @@ export function AccountControl() {
   if (session.account)
     return (
       <details className="account-control">
-        <summary aria-label={t`Connected wallet: ${session.account}`}>
+        <summary aria-label={`Connected wallet: ${session.account}`}>
           <Identicon address={session.account} />
           <span className="mono">
             {session.account.slice(0, 6)}…{session.account.slice(-4)}
@@ -55,7 +53,7 @@ export function AccountControl() {
         <div className="account-menu">
           <span className="mono">{session.account}</span>
           <button onClick={() => void copy()}>
-            {copied ? <Trans>Copied</Trans> : <Trans>Copy address</Trans>}
+            {copied ? "Copied" : "Copy address"}
           </button>
         </div>
       </details>
@@ -71,13 +69,11 @@ export function AccountControl() {
               .catch((error) => session.setStatus(errorMessage(error)))
           }
         >
-          <Trans>Connect {w.info.name}</Trans>
+          Connect {w.info.name}
         </button>
       ))}
       {!session.wallets.length ? (
-        <span className="wallet-unavailable">
-          <Trans>No wallet detected</Trans>
-        </span>
+        <span className="wallet-unavailable">No wallet detected</span>
       ) : null}
     </div>
   );

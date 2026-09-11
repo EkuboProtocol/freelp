@@ -1,6 +1,6 @@
 # npm trusted publishing
 
-The GitHub side is prepared for `@ekubo/freelp`. The maintainer authorized public npm publication after the pool-flow fixes pass verification. The source repository stays private. The manifest uses `private: false` and `publishConfig.access: public`; there is no npm `public: true` setting. Automated publication remains disabled with `FREELP_NPM_PUBLISH=false` until trusted publishing is configured.
+The GitHub side is prepared for `@ekubo/freelp`. The maintainer authorized public npm publication after the pool-flow fixes pass verification. The manifest uses `private: false` and `publishConfig.access: public`; there is no npm `public: true` setting. Trusted publishing is configured; tagged commits publish through GitHub CI with `FREELP_NPM_PUBLISH=true`.
 
 On npmjs, open https://www.npmjs.com/package/@ekubo/freelp/access and add a GitHub Actions trusted publisher:
 
@@ -12,12 +12,12 @@ On npmjs, open https://www.npmjs.com/package/@ekubo/freelp/access and add a GitH
 | Environment name | `npm` |
 | Allowed actions | Enable direct `npm publish` |
 
-The GitHub `npm` environment only permits `v*` tags. The publish job requires the build job to pass, downloads that tag's tested npm tarball, validates its name/version/repository/launch readiness, and publishes it with Node 24/npm OIDC. No NPM_TOKEN is needed. The tag must equal `v` plus the package version. This is the workflow filename containing the publish job, not a separate publish.yml.
+The GitHub `npm` environment permits tags. The publish job requires the build job to pass, downloads that tag's tested npm tarball, validates its name/version/repository/launch readiness, and publishes it with Node 24/npm OIDC. No NPM_TOKEN is needed. Any pushed tag triggers publication. Set a new, unpublished package version before tagging; tags do not change the package version. Use `v<version>` by convention. Publication updates npm’s `latest` dist-tag. This is the workflow filename containing the publish job, not a separate publish.yml.
 
 `@ekubo/freelp@0.1.1` was published publicly from commit `90ba0a231525416338b797dea393f38529d14649`. Registry access and tarball integrity were verified. The package settings now exist for configuring trusted publishing.
 
-Publish the verified current tarball with `npm publish <tarball> --access public --ignore-scripts --provenance=false` using interactive maintainer authentication. Verify the registry version and tarball integrity after publication, then configure the trusted publisher above. Do not add an npm write token. Enable `FREELP_NPM_PUBLISH=true` only after that setup; future version tags can then publish through CI.
+To release, commit the version and changes, then push a tag such as `v0.1.2`. CI builds, checks, and publishes the tested tarball. Verify the registry version and tarball integrity after publication. Do not add an npm write token. Branch builds retain their IPFS previews without publishing to npm.
 
-The repository may remain private. npm provenance is enabled only when the source repository is public, because npm does not support provenance for private source repositories. Trusted publishing authentication itself works independently of that limitation.
+CI enables npm provenance for public repositories.
 
 References: https://docs.npmjs.com/trusted-publishers/ and https://docs.npmjs.com/creating-and-publishing-scoped-public-packages/

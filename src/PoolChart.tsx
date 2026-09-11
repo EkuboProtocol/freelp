@@ -1,5 +1,4 @@
 import { fixedSqrtRatioToFloat, toSqrtRatio } from "@ekubo/sdk";
-import { Trans } from "@lingui/react/macro";
 import { decimalInput } from "./decimalFormat";
 import {
   priceToTick,
@@ -67,10 +66,8 @@ export function PoolChart({
     />
   ) : (
     <p>
-      <Trans>
-        This pool is not initialized. Set its initial price when creating the
-        first position.
-      </Trans>
+      This pool is not initialized. Set its initial price when creating the
+      first position.
     </p>
   );
 }

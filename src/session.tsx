@@ -1,5 +1,4 @@
 import { ensureNativeCurrency } from "./tokens";
-import { t } from "@lingui/core/macro";
 import {
   createContext,
   useContext,
@@ -53,7 +52,7 @@ function useSessionState() {
     if (!wallet) return;
     const changed = () => {
       setAccount(undefined);
-      setStatus(t`Wallet changed. Connect again to review the active account.`);
+      setStatus("Wallet changed. Connect again to review the active account.");
     };
     wallet.provider.on?.("accountsChanged", changed);
 
@@ -63,12 +62,12 @@ function useSessionState() {
   }, [wallet]);
   async function connect(selected: Wallet) {
     if (transactionLock.current)
-      throw new Error(t`Finish the pending transaction first.`);
+      throw new Error("Finish the pending transaction first.");
     const addresses = await selected.provider.request({
       method: "eth_requestAccounts",
     });
     if (!Array.isArray(addresses) || typeof addresses[0] !== "string")
-      throw new Error(t`Wallet has no account.`);
+      throw new Error("Wallet has no account.");
     const address = getAddress(addresses[0]);
     setWallet(selected);
     setAccount(address);
@@ -77,7 +76,7 @@ function useSessionState() {
   const configure = useCallback((next: Settings) => {
     if (transactionLock.current)
       throw new Error(
-        t`Finish the pending transaction before changing settings.`,
+        "Finish the pending transaction before changing settings.",
       );
     next = validateSettings(next);
     ensureNativeCurrency(next);
@@ -90,7 +89,7 @@ function useSessionState() {
   function toggleNetwork(id: number, enabled: boolean) {
     if (transactionLock.current)
       throw new Error(
-        t`Finish the pending transaction before changing settings.`,
+        "Finish the pending transaction before changing settings.",
       );
     const next = setNetworkEnabled(networks, id, enabled);
     setNetworks(next);
@@ -108,19 +107,19 @@ function useSessionState() {
     if (!next || next.chainId === settings.chainId) return;
     if (transactionLock.current)
       throw new Error(
-        t`Finish the pending transaction before changing settings.`,
+        "Finish the pending transaction before changing settings.",
       );
     // Choosing an existing network does not invalidate balances or portfolio data.
     setSettings(next);
     save("freelp:settings", next);
   }
   async function send(tx: Transaction | Transaction[], target = settings) {
-    if (!wallet || !account) throw new Error(t`Connect a wallet first.`);
+    if (!wallet || !account) throw new Error("Connect a wallet first.");
     if (transactionLock.current)
-      throw new Error(t`A transaction is already pending.`);
+      throw new Error("A transaction is already pending.");
     transactionLock.current = true;
     setBusy(true);
-    setStatus(t`Simulating and requesting wallet confirmation…`);
+    setStatus("Simulating and requesting wallet confirmation…");
     try {
       const receipt = await (Array.isArray(tx)
         ? (await import("./walletBatch")).executeBatch(
@@ -135,7 +134,7 @@ function useSessionState() {
             target,
             tx,
           ));
-      setStatus(t`Confirmed: ${receipt.transactionHash}`);
+      setStatus(`Confirmed: ${receipt.transactionHash}`);
       return receipt;
     } finally {
       setRevision((n) => n + 1);

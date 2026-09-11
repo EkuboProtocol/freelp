@@ -6,8 +6,6 @@ import { useTokenBalances } from "./useTokenBalances";
 import { networkName } from "./networks";
 import type { Settings } from "./types";
 import { useId, useRef, useState } from "react";
-import { Trans } from "@lingui/react/macro";
-import { t } from "@lingui/core/macro";
 import { isAddress } from "viem";
 import { networkCurrencies, importCurrency, type Currency } from "./tokens";
 import { useSession } from "./session";
@@ -102,11 +100,9 @@ export function CurrencySelect({
         onKeyDown={tokenPickerKeyboard}
       >
         <div className="row spread">
-          <h2 id={titleId}>
-            <Trans>Select a token</Trans>
-          </h2>
+          <h2 id={titleId}>Select a token</h2>
           <button
-            aria-label={t`Close token selector`}
+            aria-label={"Close token selector"}
             onClick={() => dialog.current?.close()}
           >
             ×
@@ -114,8 +110,8 @@ export function CurrencySelect({
         </div>
         <div className="token-search-row">
           <input
-            aria-label={t`Search tokens or paste an address`}
-            placeholder={t`Search tokens or paste an address`}
+            aria-label={"Search tokens or paste an address"}
+            placeholder={"Search tokens or paste an address"}
             ref={searchInput}
             name="token-search"
             spellCheck={false}
@@ -131,10 +127,10 @@ export function CurrencySelect({
           {account ? (
             <button
               type="button"
-              aria-label={t`Refresh balances`}
+              aria-label={"Refresh balances"}
               onClick={() => setRefresh((n) => n + 1)}
             >
-              <Trans>Refresh</Trans>
+              Refresh
             </button>
           ) : null}
         </div>
@@ -155,9 +151,7 @@ export function CurrencySelect({
                 disabled={busy}
                 onClick={() => void inspect(network)}
               >
-                <Trans>
-                  Read token on {networkName(network.chainId, network.name)}
-                </Trans>
+                Read token on {networkName(network.chainId, network.name)}
               </button>
             ))}
           </div>
@@ -166,7 +160,7 @@ export function CurrencySelect({
           <div className="panel">
             <strong>{candidate.symbol}</strong>
             <p>
-              {candidate.name} · {candidate.decimals} <Trans>decimals</Trans>
+              {candidate.name} · {candidate.decimals} decimals
             </p>
             <p className="mono">{candidate.address}</p>
             <button
@@ -178,7 +172,7 @@ export function CurrencySelect({
                 choose(imported, importNetwork.chainId);
               }}
             >
-              <Trans>Import token</Trans>
+              Import token
             </button>
           </div>
         ) : null}
@@ -201,6 +195,6 @@ function UnlistedToken({ value }: { value: string }) {
       {value.slice(0, 6)}…{value.slice(-4)}
     </span>
   ) : (
-    <Trans>Select token</Trans>
+    "Select token"
   );
 }

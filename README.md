@@ -1,49 +1,44 @@
 # FreeLP
 
-EVM liquidity position management using only RPC endpoints and an injected wallet. No swaps, TWAMM orders, indexer, hosted metadata, API keys, analytics, or application fee. Position records and NFT metadata are on-chain. Network gas still applies.
+Manage EVM liquidity positions using only RPC endpoints and your wallet. No application fees, indexers, hosted token APIs, or API keys. Position data and NFT metadata live on-chain.
 
-**Private source:** this repository remains private; public npm publication is authorized after verification. Successful CI builds have user-authorized public IPFS previews. Solidity changes live separately in EkuboProtocol/evm-contracts.
+## Run
 
-## Run the packaged app
+```sh
+bunx @ekubo/freelp@latest
+# or
+npx @ekubo/freelp@latest
+```
 
-`bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest` serves the complete installed application on localhost and opens your browser. Use `--no-browser` or `--port 4173` as needed. A specific version can be selected with `bunx @ekubo/freelp@VERSION`.
+The package serves the app locally and opens your browser. Requires Node.js 22+; the Bun command also requires Bun. Use `--no-browser` to skip opening the browser or `--port 4173` to choose a port.
 
-Trust the package publisher and your package manager's integrity checks. The package contains its static assets and has no runtime package dependencies. The launcher does not contact GitHub, download a second build, or handle wallet keys. The launcher requires Node 22+; the bunx command additionally requires Bun. No runtime binary is distributed.
+You can also open an IPFS build from the **IPFS preview** commit status or GitHub Actions summary.
 
-Build locally with `bun install --frozen-lockfile && bun run pack:app`. Test the resulting tarball with `bun scripts/check-package.ts ekubo-freelp-0.1.2.tgz`, or run `node cli-dist/main.js` from the built checkout. Packing does not publish. The npm manifest uses `private: false` and `publishConfig.access: public`.
+## Use
 
-## Use FreeLP
+Connect your wallet to view positions across enabled networks. Create a position by selecting a network, tokens, pool, and price range. Deposit amounts are calculated locally; the liquidity chart supports hover, zoom, and range selection. Add liquidity, withdraw, or claim fees from your positions.
 
-Ethereum, Arbitrum, Base, Robinhood Chain, Optimism, BNB Smart Chain, Gnosis, Unichain, Polygon, Monad, and Ink are enabled by default. Settings can enable or disable mainnets from viem's chain catalog. Chain names, native tokens and public RPC defaults come from viem; no RPC overrides are configured initially. An optional RPC override can be entered for any catalog chain and must report that chain's ID. Testnets and arbitrary custom-network creation are not exposed in the interface.
+Ethereum, Arbitrum, Base, Robinhood Chain, Optimism, BNB Smart Chain, Gnosis, Unichain, Polygon, Monad, and Ink are enabled by default. Enable other mainnets or override their RPC URLs in Settings. Import tokens by address using their on-chain metadata.
 
-Choose bundled tokens or import a token by address using on-chain metadata. The searchable picker groups held tokens first, shows network labels and wallet balances, and supports arrow-key navigation. Balances load in one FreeLPDataFetcher call per chain and share a short-lived cache with the deposit controls; refresh or transaction completion updates them. Failed balance queries remain explicit. Prices use decimal notation. Tick spacing is shown as a percentage, with presets, custom percentages rounded to the nearest valid spacing, and exact integer ticks available. Pool discovery preserves your chosen spacing and entered range. Selecting a pool automatically loads its data through FreeLPDataFetcher. Any valid concentrated spacing or stableswap amplification/center can be used with any extension address; an exact uint64 fee input preserves arbitrary fee bits. Create form values are shareable through the URL and survive reloads. Matching deposit amounts are always calculated automatically from the edited side. The liquidity chart reconstructs current liquidity from initialized ticks, using the original interface's liquidity math. It shows both token reserves per price bucket within the fetched tick range, with hover details, zoom, drag selection and centered range shortcuts. Deposit amounts use local @ekubo/sdk math with EVM rounding compatibility; changing amounts does not call a quoting contract. Wallets supporting EIP-5792 may batch approvals and deposits without requiring atomic execution; separate approvals remain available. Choose a range, preview amounts, approve tokens, and create a position. Positions can be listed across configured networks and managed on their respective network.
+If required contracts are missing on a network, the Deploy page can deploy Core, FreeLP, and FreeLPDataFetcher at their fixed addresses.
 
-The canonical Core address is bundled. The shared FreeLP manager address is bundled; it needs a one-time deployment on each network before managing positions. The Deploy page uses a fixed CREATE2 salt for Core, FreeLP, and FreeLPDataFetcher, detects existing code, checks for deployed code, and saves addresses per network. Every user gets the same address for the same Core and pinned bytecode. Deploying a fresh Core creates an independent liquidity system. Creation requires deployed Core, FreeLP, and FreeLPDataFetcher code at the fixed addresses. Select a network before choosing tokens; imported tokens must expose their name, symbol, and decimals on chain. Enabling a chain saves a unique zero-address native token using viem metadata. Wallet transactions require wallet confirmation. Terms are available from the footer without an acceptance step.
+## Develop
 
-## Development and verification
+Use Bun 1.4.0.
 
-Use Bun 1.4.0. Run `bun run dev`, `bun run lint`, `bun run check-ts`, `bun run test`, and `bun run build`. Browser tests use Anvil with Osaka support at port 18545: `anvil --port 18545 --hardfork osaka --silent`, then `bun run test:e2e`. Only documented local development keys are used.
+```sh
+bun install --frozen-lockfile
+bun run dev
+```
 
-## IPFS
+Run `bun run lint`, `bun run check-ts`, `bun run test`, and `bun run build` to verify changes. Browser tests require Anvil with Osaka support on port 18545, then `bun run test:e2e`.
 
-CI builds and packages each main commit and version tag. `bun scripts/package-release.ts SOURCE_COMMIT` produces the static site's CAR, manifest, and `deployment.json` with its CID and source commit. CI tests both an isolated IPFS gateway and the npm tarball, then retains artifacts in a private GitHub release. No npm publication occurs.
+## Release
 
-Each successful branch or version-tag build is pinned on the persistent DigitalOcean IPFS node. Find its gateway URL in the commit’s **IPFS preview** status or the Actions job summary. The source repository remains private. Never bring a historical private IPFS blockstore online; CI publishes only the current build’s CAR.
+Set an unpublished version in `package.json`, commit the changes, and push a tag (conventionally `v<version>`). GitHub CI builds, tests, and publishes the verified package to npm through trusted publishing. Every successful build is pinned to IPFS; GitHub releases contain notes only.
 
-Stable IPNS updates remain a separate, launch-gated job. A CID identifies immutable content; IPNS identifies the selected stable release. Restore an authorized public deployment with `ipfs dag import site.car`.
+See [publishing setup](docs/npm-publishing.md) and [distribution](docs/distribution.md) for operational details.
 
-## Licensing
+## License
 
-New interface and CLI code are MIT. The repository started with one squashed reduced-interface commit; squashing does not relicense dependencies or contract artifacts. Reused Ekubo interface math, ABI, and configuration logic are identified in source. Retain the licenses and attribution in THIRD_PARTY_NOTICES.md.
-
-See [distribution and infrastructure](docs/distribution.md) for the bunx/npx commands, immutable IPFS and stable IPNS URLs, allocated node, privacy gates, and recovery instructions.
-
-See [position UX and deterministic deployment validation](docs/ship-ux.md) for the shared addresses, deployment status, and tested behavior.
-
-The positions page combines all configured networks. A stateless FreeLPDataFetcher returns each owner’s complete position snapshot in one `eth_call` per chain; deploy it once from the Deploy tab. The manager’s fixed address is unchanged. Token selection identifies the chain for creation, while management actions use the selected position’s chain and request wallet switching as needed. Settings and Deploy retain network controls for their specific tasks.
-
-FreeLPDataFetcher inherits the pool quote and sparse token balance readers, so positions, liquidity charts, balances and allowances share one fixed reader address. No standalone Quote/Core/Token data fetcher deployment is required. The existing Core still hosts pools; a fresh network may deploy Core from the same page.
-
-Network settings have enable switches and optional RPC override dialogs. Clearing an override restores viem's default transport. Old bundled RPC URLs are removed when migrating settings; explicit custom overrides are preserved. Disabled chains stay disabled across reloads. Protocol addresses remain fixed by the build. The account control uses a local deterministic identicon, and creation starts from the Positions page. IPFS distribution information remains in these docs and CI links, not in the app.
-
-For the GitHub/npm setup and launch checklist, see [npm trusted publishing](docs/npm-publishing.md).
+[MIT](LICENSE). Use at your own risk, without warranty. Third-party code and contract artifacts retain their respective licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).

@@ -1,5 +1,3 @@
-import { Trans } from "@lingui/react/macro";
-import { t } from "@lingui/core/macro";
 import { formatUnits } from "viem";
 import { networkName } from "./networks";
 import { displayAmount } from "./displayAmount";
@@ -50,9 +48,7 @@ export function TokenPickerRows({
       ))}
       {!entries.length ? (
         <p className="token-empty">
-          <Trans>
-            No matching tokens. Paste a contract address to import one.
-          </Trans>
+          No matching tokens. Paste a contract address to import one.
         </p>
       ) : null}
     </>
@@ -75,13 +71,13 @@ function TokenRowBalance({
     );
   if (!state)
     return (
-      <span className="token-row-balance" aria-label={t`Loading balance`}>
+      <span className="token-row-balance" aria-label={"Loading balance"}>
         …
       </span>
     );
   if (!state.balances)
     return (
-      <span className="token-row-balance" title={t`Balance unavailable`}>
+      <span className="token-row-balance" title={"Balance unavailable"}>
         —
       </span>
     );
@@ -89,7 +85,7 @@ function TokenRowBalance({
   return (
     <span
       className="token-row-balance"
-      title={t`Balance: ${formatUnits(balance, token.decimals)}`}
+      title={`Balance: ${formatUnits(balance, token.decimals)}`}
     >
       <strong>{displayAmount(balance, token.decimals)}</strong>
     </span>
@@ -108,10 +104,7 @@ export function PickerBalanceStatus({
     <>
       {[...balances.values()].some((state) => state.error) ? (
         <p className="balance-error">
-          <Trans>
-            Some balances could not be loaded. Refresh or check your RPC
-            settings.
-          </Trans>
+          Some balances could not be loaded. Refresh or check your RPC settings.
         </p>
       ) : null}
     </>

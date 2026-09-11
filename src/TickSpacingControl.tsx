@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { t } from "@lingui/core/macro";
-import { Trans } from "@lingui/react/macro";
 import { checkSpacing, percentToSpacing, spacingPercent } from "./pools";
 import { decimalDisplay } from "./decimalFormat";
 import { Field, ErrorText } from "./common";
@@ -12,7 +10,7 @@ function candidate(value: string, raw: boolean) {
   } catch {
     return {
       spacing: undefined,
-      error: t`Enter a positive spacing that rounds to 1–698605 integer ticks.`,
+      error: "Enter a positive spacing that rounds to 1–698605 integer ticks.",
     };
   }
 }
@@ -34,19 +32,14 @@ export function TickSpacingControl({
   return (
     <details className="tick-spacing-control">
       <summary>
-        <Trans>Tick spacing</Trans> ·{" "}
-        {decimalDisplay(spacingPercent(spacing), 3)}%
+        Tick spacing · {decimalDisplay(spacingPercent(spacing), 3)}%
       </summary>
       {sourceSpacing !== spacing ? (
-        <small className="snapped-value">
-          <Trans>Adjusted to nearest valid value</Trans>
-        </small>
+        <small className="snapped-value">Adjusted to nearest valid value</small>
       ) : null}
       <p>
-        <Trans>
-          Spacing is the price change between adjacent usable ticks. It is
-          independent of the pool fee.
-        </Trans>
+        Spacing is the price change between adjacent usable ticks. It is
+        independent of the pool fee.
       </p>
       <div className="row spacing-presets">
         {[200, 1000, 5982, 19802].map((value) => (
@@ -60,15 +53,7 @@ export function TickSpacingControl({
           </button>
         ))}
       </div>
-      <Field
-        label={
-          raw ? (
-            <Trans>Tick spacing (ticks)</Trans>
-          ) : (
-            <Trans>Tick spacing (%)</Trans>
-          )
-        }
-      >
+      <Field label={raw ? "Tick spacing (ticks)" : "Tick spacing (%)"}>
         <input
           inputMode={raw ? "numeric" : "decimal"}
           value={raw ? ticks : percent}
@@ -83,11 +68,11 @@ export function TickSpacingControl({
           checked={raw}
           onChange={(e) => setRaw(e.target.checked)}
         />
-        <Trans>Enter exact ticks</Trans>
+        Enter exact ticks
       </label>
       {next.spacing ? (
         <p>
-          <Trans>Applies {next.spacing} ticks:</Trans>{" "}
+          Applies {next.spacing} ticks:{" "}
           {decimalDisplay(spacingPercent(next.spacing))}%
         </p>
       ) : null}
@@ -99,7 +84,7 @@ export function TickSpacingControl({
           if (next.spacing) onApply(next.spacing);
         }}
       >
-        <Trans>Apply tick spacing</Trans>
+        Apply tick spacing
       </button>
     </details>
   );

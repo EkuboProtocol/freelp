@@ -1,6 +1,4 @@
 import { snapNumber } from "./snapCreateForm";
-import { t } from "@lingui/core/macro";
-import { Trans } from "@lingui/react/macro";
 import type { Dispatch, SetStateAction } from "react";
 import { SnappedInput } from "./SnappedInput";
 import { Field } from "./common";
@@ -61,9 +59,7 @@ export function RangeFields({
         </div>
       ) : null}
       <small>
-        <Trans>
-          Prices in {symbols[1]} per {symbols[0]}.
-        </Trans>
+        Prices in {symbols[1]} per {symbols[0]}.
       </small>
       {(range.raw ? sourceRange.ticks : sourceRange.prices)
         .slice(0, 2)
@@ -71,14 +67,12 @@ export function RangeFields({
           (value, i) =>
             value && value !== (range.raw ? range.ticks : range.prices)[i],
         ) ? (
-        <small className="snapped-value">
-          <Trans>Adjusted to nearest valid value</Trans>
-        </small>
+        <small className="snapped-value">Adjusted to nearest valid value</small>
       ) : null}
       {!initialized ? (
-        <Field label={<Trans>Initial price</Trans>}>
+        <Field label={"Initial price"}>
           <SnappedInput
-            aria-label={t`Initial price`}
+            aria-label={"Initial price"}
             inputMode="decimal"
             value={sourceRange.prices[2]}
             snapped={range.prices[2]}

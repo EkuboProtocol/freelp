@@ -1,8 +1,6 @@
 import { useCopied } from "./useCopied";
 import { AccountControl } from "./AccountControl";
-import { t } from "@lingui/core/macro";
 import { useEffect, useState, lazy, Suspense } from "react";
-import { Trans } from "@lingui/react/macro";
 import { useSession } from "./session";
 const SettingsPage = lazy(() =>
   import("./SettingsPage").then((module) => ({ default: module.SettingsPage })),
@@ -20,11 +18,9 @@ import { PositionsPage } from "./PositionsPage";
 function BuildPage() {
   return (
     <section>
-      <h2>
-        <Trans>Build details</Trans>
-      </h2>
+      <h2>Build details</h2>
       <p>
-        <Trans>Official source repository:</Trans>{" "}
+        Official source repository:{" "}
         <a
           href="https://github.com/EkuboProtocol/freelp"
           target="_blank"
@@ -34,39 +30,27 @@ function BuildPage() {
         </a>
       </p>
       <p>
-        <Trans>Run the installed app locally with</Trans>{" "}
-        <code>bunx @ekubo/freelp@latest</code> <Trans>or</Trans>{" "}
+        Run the installed app locally with{" "}
+        <code>bunx @ekubo/freelp@latest</code> or{" "}
         <code>npx @ekubo/freelp@latest</code>.
       </p>
       <p>
-        <Trans>
-          The package contains the complete application. Your package manager
-          handles package integrity; the launcher serves local files without
-          fetching a separate build or contacting GitHub.
-        </Trans>
+        The package contains the complete application. Your package manager
+        handles package integrity; the launcher serves local files without
+        fetching a separate build or contacting GitHub.
       </p>
-      <h3>
-        <Trans>Run locally</Trans>
-      </h3>
+      <h3>Run locally</h3>
       <Command command="bunx @ekubo/freelp@latest" />
       <Command command="npx @ekubo/freelp@latest" />
       <p>
-        <Trans>
-          Use a version suffix to keep a specific release, for example
-          @ekubo/freelp@0.1.1. The package opens a local web server; your wallet
-          signs transactions in the browser.
-        </Trans>
+        Use a version suffix to keep a specific release, for example
+        @ekubo/freelp@0.1.1. The package opens a local web server; your wallet
+        signs transactions in the browser.
       </p>
       <p className="row">
-        <a href="./licenses/freelp.txt">
-          <Trans>MIT license</Trans>
-        </a>
-        <a href="./licenses/contracts.txt">
-          <Trans>Contract license</Trans>
-        </a>
-        <a href="./licenses/dependencies.txt">
-          <Trans>Dependency notices</Trans>
-        </a>
+        <a href="./licenses/freelp.txt">MIT license</a>
+        <a href="./licenses/contracts.txt">Contract license</a>
+        <a href="./licenses/dependencies.txt">Dependency notices</a>
       </p>
     </section>
   );
@@ -105,7 +89,7 @@ export function App() {
           document.getElementById("main-content")?.focus();
         }}
       >
-        <Trans>Skip to content</Trans>
+        Skip to content
       </a>
       <header>
         <h1>FreeLP</h1>
@@ -118,13 +102,7 @@ export function App() {
         </p>
       ) : null}
       <div id="main-content" tabIndex={-1}>
-        <Suspense
-          fallback={
-            <p role="status">
-              <Trans>Loading…</Trans>
-            </p>
-          }
-        >
+        <Suspense fallback={<p role="status">Loading…</p>}>
           <Page
             key={route.split("?")[0].split("/")[1] || "positions"}
             route={route}
@@ -132,14 +110,10 @@ export function App() {
         </Suspense>
       </div>
       <footer className="row">
-        <a href="#/terms">
-          <Trans>Terms</Trans>
-        </a>
-        <a href="#/build">
-          <Trans>About FreeLP</Trans>
-        </a>
+        <a href="#/terms">Terms</a>
+        <a href="#/build">About FreeLP</a>
         <span className="free-forever">
-          <Trans>No fees, completely free to use, forever</Trans>
+          No fees, completely free to use, forever
         </span>
       </footer>
     </main>
@@ -148,26 +122,26 @@ export function App() {
 
 function MainNavigation({ route }: { route: string }) {
   return (
-    <nav aria-label={t`Main navigation`}>
+    <nav aria-label={"Main navigation"}>
       <a
         href="#/positions"
         aria-current={
           route.startsWith("#/positions") || !route ? "page" : undefined
         }
       >
-        <Trans>Positions</Trans>
+        Positions
       </a>
       <a
         href="#/settings"
         aria-current={route.startsWith("#/settings") ? "page" : undefined}
       >
-        <Trans>Settings</Trans>
+        Settings
       </a>
       <a
         href="#/deploy"
         aria-current={route.startsWith("#/deploy") ? "page" : undefined}
       >
-        <Trans>Deploy</Trans>
+        Deploy
       </a>
     </nav>
   );
@@ -181,7 +155,7 @@ function Command({ command }: { command: string }) {
       await navigator.clipboard.writeText(command);
       showCopied();
     } catch {
-      setError(t`Select and copy the command manually.`);
+      setError("Select and copy the command manually.");
     }
   }
   return (
@@ -189,7 +163,7 @@ function Command({ command }: { command: string }) {
       <div className="command">
         <code>{command}</code>
         <button onClick={() => void copy()}>
-          {copied ? <Trans>Copied</Trans> : <Trans>Copy command</Trans>}
+          {copied ? "Copied" : "Copy command"}
         </button>
       </div>
       <span role="status">{error}</span>

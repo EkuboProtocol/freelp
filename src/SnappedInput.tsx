@@ -1,5 +1,5 @@
 import { useId, useState, type InputHTMLAttributes } from "react";
-import { Trans } from "@lingui/react/macro";
+
 export function SnappedInput({
   value,
   snapped,
@@ -35,7 +35,7 @@ export function SnappedInput({
           className="snapped-value"
           style={{ visibility: editing ? "hidden" : "visible" }}
         >
-          <Trans>Adjusted to nearest valid value</Trans>
+          Adjusted to nearest valid value
         </small>
       ) : null}
     </>

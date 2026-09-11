@@ -2,7 +2,7 @@ name: Verify and deploy to IPFS
 on:
   push:
     branches: ['**']
-    tags: ['v*']
+    tags: ['**']
 permissions:
   contents: read
 jobs:
@@ -35,7 +35,6 @@ jobs:
       - name: Package content-addressed site
         run: |
           bun scripts/package-release.ts
-          cp .cache/ux-audit/accessibility.json .cache/ux-audit/lighthouse-*.json release/
       - name: Pack npm distribution (no publication)
         run: npm pack --ignore-scripts --pack-destination release
       - name: Exercise packaged application
@@ -70,21 +69,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: bun scripts/link-build.ts
-      - name: Retain deployment artifacts privately before launch
+      - name: Retain verified build for publishing
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: verified-release
+          path: |
+            release/ekubo-freelp-*.tgz
+            release/site.car
+            release/deployment.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Create release notes
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            tag="${GITHUB_REF#refs/tags/}"
-            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$tag" --notes-file docs/release-notes.md release/*
-          else
-            tag="build-$GITHUB_SHA"
-            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false --title "Build $GITHUB_SHA" --notes-file docs/release-notes.md release/*
-          fi
+        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$GITHUB_REF_NAME" --notes-file docs/release-notes.md
 
   publish-npm:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v') && vars.FREELP_NPM_PUBLISH == 'true'
+    if: startsWith(github.ref, 'refs/tags/') && vars.FREELP_NPM_PUBLISH == 'true'
     runs-on: ubuntu-latest
     environment: npm
     permissions:
@@ -94,12 +97,12 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: '24'
-          registry-url: https://registry.npmjs.org
           package-manager-cache: false
       - name: Download the verified release package
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --pattern 'ekubo-freelp-*.tgz' --dir release
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: verified-release
+          path: release
       - name: Validate release identity and launch readiness
         shell: bash
         run: |
@@ -109,11 +112,11 @@ jobs:
           node --input-type=module <<'JS'
           import { readFileSync } from 'node:fs';
           const p = JSON.parse(readFileSync('manifest.json', 'utf8'));
-          if (p.name !== '@ekubo/freelp' || `v${p.version}` !== process.env.GITHUB_REF_NAME || p.private === true || p.repository?.url !== 'git+https://github.com/EkuboProtocol/freelp.git') {
+          if (p.name !== '@ekubo/freelp' || typeof p.version !== 'string' || p.private === true || p.repository?.url !== 'git+https://github.com/EkuboProtocol/freelp.git') {
             throw new Error('Package name, version, repository or launch readiness does not match this release.');
           }
           JS
       - name: Publish using npm trusted publishing
         env:
           NPM_CONFIG_PROVENANCE: ${{ !github.event.repository.private }}
-        run: npm publish release/ekubo-freelp-*.tgz --access public --ignore-scripts
+        run: npm publish release/ekubo-freelp-*.tgz --access public --ignore-scripts --registry=https://registry.npmjs.org/ --tag latest

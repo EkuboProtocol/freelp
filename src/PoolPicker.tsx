@@ -1,6 +1,4 @@
-import { t } from "@lingui/core/macro";
 import { SnappedInput } from "./SnappedInput";
-import { Trans } from "@lingui/react/macro";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { PoolKeyFields } from "./PoolKeyFields";
 import { TickSpacingControl } from "./TickSpacingControl";
@@ -30,11 +28,9 @@ export function PoolPicker({
   return (
     <section className="pool-picker">
       <div className="row spread">
-        <h3>
-          <Trans>Choose a pool</Trans>
-        </h3>
+        <h3>Choose a pool</h3>
         <label className="row advanced-toggle">
-          <Trans>Advanced</Trans>
+          Advanced
           <input
             type="checkbox"
             role="switch"
@@ -65,18 +61,14 @@ export function PoolPicker({
             <strong>
               {decimalDisplay(Number(percentFromExactFee(preset.exactFee)))}%
             </strong>
-            <small>
-              <Trans>Fee tier</Trans>
-            </small>
+            <small>Fee tier</small>
             {form.kind === "concentrated" ? (
               <small>
-                <Trans>Tick spacing</Trans>{" "}
-                {decimalDisplay(spacingPercent(preset.spacing), 3)}%
+                Tick spacing {decimalDisplay(spacingPercent(preset.spacing), 3)}
+                %
               </small>
             ) : (
-              <small>
-                <Trans>Stableswap</Trans>
-              </small>
+              <small>Stableswap</small>
             )}
           </button>
         ))}
@@ -84,17 +76,9 @@ export function PoolPicker({
       <div id="advanced-pool" hidden={!advanced} className="advanced-settings">
         <div className="grid">
           <div>
-            <Field
-              label={
-                rawFee ? (
-                  <Trans>Exact fee (uint64)</Trans>
-                ) : (
-                  <Trans>Pool fee (%)</Trans>
-                )
-              }
-            >
+            <Field label={rawFee ? "Exact fee (uint64)" : "Pool fee (%)"}>
               <SnappedInput
-                aria-label={rawFee ? t`Exact fee (uint64)` : t`Pool fee (%)`}
+                aria-label={rawFee ? "Exact fee (uint64)" : "Pool fee (%)"}
                 inputMode={rawFee ? "numeric" : "decimal"}
                 snapped={rawFee ? exact : displayedFee(form)}
                 value={
@@ -120,7 +104,7 @@ export function PoolPicker({
                 checked={rawFee}
                 onChange={(e) => setRawFee(e.target.checked)}
               />
-              <Trans>Enter exact amount</Trans>
+              Enter exact amount
             </label>
           </div>
           <PoolKeyFields

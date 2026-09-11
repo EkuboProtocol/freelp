@@ -1,5 +1,3 @@
-import { t } from "@lingui/core/macro";
-import { Trans } from "@lingui/react/macro";
 import { useRef, useState } from "react";
 import { MAINNET_CHAINS, chainDefinition, rpcEndpoint } from "./chains";
 import { configuredNetwork } from "./networks";
@@ -48,7 +46,7 @@ export function SettingsPage() {
         const id = await rpc(next).getChainId();
         if (id !== next.chainId)
           throw new Error(
-            t`Expected chain ${next.chainId}, but this RPC reports ${id}.`,
+            `Expected chain ${next.chainId}, but this RPC reports ${id}.`,
           );
       }
       configure(next);
@@ -61,18 +59,14 @@ export function SettingsPage() {
   }
   return (
     <section>
-      <h2>
-        <Trans>Networks</Trans>
-      </h2>
+      <h2>Networks</h2>
       <p>
-        <Trans>
-          Enable the networks you use. Their names, native tokens and default
-          RPCs come from viem.
-        </Trans>
+        Enable the networks you use. Their names, native tokens and default RPCs
+        come from viem.
       </p>
       <input
-        aria-label={t`Search networks`}
-        placeholder={t`Search networks`}
+        aria-label={"Search networks"}
+        placeholder={"Search networks"}
         value={search}
         onChange={(event) => {
           setSearch(event.target.value);
@@ -85,7 +79,7 @@ export function SettingsPage() {
             <label className="row">
               <input
                 type="checkbox"
-                aria-label={t`Enable ${chain.name}`}
+                aria-label={`Enable ${chain.name}`}
                 checked={enabled.has(chain.id)}
                 disabled={transactionBusy}
                 onChange={(event) =>
@@ -100,20 +94,16 @@ export function SettingsPage() {
               </span>
             </label>
             <button
-              aria-label={t`Edit ${chain.name} RPC`}
+              aria-label={`Edit ${chain.name} RPC`}
               disabled={transactionBusy}
               onClick={() => open(chain.id)}
             >
-              <Trans>RPC settings</Trans>
+              RPC settings
             </button>
           </div>
         ))}
       </div>
-      {!matches.length ? (
-        <p>
-          <Trans>No matching networks.</Trans>
-        </p>
-      ) : null}
+      {!matches.length ? <p>No matching networks.</p> : null}
       {!search ? (
         <button
           onClick={() => {
@@ -121,16 +111,12 @@ export function SettingsPage() {
             setLimit(40);
           }}
         >
-          {showAll ? (
-            <Trans>Show enabled networks</Trans>
-          ) : (
-            <Trans>Show all networks</Trans>
-          )}
+          {showAll ? "Show enabled networks" : "Show all networks"}
         </button>
       ) : null}
       {matches.length > limit ? (
         <button onClick={() => setLimit((value) => value + 40)}>
-          <Trans>Show more</Trans>
+          Show more
         </button>
       ) : null}
       <dialog
@@ -148,12 +134,10 @@ export function SettingsPage() {
           }}
         >
           <div className="row spread">
-            <h2 id="network-dialog-title">
-              <Trans>RPC settings</Trans>
-            </h2>
+            <h2 id="network-dialog-title">RPC settings</h2>
             <button
               type="button"
-              aria-label={t`Close network dialog`}
+              aria-label={"Close network dialog"}
               disabled={busy}
               onClick={() => dialog.current?.close()}
             >
@@ -162,7 +146,7 @@ export function SettingsPage() {
           </div>
           <p>{editing?.name}</p>
           <label>
-            <Trans>RPC URL override</Trans>
+            RPC URL override
             <input
               ref={input}
               type="url"
@@ -176,15 +160,13 @@ export function SettingsPage() {
               onChange={(event) => setRpcUrl(event.target.value)}
             />
           </label>
-          <p>
-            <Trans>Leave blank to use this network's default RPC.</Trans>
-          </p>
+          <p>Leave blank to use this network's default RPC.</p>
           <button type="button" disabled={busy} onClick={() => setRpcUrl("")}>
-            <Trans>Use default RPC</Trans>
+            Use default RPC
           </button>
           {error ? <p role="alert">{error}</p> : null}
           <button type="submit" disabled={busy}>
-            {busy ? <Trans>Checking RPC…</Trans> : <Trans>Save RPC</Trans>}
+            {busy ? "Checking RPC…" : "Save RPC"}
           </button>
         </form>
       </dialog>

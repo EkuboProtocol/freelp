@@ -2,7 +2,6 @@ import { floatSqrtRatioToFixed, toSqrtRatio } from "@ekubo/sdk";
 import fetcherArtifact from "../artifacts/FreeLPDataFetcher.json" with { type: "json" };
 import { quoteFetcher } from "./poolData";
 import { networkCurrencies } from "./tokens";
-import { t } from "@lingui/core/macro";
 import { getAddress, zeroAddress } from "viem";
 import { rpc } from "./rpc";
 import { poolConfig, poolRange, type PoolOptions } from "./poolOptions";
@@ -34,7 +33,7 @@ async function loadTokens(input: Input) {
     );
     if (!currency)
       throw new Error(
-        t`Import this token's on-chain metadata before creating a position.`,
+        "Import this token's on-chain metadata before creating a position.",
       );
     return currency;
   });
@@ -77,7 +76,7 @@ export async function loadDepositQuote(input: Input) {
   const { settings, range } = input;
   const addresses = [getAddress(input.a), getAddress(input.b)];
   if (BigInt(addresses[0]) >= BigInt(addresses[1]))
-    throw new Error(t`Choose two different tokens in address order.`);
+    throw new Error("Choose two different tokens in address order.");
   const poolKey = {
     token0: addresses[0],
     token1: addresses[1],
@@ -89,7 +88,7 @@ export async function loadDepositQuote(input: Input) {
     );
     if (!currency)
       throw new Error(
-        t`Import this token's on-chain metadata before creating a position.`,
+        "Import this token's on-chain metadata before creating a position.",
       );
     return currency;
   });
@@ -99,7 +98,7 @@ export async function loadDepositQuote(input: Input) {
     metadata[input.specified].decimals,
   );
   if (amounts[input.specified] === 0n)
-    throw new Error(t`Enter an amount greater than zero.`);
+    throw new Error("Enter an amount greater than zero.");
   // Reject incomplete amounts, pool keys and ranges before making any RPC request.
   poolRange(
     range,
@@ -170,6 +169,6 @@ function assertNeededToken(
 ) {
   if ((side === 0 && tick >= upper) || (side === 1 && tick <= lower))
     throw new Error(
-      t`This token is not needed for the selected range. Enter an amount for the other token.`,
+      "This token is not needed for the selected range. Enter an amount for the other token.",
     );
 }

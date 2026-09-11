@@ -1,4 +1,3 @@
-import { i18n } from "@lingui/core";
 import { expect, test } from "bun:test";
 import { zeroAddress, toHex } from "viem";
 import { defaultCreateForm } from "../../src/createForm";
@@ -53,7 +52,6 @@ test("amount typing accepts leading and trailing decimal points but rejects inva
     expect(() => parseAmount(value, 6)).toThrow();
 });
 test("RPC diagnostic data stays out of user-facing errors", () => {
-  i18n.loadAndActivate({ locale: "en", messages: {} });
   const text = errorMessage(
     new Error(
       "RPC Request failed.\nURL: https://secret.example/key\nRequest body: {}\nDetails: over rate limit",

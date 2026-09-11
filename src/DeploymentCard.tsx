@@ -1,7 +1,5 @@
 import { errorMessage } from "./errors";
 import { useEffect, useState } from "react";
-import { Trans } from "@lingui/react/macro";
-import { t } from "@lingui/core/macro";
 import { useSession } from "./session";
 import { verifyCode, type ContractKind } from "./contracts";
 import {
@@ -40,16 +38,16 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
     const transaction = await prepareDeployment(settings, kind);
     await send(transaction);
     await verifyCode(settings, address, kind);
-    setStatus(t`Deployed ${kind} at ${address}.`);
+    setStatus(`Deployed ${kind} at ${address}.`);
     setRefresh((n) => n + 1);
   }
   return (
     <article className="panel">
-      <h3>{kind === "FreeLP" ? <Trans>Position manager</Trans> : kind}</h3>
+      <h3>{kind === "FreeLP" ? "Position manager" : kind}</h3>
       <p className="mono">{address}</p>
       {usesCore ? (
         <p>
-          <Trans>Core:</Trans> <code>{settings.core}</code>
+          Core: <code>{settings.core}</code>
         </p>
       ) : null}
       <p role="status">
@@ -58,11 +56,9 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
       <ErrorText error={current?.error ?? ""} />
       <div className="row">
         <Action run={deploy} disabled={deploymentDisabled(current)}>
-          <Trans>Deploy {kind}</Trans>
+          Deploy {kind}
         </Action>
-        <button onClick={() => setRefresh((n) => n + 1)}>
-          <Trans>Refresh status</Trans>
-        </button>
+        <button onClick={() => setRefresh((n) => n + 1)}>Refresh status</button>
       </div>
     </article>
   );
@@ -73,9 +69,9 @@ function deploymentDisabled(current: Check) {
   return !current || !!current.error || current.exists;
 }
 function DeploymentMessage({ current }: { current: Check }) {
-  if (!current) return <Trans>Checking code on this network…</Trans>;
-  if (current.exists) return <Trans>Already deployed</Trans>;
+  if (!current) return "Checking code on this network…";
+  if (current.exists) return "Already deployed";
   if (current.error)
-    return <Trans>Unable to read this address. Deployment is disabled.</Trans>;
-  return <Trans>Not deployed · no code at this address</Trans>;
+    return "Unable to read this address. Deployment is disabled.";
+  return "Not deployed · no code at this address";
 }

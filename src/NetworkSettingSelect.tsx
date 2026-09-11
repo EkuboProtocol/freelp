@@ -1,11 +1,10 @@
-import { Trans } from "@lingui/react/macro";
 import { useSession } from "./session";
 import { networkName } from "./networks";
 export function NetworkSettingSelect() {
   const { settings, networks, selectNetwork, busy } = useSession();
   return (
     <label>
-      <Trans>Deployment network</Trans>
+      Deployment network
       <select
         disabled={busy}
         value={settings.chainId}

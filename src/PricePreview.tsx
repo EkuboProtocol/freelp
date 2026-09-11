@@ -1,4 +1,3 @@
-import { Trans } from "@lingui/react/macro";
 import { displayPrice, tickPrice, sqrtPrice } from "./prices";
 import type { Descriptor } from "./types";
 import type { Token } from "./contracts";
@@ -16,11 +15,7 @@ export function PricePreview({
 }) {
   const [a, b] = tokens;
   if (sqrtRatio === 0n && initialTick === undefined)
-    return (
-      <p>
-        <Trans>Pool state is unavailable.</Trans>
-      </p>
-    );
+    return <p>Pool state is unavailable.</p>;
   const price =
     sqrtRatio === 0n
       ? tickPrice(initialTick ?? 0, a.decimals, b.decimals)
@@ -29,29 +24,22 @@ export function PricePreview({
     <div>
       {initialTick !== undefined ? (
         <p>
-          {sqrtRatio === 0n ? (
-            <Trans>New pool: creation will initialize its price.</Trans>
-          ) : (
-            <Trans>Existing pool: the initial-price input is ignored.</Trans>
-          )}
+          {sqrtRatio === 0n
+            ? "New pool: creation will initialize its price."
+            : "Existing pool: the initial-price input is ignored."}
         </p>
       ) : null}
       <p>
-        <Trans>
-          Price ({b.symbol} per {a.symbol}):
-        </Trans>{" "}
-        ≈ {displayPrice(price)}
+        Price ({b.symbol} per {a.symbol}): ≈ {displayPrice(price)}
       </p>
       <p>
-        <Trans>Position range:</Trans> ≈{" "}
+        Position range: ≈{" "}
         {displayPrice(tickPrice(descriptor.tickLower, a.decimals, b.decimals))}{" "}
         —{" "}
         {displayPrice(tickPrice(descriptor.tickUpper, a.decimals, b.decimals))}
       </p>
       <details>
-        <summary>
-          <Trans>Exact ticks</Trans>
-        </summary>
+        <summary>Exact ticks</summary>
         <p>
           {descriptor.tickLower} — {descriptor.tickUpper}
         </p>

@@ -1,6 +1,5 @@
 import { errorMessage } from "./errors";
 import { useState, type ReactNode } from "react";
-import { Trans } from "@lingui/react/macro";
 import { useSession } from "./session";
 export function Field({
   label,
@@ -53,7 +52,7 @@ export function Action({
 export function ErrorText({ error }: { error: string }) {
   return error ? (
     <p role="alert" className="status">
-      <Trans>Error: {error}</Trans>
+      Error: {error}
     </p>
   ) : null;
 }

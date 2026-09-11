@@ -1,6 +1,4 @@
 import { toSqrtRatio } from "@ekubo/sdk";
-import { Trans } from "@lingui/react/macro";
-import { t } from "@lingui/core/macro";
 import { sqrtPrice, tickPrice, displayPrice } from "./prices";
 import type { Position } from "./types";
 export function positionState(position: Position) {
@@ -15,13 +13,11 @@ export function PositionStatus({ position }: { position: Position }) {
   const state = positionState(position);
   return (
     <span className={`position-status ${state}`}>
-      {state === "closed" ? (
-        <Trans>Closed</Trans>
-      ) : state === "active" ? (
-        <Trans>In range</Trans>
-      ) : (
-        <Trans>Out of range</Trans>
-      )}
+      {state === "closed"
+        ? "Closed"
+        : state === "active"
+          ? "In range"
+          : "Out of range"}
     </span>
   );
 }
@@ -43,7 +39,7 @@ export function PositionRange({
       <div
         className="position-range-track"
         role="img"
-        aria-label={t`Current price ${displayPrice(current)}; range ${displayPrice(lower)} to ${displayPrice(upper)}`}
+        aria-label={`Current price ${displayPrice(current)}; range ${displayPrice(lower)} to ${displayPrice(upper)}`}
       >
         <span style={{ left: `${Number.isFinite(marker) ? marker : 0}%` }} />
       </div>

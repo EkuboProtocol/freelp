@@ -7,7 +7,7 @@
 - Cross-network owned-position listing, creation, deposits, withdrawals, fee collection, transfer and burn. On-chain ownership and metadata remain authoritative.
 - Browser deployment of Core, FreeLP and the combined FreeLPDataFetcher, with shared transaction consent and runtime verification.
 - npm distribution with bundled static assets, no runtime dependencies, custom binaries, GitHub attestation, or second application download.
-- Per-commit static IPFS artifacts; offline verification and private releases before launch.
+- Per-commit static IPFS artifacts; offline verification and verified Actions artifacts.
 - Monochrome styling and retained legal notices. New source MIT; contract/dependency licensing is unchanged.
 
 Free means no application fee or operator service bill. Users still pay chain gas. Public RPC availability and long-term IPFS retention depend on their operators; users can replace RPCs, self-host, and retain CARs.

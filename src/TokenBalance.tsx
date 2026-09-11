@@ -1,7 +1,6 @@
 import { errorMessage } from "./errors";
 import { displayAmount } from "./displayAmount";
 import { useEffect, useState } from "react";
-import { Trans } from "@lingui/react/macro";
 import { formatUnits, getAddress, isAddress, zeroAddress } from "viem";
 import { token, type Token } from "./contracts";
 import { networkCurrencies, type Currency } from "./tokens";
@@ -109,17 +108,13 @@ function BalanceStatus({
     <div className="balance-actions" role="status">
       {failed ? (
         <>
-          <span>
-            <Trans>Balance unavailable</Trans>
-          </span>
+          <span>Balance unavailable</span>
           <button type="button" onClick={retry}>
-            <Trans>Retry balance</Trans>
+            Retry balance
           </button>
         </>
       ) : (
-        <span>
-          <Trans>Loading balance…</Trans>
-        </span>
+        <span>Loading balance…</span>
       )}
     </div>
   );
@@ -135,8 +130,7 @@ function BalanceActions({
   return (
     <div className="balance-actions">
       <small title={formatUnits(value.balance, value.decimals)}>
-        <Trans>Balance:</Trans> {displayAmount(value.balance, value.decimals)}{" "}
-        {value.symbol}
+        Balance: {displayAmount(value.balance, value.decimals)} {value.symbol}
       </small>
       <div className="row">
         <button
@@ -145,7 +139,7 @@ function BalanceActions({
             onAmount(formatUnits(value.balance / 2n, value.decimals))
           }
         >
-          <Trans>Half</Trans>
+          Half
         </button>
         <button
           type="button"
@@ -158,7 +152,7 @@ function BalanceActions({
             )
           }
         >
-          {percent === 100 ? <Trans>Max</Trans> : <Trans>Use 95%</Trans>}
+          {percent === 100 ? "Max" : "Use 95%"}
         </button>
       </div>
     </div>

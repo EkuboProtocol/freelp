@@ -2,8 +2,6 @@ import { PoolIdentity } from "./PoolIdentity";
 import { PositionStatus, PositionRange } from "./PositionRange";
 import type { Currency } from "./tokens";
 import { displayPrice, tickPrice } from "./prices";
-import { t } from "@lingui/core/macro";
-import { Trans } from "@lingui/react/macro";
 import { networkCurrencies } from "./tokens";
 import { networkName } from "./networks";
 import { displayAmount } from "./displayAmount";
@@ -24,7 +22,7 @@ export function PortfolioPosition({
       ),
   );
   const amount = (value: bigint, i: number) =>
-    `${displayAmount(value, tokens[i]?.decimals ?? 0)} ${tokens[i]?.symbol ?? t`raw units`}`;
+    `${displayAmount(value, tokens[i]?.decimals ?? 0)} ${tokens[i]?.symbol ?? "raw units"}`;
   return (
     <article className="panel portfolio-position">
       <div className="row spread">
@@ -37,11 +35,11 @@ export function PortfolioPosition({
       <PositionStatus position={p} />
       <PoolIdentity descriptor={p.descriptor} />
       <p>
-        <Trans>Principal:</Trans> {amount(p.amounts.principal0, 0)} /{" "}
+        Principal: {amount(p.amounts.principal0, 0)} /{" "}
         {amount(p.amounts.principal1, 1)}
       </p>
       <p>
-        <Trans>Uncollected fees:</Trans> {amount(p.amounts.fees0, 0)} /{" "}
+        Uncollected fees: {amount(p.amounts.fees0, 0)} /{" "}
         {amount(p.amounts.fees1, 1)}
       </p>
       <PositionRangePrice tokens={tokens} position={p} />
@@ -52,17 +50,12 @@ export function PortfolioPosition({
         />
       ) : null}
       <details>
-        <summary>
-          <Trans>Pool details</Trans>
-        </summary>
+        <summary>Pool details</summary>
         <p>
-          <Trans>Tick range:</Trans> {p.descriptor.tickLower} —{" "}
-          {p.descriptor.tickUpper}
+          Tick range: {p.descriptor.tickLower} — {p.descriptor.tickUpper}
         </p>
       </details>
-      <button onClick={onSelect}>
-        <Trans>Manage position #{p.id.toString()}</Trans>
-      </button>
+      <button onClick={onSelect}>Manage position #{p.id.toString()}</button>
     </article>
   );
 }
@@ -78,11 +71,11 @@ function PositionRangePrice({
   if (!a || !b) return null;
   return (
     <p>
-      <Trans>Price range:</Trans>{" "}
+      Price range:{" "}
       {displayPrice(tickPrice(p.descriptor.tickLower, a.decimals, b.decimals))}{" "}
       —{" "}
       {displayPrice(tickPrice(p.descriptor.tickUpper, a.decimals, b.decimals))}{" "}
-      {b.symbol} <Trans>per</Trans> {a.symbol}
+      {b.symbol} per {a.symbol}
     </p>
   );
 }

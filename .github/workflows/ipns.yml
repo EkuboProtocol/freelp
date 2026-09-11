@@ -16,6 +16,7 @@ on:
     - cron: '17 */12 * * *'
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: freelp-stable-ipns
   cancel-in-progress: false

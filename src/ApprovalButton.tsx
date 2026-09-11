@@ -1,4 +1,3 @@
-import { Trans } from "@lingui/react/macro";
 import { zeroAddress } from "viem";
 import { useSession } from "./session";
 import { approval, type Token } from "./contracts";
@@ -26,11 +25,7 @@ export function ApprovalButton({
         send(approval(token.address, settings.manager, reset ? 0n : required))
       }
     >
-      {reset ? (
-        <Trans>Reset {token.symbol} approval</Trans>
-      ) : (
-        <Trans>Approve {token.symbol}</Trans>
-      )}
+      {reset ? <>Reset {token.symbol} approval</> : <>Approve {token.symbol}</>}
     </Action>
   );
 }

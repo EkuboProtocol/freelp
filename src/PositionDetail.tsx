@@ -3,13 +3,11 @@ import { depositCalls } from "./walletCalls";
 import { PoolIdentity } from "./PoolIdentity";
 import { displayAmount } from "./displayAmount";
 import { errorMessage } from "./errors";
-import { t } from "@lingui/core/macro";
 import { usePositionDeposit } from "./usePositionDeposit";
 import { PositionDepositFields } from "./PositionDepositFields";
 import { PositionRange, PositionStatus } from "./PositionRange";
 import { PricePreview } from "./PricePreview";
 import { useEffect, useState } from "react";
-import { Trans } from "@lingui/react/macro";
 import { encodeFunctionData, erc721Abi, getAddress, zeroAddress } from "viem";
 import { useSession } from "./session";
 import { token, managerData, type Token } from "./contracts";
@@ -60,12 +58,12 @@ export function PositionDetail({ position: p }: { position: Position }) {
   }
   function factor() {
     if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
-      throw new Error(t`Invalid slippage.`);
+      throw new Error("Invalid slippage.");
     return BigInt(10000 - slippage);
   }
   async function withdraw(feesOnly: boolean) {
     if (!Number.isInteger(portion) || portion < 1 || portion > 100)
-      throw new Error(t`Withdrawal percentage must be 1–100.`);
+      throw new Error("Withdrawal percentage must be 1–100.");
     const liquidity = feesOnly
       ? 0n
       : (p.amounts.liquidity * BigInt(portion)) / 100n;
@@ -95,9 +93,9 @@ export function PositionDetail({ position: p }: { position: Position }) {
     });
   }
   async function add() {
-    if (!tokens) throw new Error(t`Token metadata unavailable.`);
+    if (!tokens) throw new Error("Token metadata unavailable.");
     if (!deposit.result)
-      throw new Error(t`Wait for the matching deposit amount.`);
+      throw new Error("Wait for the matching deposit amount.");
     const { max0, max1, liquidity } = deposit.result;
     const transaction = {
       to: settings.manager,
@@ -121,21 +119,13 @@ export function PositionDetail({ position: p }: { position: Position }) {
   const image = metadataImage(p.metadata);
   return (
     <div className="position-detail">
-      <h2>
-        <Trans>Position #{p.id.toString()}</Trans>
-      </h2>
+      <h2>Position #{p.id.toString()}</h2>
       <PositionStatus position={p} />
       <PoolIdentity descriptor={p.descriptor} />
       {image ? (
         <details className="nft-metadata">
-          <summary>
-            <Trans>Position NFT</Trans>
-          </summary>
-          <img
-            className="nft"
-            src={image}
-            alt={t`On-chain position metadata`}
-          />
+          <summary>Position NFT</summary>
+          <img className="nft" src={image} alt={"On-chain position metadata"} />
         </details>
       ) : null}
       {tokens ? (
@@ -152,20 +142,18 @@ export function PositionDetail({ position: p }: { position: Position }) {
               <strong>{t.symbol}</strong>
               {t.metadataMissing ? (
                 <small>
-                  <Trans>
-                    Decimals unavailable: displayed and deposit amounts use raw
-                    integer units.
-                  </Trans>
+                  Decimals unavailable: displayed and deposit amounts use raw
+                  integer units.
                 </small>
               ) : null}
               <br />
-              <Trans>Principal:</Trans>{" "}
+              Principal:{" "}
               {displayAmount(
                 i === 0 ? p.amounts.principal0 : p.amounts.principal1,
                 t.decimals,
               )}
               <br />
-              <Trans>Uncollected fees:</Trans>{" "}
+              Uncollected fees:{" "}
               {displayAmount(
                 i === 0 ? p.amounts.fees0 : p.amounts.fees1,
                 t.decimals,
@@ -181,13 +169,13 @@ export function PositionDetail({ position: p }: { position: Position }) {
         />
       ) : null}
       <div className="grid">
-        <Field label={<Trans>Recipient address</Trans>}>
+        <Field label={"Recipient address"}>
           <input
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
           />
         </Field>
-        <Field label={<Trans>Slippage (basis points)</Trans>}>
+        <Field label={"Slippage (basis points)"}>
           <input
             type="number"
             value={slippage}
@@ -196,10 +184,8 @@ export function PositionDetail({ position: p }: { position: Position }) {
         </Field>
       </div>
       <fieldset>
-        <legend>
-          <Trans>Withdraw or collect</Trans>
-        </legend>
-        <Field label={<Trans>Withdraw percentage</Trans>}>
+        <legend>Withdraw or collect</legend>
+        <Field label={"Withdraw percentage"}>
           <input
             type="number"
             min={1}
@@ -210,7 +196,7 @@ export function PositionDetail({ position: p }: { position: Position }) {
         </Field>
         <input
           type="range"
-          aria-label={t`Withdrawal portion`}
+          aria-label={"Withdrawal portion"}
           min={1}
           max={100}
           value={portion}
@@ -230,11 +216,9 @@ export function PositionDetail({ position: p }: { position: Position }) {
         </div>
         <p className="row">
           <Action run={() => withdraw(false)}>
-            <Trans>Withdraw liquidity and fees</Trans>
+            Withdraw liquidity and fees
           </Action>
-          <Action run={() => withdraw(true)}>
-            <Trans>Collect fees</Trans>
-          </Action>
+          <Action run={() => withdraw(true)}>Collect fees</Action>
         </p>
       </fieldset>
       <PositionDepositFields
@@ -256,7 +240,7 @@ export function PositionDetail({ position: p }: { position: Position }) {
             })
           }
         >
-          <Trans>Transfer NFT to recipient</Trans>
+          Transfer NFT to recipient
         </Action>
         <Action
           disabled={
@@ -268,7 +252,7 @@ export function PositionDetail({ position: p }: { position: Position }) {
             send({ to: settings.manager, data: managerData("burn", [p.id]) })
           }
         >
-          <Trans>Burn empty NFT</Trans>
+          Burn empty NFT
         </Action>
       </p>
     </div>

@@ -1,9 +1,7 @@
-import { t } from "@lingui/core/macro";
 import { positionState } from "./PositionRange";
 import { networkCurrencies } from "./tokens";
 import type { Position, Settings } from "./types";
 import { useState, lazy, Suspense } from "react";
-import { Trans } from "@lingui/react/macro";
 import { useSession, NetworkScope } from "./session";
 import { usePortfolio } from "./usePortfolio";
 import { networkName } from "./networks";
@@ -43,42 +41,33 @@ export function PositionsPage() {
       <div hidden={!!current}>
         <div className="row spread">
           <h2>
-            <Trans>Your positions</Trans>{" "}
-            <span className="muted">{positions.length}</span>
+            Your positions <span className="muted">{positions.length}</span>
           </h2>
           <a className="primary-link" href="#/create">
-            <Trans>Create position</Trans>
+            Create position
           </a>
         </div>
         <p>
-          <Trans>
-            All networks. Positions, pool data, and fees are read together from
-            each chain.
-          </Trans>
+          All networks. Positions, pool data, and fees are read together from
+          each chain.
         </p>
         {!account ? (
-          <p>
-            <Trans>
-              Connect a wallet to load positions directly from the chain.
-            </Trans>
-          </p>
+          <p>Connect a wallet to load positions directly from the chain.</p>
         ) : (
           <>
             <button
               disabled={pending > 0 || busy}
               onClick={() => setRefresh((n) => n + 1)}
             >
-              <Trans>Refresh positions</Trans>
+              Refresh positions
             </button>
             {pending > 0 ? (
-              <p role="status">
-                <Trans>Reading {pending} networks…</Trans>
-              </p>
+              <p role="status">Reading {pending} networks…</p>
             ) : null}
             <div className="row portfolio-filters">
               <input
-                aria-label={t`Search positions`}
-                placeholder={t`Search by token, network, address or ID`}
+                aria-label={"Search positions"}
+                placeholder={"Search by token, network, address or ID"}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -88,7 +77,7 @@ export function PositionsPage() {
                   checked={showClosed}
                   onChange={(e) => setShowClosed(e.target.checked)}
                 />
-                <Trans>Show closed</Trans>
+                Show closed
               </label>
             </div>
             <div className="portfolio-positions">
@@ -108,9 +97,7 @@ export function PositionsPage() {
             ) : null}
             {errors.length ? (
               <details className="network-errors">
-                <summary>
-                  <Trans>{errors.length} networks unavailable</Trans>
-                </summary>
+                <summary>{errors.length} networks unavailable</summary>
                 {errors.map((row) => (
                   <p key={row.settings.chainId}>
                     <strong>
@@ -127,7 +114,7 @@ export function PositionsPage() {
       {current ? (
         <>
           <a href="#/positions" className="back-link">
-            <Trans>All positions</Trans>
+            All positions
           </a>
           <NetworkScope settings={current.settings}>
             <fieldset
@@ -136,16 +123,10 @@ export function PositionsPage() {
               aria-busy={!current.fresh}
             >
               <legend>
-                <Trans>Manage position</Trans> ·{" "}
+                Manage position ·{" "}
                 {networkName(current.settings.chainId, current.settings.name)}
               </legend>
-              <Suspense
-                fallback={
-                  <p role="status">
-                    <Trans>Loading…</Trans>
-                  </p>
-                }
-              >
+              <Suspense fallback={<p role="status">Loading…</p>}>
                 <PositionDetail key={selected} position={current.position} />
               </Suspense>
             </fieldset>
@@ -180,13 +161,9 @@ function matchesPosition(
 function EmptyPositions({ total }: { total: number }) {
   return (
     <p>
-      {total ? (
-        <Trans>
-          No matching positions. Try another search or show closed positions.
-        </Trans>
-      ) : (
-        <Trans>No positions found on the available networks.</Trans>
-      )}
+      {total
+        ? "No matching positions. Try another search or show closed positions."
+        : "No positions found on the available networks."}
     </p>
   );
 }

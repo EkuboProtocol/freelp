@@ -1,5 +1,3 @@
-import { t } from "@lingui/core/macro";
-import { Trans } from "@lingui/react/macro";
 import type { Token } from "./contracts";
 import { TokenBalance } from "./TokenBalance";
 import { ApprovalButton } from "./ApprovalButton";
@@ -23,9 +21,7 @@ export function PositionDepositFields({
   ];
   return (
     <fieldset className="position-deposit">
-      <legend>
-        <Trans>Add liquidity</Trans>
-      </legend>
+      <legend>Add liquidity</legend>
       <div className="grid deposit-inputs">
         {addresses.map((address, i) => (
           <div key={address} className="deposit-input">
@@ -33,7 +29,7 @@ export function PositionDepositFields({
               {tokens?.[i].symbol ?? address.slice(0, 8)}
             </strong>
             <input
-              aria-label={t`Add token ${i} amount`}
+              aria-label={`Add token ${i} amount`}
               data-testid={`position-amount-${i}`}
               inputMode="decimal"
               placeholder="0"
@@ -57,16 +53,12 @@ export function PositionDepositFields({
         ))}
       </div>
       <p className="muted">
-        <Trans>
-          The matching amount is calculated from this position’s range and
-          current pool price.
-        </Trans>
+        The matching amount is calculated from this position’s range and current
+        pool price.
       </p>
       <ErrorText error={deposit.error ?? ""} />
       {deposit.pending ? (
-        <p role="status">
-          <Trans>Calculating matching amount…</Trans>
-        </p>
+        <p role="status">Calculating matching amount…</p>
       ) : null}
       <p className="row">
         {tokens?.map((token, i) => (
@@ -80,7 +72,7 @@ export function PositionDepositFields({
           run={add}
           disabled={!deposit.result || deposit.result.liquidity === 0n}
         >
-          <Trans>Add liquidity</Trans>
+          Add liquidity
         </Action>
       </p>
     </fieldset>

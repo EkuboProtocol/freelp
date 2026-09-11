@@ -1,4 +1,3 @@
-import { Trans } from "@lingui/react/macro";
 import { useEffect, useState, type ReactNode } from "react";
 import { useSession, rpc } from "./session";
 import { verifyCode } from "./contracts";
@@ -45,23 +44,14 @@ export function CreateDeploymentGate({ children }: { children: ReactNode }) {
     };
   }, [settings, key]);
   const current = result?.key === key ? result : undefined;
-  if (!current)
-    return (
-      <p role="status">
-        <Trans>Checking required contracts…</Trans>
-      </p>
-    );
+  if (!current) return <p role="status">Checking required contracts…</p>;
   if (!current.errors.length) return children;
   return (
     <div className="panel" role="alert">
-      <h3>
-        <Trans>Deploy contracts to create positions</Trans>
-      </h3>
+      <h3>Deploy contracts to create positions</h3>
       <p>
-        <Trans>
-          Core, FreeLPDataFetcher, and the position manager must match this
-          build before you can create a position on this network.
-        </Trans>
+        Core, FreeLPDataFetcher, and the position manager must match this build
+        before you can create a position on this network.
       </p>
       <ul>
         {current.errors.map((error) => (
@@ -74,11 +64,9 @@ export function CreateDeploymentGate({ children }: { children: ReactNode }) {
           href="#/deploy"
           onClick={() => selectNetwork(settings.chainId)}
         >
-          <Trans>Go to Deploy</Trans>
+          Go to Deploy
         </a>
-        <button onClick={() => setRefresh((n) => n + 1)}>
-          <Trans>Check again</Trans>
-        </button>
+        <button onClick={() => setRefresh((n) => n + 1)}>Check again</button>
       </div>
     </div>
   );

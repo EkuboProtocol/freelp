@@ -1,6 +1,4 @@
 import { SnappedInput } from "./SnappedInput";
-import { t } from "@lingui/core/macro";
-import { Trans } from "@lingui/react/macro";
 import type { Dispatch, SetStateAction } from "react";
 import type { CreateForm } from "./createForm";
 import { Field } from "./common";
@@ -17,21 +15,17 @@ export function PoolKeyFields({
     setForm((previous) => ({ ...previous, [key]: value }));
   return (
     <>
-      <Field label={<Trans>Pool type</Trans>}>
+      <Field label={"Pool type"}>
         <select
-          aria-label={t`Pool type`}
+          aria-label={"Pool type"}
           value={form.kind}
           onChange={(e) => update("kind", e.target.value)}
         >
-          <option value="concentrated">
-            <Trans>Concentrated liquidity</Trans>
-          </option>
-          <option value="stable">
-            <Trans>Stableswap</Trans>
-          </option>
+          <option value="concentrated">Concentrated liquidity</option>
+          <option value="stable">Stableswap</option>
         </select>
       </Field>
-      <Field label={<Trans>Extension address</Trans>}>
+      <Field label={"Extension address"}>
         <input
           value={form.extension}
           onChange={(e) => update("extension", e.target.value)}
@@ -40,19 +34,19 @@ export function PoolKeyFields({
       </Field>
       {form.kind === "stable" ? (
         <>
-          <Field label={<Trans>Amplification exponent</Trans>}>
+          <Field label={"Amplification exponent"}>
             <SnappedInput
               inputMode="numeric"
-              aria-label={t`Amplification exponent`}
+              aria-label={"Amplification exponent"}
               value={sourceForm.amplification}
               snapped={form.amplification}
               onChange={(e) => update("amplification", e.target.value)}
             />
           </Field>
-          <Field label={<Trans>Center tick (multiple of 16)</Trans>}>
+          <Field label={"Center tick (multiple of 16)"}>
             <SnappedInput
               inputMode="numeric"
-              aria-label={t`Center tick (multiple of 16)`}
+              aria-label={"Center tick (multiple of 16)"}
               value={sourceForm.center}
               snapped={form.center}
               onChange={(e) => update("center", e.target.value)}

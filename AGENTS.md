@@ -1,6 +1,6 @@
 # FreeLP development
 
-Source stays private. npm publication is authorized after verification. Successful CI builds may publish IPFS previews. Publish only that build’s site CAR; never expose historical private IPFS blockstores. EVM contracts PRs may be public.
+FreeLP is prepared for open-source distribution under MIT. CI publishes verified npm releases from tags and IPFS previews from successful builds. Publish only the current build’s site CAR.
 
 Use worktrees; keep main clean. New Solidity belongs in EkuboProtocol/evm-contracts. Import pinned compiled artifacts with `scripts/import-contracts.ts` and record their source commit in `artifacts/source.json`.
 
@@ -8,7 +8,7 @@ The application uses only configured RPC endpoints and injected wallets. Core, F
 
 Use black/white styling and system fonts. Retain required license and protocol identifiers.
 
-Wrap user-facing copy in Lingui macros (`Trans`, `t`). Run `bun run messages:extract --locale en` after changing copy and commit `src/locales/en.po`. Keep interpolations inside macros. Do not edit other locale catalogs manually.
+Use plain English JSX and strings for user-facing copy. No translation framework or catalogs.
 
 Run lint, typecheck, unit tests, production build, accessibility checks, and Lighthouse thresholds. Exercise changed transaction flows with the local-chain browser tests. Complexity is capped at 10; simplify functions rather than raising the limit or adding suppressions.
 
@@ -16,4 +16,4 @@ Terms are informational: no acceptance gate, consent storage, or terms version. 
 
 Every successful branch/tag build pins on the DigitalOcean node and attaches its gateway URL to the commit status and Actions summary. Keep FREELP_PUBLIC_RELEASE=false until stable IPNS publication is authorized separately.
 
-The deploy.yml publish-npm job uses npm trusted publishing and the npm environment. Keep FREELP_NPM_PUBLISH=false until trusted publishing is configured. Do not add npm write tokens.
+The deploy.yml publish-npm job uses npm trusted publishing and the npm environment. Trusted publishing is configured; FREELP_NPM_PUBLISH=true. Do not add npm write tokens.
