@@ -1,3 +1,4 @@
+import { SnappedInput } from "./SnappedInput";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 import type { Dispatch, SetStateAction } from "react";
@@ -5,9 +6,11 @@ import type { CreateForm } from "./createForm";
 import { Field } from "./common";
 export function PoolKeyFields({
   form,
+  sourceForm = form,
   setForm,
 }: {
   form: CreateForm;
+  sourceForm?: CreateForm;
   setForm: Dispatch<SetStateAction<CreateForm>>;
 }) {
   const update = (key: keyof CreateForm, value: string) =>
@@ -38,16 +41,20 @@ export function PoolKeyFields({
       {form.kind === "stable" ? (
         <>
           <Field label={<Trans>Amplification exponent</Trans>}>
-            <input
+            <SnappedInput
               inputMode="numeric"
-              value={form.amplification}
+              aria-label={t`Amplification exponent`}
+              value={sourceForm.amplification}
+              snapped={form.amplification}
               onChange={(e) => update("amplification", e.target.value)}
             />
           </Field>
           <Field label={<Trans>Center tick (multiple of 16)</Trans>}>
-            <input
+            <SnappedInput
               inputMode="numeric"
-              value={form.center}
+              aria-label={t`Center tick (multiple of 16)`}
+              value={sourceForm.center}
+              snapped={form.center}
               onChange={(e) => update("center", e.target.value)}
             />
           </Field>

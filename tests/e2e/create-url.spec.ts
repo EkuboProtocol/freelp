@@ -1,3 +1,4 @@
+import { mockPoolData } from "../support/poolRpc";
 import { mockDeployments } from "../support/deploymentRpc";
 import { test, expect } from "@playwright/test";
 import {
@@ -11,6 +12,7 @@ test("create links restore all pool parameters and amounts on reload and history
 }) => {
   await page.route("https://**", (route) => route.abort());
   await mockDeployments(page);
+  await mockPoolData(page);
   const form = {
     ...defaultCreateForm(8453),
     a: "0x0000000000000000000000000000000000000000",
@@ -34,7 +36,6 @@ test("create links restore all pool parameters and amounts on reload and history
   await expect(page.getByLabel("Extension address")).toHaveValue(
     form.extension,
   );
-  await page.locator(".pool-edit summary").click();
   await expect(page.getByLabel("Exact fee (uint64)")).toHaveValue(
     form.exactFee,
   );
@@ -45,7 +46,6 @@ test("create links restore all pool parameters and amounts on reload and history
   await expect(
     page.getByLabel("Calculate the matching token amount"),
   ).toHaveCount(0);
-  await page.locator(".pool-edit summary").click();
   await expect(page.locator(".pool-options")).toBeVisible();
   await page.getByLabel("Amplification exponent").fill("26");
   await expect
@@ -70,7 +70,11 @@ test("pool fee editors stay synchronized and deposit amounts follow pool configu
 }) => {
   await page.route("https://**", (route) => route.abort());
   await mockDeployments(page);
-  await page.goto("/#/create");
+  await mockPoolData(page);
+  await page.goto(
+    "/#/create?chain=8453&a=0x0000000000000000000000000000000000000000&b=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  );
+  await page.getByText("Advanced pool settings", { exact: true }).click();
   await expect(page.getByLabel("Slippage (basis points)")).toBeVisible();
   await expect(page.getByLabel("Token 0 address", { exact: true })).toHaveCount(
     0,
@@ -78,7 +82,6 @@ test("pool fee editors stay synchronized and deposit amounts follow pool configu
   await expect(page.getByLabel("Token 1 address", { exact: true })).toHaveCount(
     0,
   );
-  await page.locator(".pool-edit summary").click();
   const percent = page.getByLabel("Pool fee (%)", { exact: true });
   const exact = page.getByLabel("Exact fee (uint64)");
   await percent.fill("0.3");

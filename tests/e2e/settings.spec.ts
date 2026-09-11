@@ -39,6 +39,9 @@ test("RPC-only add dialog detects networks, rejects failures and persists fixed 
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByLabel("RPC URL")).toBeFocused();
   await expect(dialog.locator("input")).toHaveCount(5);
+  await expect(
+    dialog.getByLabel("Network name", { exact: true }),
+  ).toHaveAttribute("placeholder", "Ethereum");
   await dialog.getByLabel("RPC URL").fill(url);
   await dialog
     .getByLabel("Network name", { exact: true })
@@ -47,7 +50,9 @@ test("RPC-only add dialog detects networks, rejects failures and persists fixed 
   await dialog.getByLabel("Native token name").fill("Test Coin");
   await dialog.getByLabel("Native token decimals").fill("6");
   await dialog.getByRole("button", { name: "Save network" }).click();
-  await expect(dialog.getByRole("alert")).toContainText("RPC unavailable");
+  await expect(dialog.getByRole("alert")).toContainText(
+    "Could not load data from this network",
+  );
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   available = true;
   await dialog.getByRole("button", { name: "Save network" }).click();
@@ -67,6 +72,20 @@ test("RPC-only add dialog detects networks, rejects failures and persists fixed 
     nativeName: "Test Coin",
     nativeDecimals: 6,
   });
+  const nativeTokens = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("freelp:tokens:31337")!).filter(
+      (token: { address: string }) =>
+        token.address === "0x0000000000000000000000000000000000000000",
+    ),
+  );
+  expect(nativeTokens).toEqual([
+    {
+      address: "0x0000000000000000000000000000000000000000",
+      symbol: "TST",
+      name: "Test Coin",
+      decimals: 6,
+    },
+  ]);
   await page.reload();
   await expect(
     page.locator(".network-row").filter({ hasText: "My custom chain" }),

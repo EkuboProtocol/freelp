@@ -72,8 +72,8 @@ function bounds(input: RangeInput, decimals0: number, decimals1: number) {
   }
   if (input.raw) return [rawTick(input.ticks[0]), rawTick(input.ticks[1])];
   return [
-    priceToTick(input.prices[0], decimals0, decimals1, input.spacing, "floor"),
-    priceToTick(input.prices[1], decimals0, decimals1, input.spacing, "ceil"),
+    priceToTick(input.prices[0], decimals0, decimals1, input.spacing, "round"),
+    priceToTick(input.prices[1], decimals0, decimals1, input.spacing, "round"),
   ];
 }
 /** Display only; deposits and slippage limits use the contract's integer quote. */

@@ -36,7 +36,7 @@ export function readCreateForm(hash: string, chain: number): CreateForm {
   for (const name of strings) result[name] = params.get(name) ?? result[name];
   for (const name of ["chain", "slippage"] as const) {
     const value = params.get(name);
-    if (value !== null && Number.isSafeInteger(Number(value)))
+    if (value !== null && Number.isFinite(Number(value)))
       result[name] = Number(value);
   }
   result.specified = params.get("specified") === "1" ? 1 : 0;
@@ -49,7 +49,7 @@ function readRange(params: URLSearchParams, range: RangeInput): RangeInput {
   return {
     raw: params.get("raw") === "true",
     full: params.get("full") === "true",
-    spacing: Number.isSafeInteger(spacing) ? spacing : range.spacing,
+    spacing: Number.isFinite(spacing) ? spacing : range.spacing,
     prices: [0, 1, 2].map(
       (i) => params.get(`price${i}`) ?? range.prices[i],
     ) as RangeInput["prices"],

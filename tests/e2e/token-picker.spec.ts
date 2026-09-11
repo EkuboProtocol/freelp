@@ -1,3 +1,4 @@
+import { mockPoolData } from "../support/poolRpc";
 import { mockDeployments } from "../support/deploymentRpc";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
@@ -55,6 +56,7 @@ test("picker batches balances only on the selected network, caches reads, and su
     );
   });
   await mockDeployments(page);
+  await mockPoolData(page);
   await page.goto("/#/create");
   await page.getByRole("button", { name: "Connect Balance wallet" }).click();
   await page.getByRole("button", { name: "Select first token" }).click();
@@ -91,6 +93,9 @@ test("picker batches balances only on the selected network, caches reads, and su
   await expect(dialog.locator(".token-option").first()).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(dialog).not.toBeVisible();
+  await page.getByRole("button", { name: "Select second token" }).click();
+  await search.fill("USDC");
+  await dialog.locator(".token-option").first().click();
   await expect(page.locator(".balance-actions").first()).toContainText(
     "12.5 ETH",
   );

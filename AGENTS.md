@@ -1,6 +1,6 @@
 # FreeLP development
 
-Keep source and npm private until launch. Public IPFS previews of successful CI builds are authorized. Publish only that build’s site CAR; never expose historical private IPFS blockstores. EVM contracts PRs may be public.
+Source stays private. npm publication is authorized after pool-flow fixes pass verification. Successful CI builds may publish IPFS previews. Publish only that build’s site CAR; never expose historical private IPFS blockstores. EVM contracts PRs may be public.
 
 Use worktrees; keep main clean. New Solidity belongs in EkuboProtocol/evm-contracts. Import pinned compiled artifacts with `scripts/import-contracts.ts` and record their source commit in `artifacts/source.json`.
 
@@ -16,4 +16,4 @@ Terms are informational: no acceptance gate, consent storage, or terms version. 
 
 Every successful branch/tag build pins on the dedicated DigitalOcean node and attaches its gateway URL to the commit status and Actions summary. Keep FREELP_PUBLIC_RELEASE=false until stable IPNS publication is authorized separately.
 
-The deploy.yml publish-npm job uses npm trusted publishing and the npm environment. Keep FREELP_NPM_PUBLISH=false and package.json private until launch is authorized. Do not add npm write tokens.
+The deploy.yml publish-npm job uses npm trusted publishing and the npm environment. Keep FREELP_NPM_PUBLISH=false until trusted publishing is configured. Do not add npm write tokens.

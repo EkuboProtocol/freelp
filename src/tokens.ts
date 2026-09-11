@@ -81,7 +81,9 @@ export function importCurrency(chainId: number, token: Currency) {
   )
     throw new Error("Enter a symbol and decimals between 0 and 255.");
   save(`freelp:tokens:${chainId}`, [
-    ...currencies(chainId).filter((entry) => entry.address !== next.address),
+    ...currencies(chainId).filter(
+      (entry) => entry.address.toLowerCase() !== next.address.toLowerCase(),
+    ),
     next,
   ]);
   return next;
@@ -94,4 +96,19 @@ export function networkCurrencies(settings: Settings) {
     settings.nativeName,
     settings.nativeDecimals,
   );
+}
+
+export function ensureNativeCurrency(settings: Settings) {
+  const entries = networkCurrencies(settings);
+  const unique = new Map(
+    entries.map((token) => [
+      token.address.toLowerCase(),
+      { ...token, address: getAddress(token.address) },
+    ]),
+  );
+  unique.set(zeroAddress, {
+    address: zeroAddress,
+    ...nativeCurrency(settings),
+  });
+  save(`freelp:tokens:${settings.chainId}`, [...unique.values()]);
 }

@@ -382,9 +382,9 @@ for (const { missingDecimals, native } of [
     await page.getByLabel("Upper price", { exact: true }).fill("1.01");
     await page.getByTestId("deposit-amount-0").fill(amount(1));
     await page.getByTestId("deposit-amount-1").fill(amount(1));
-    await page
-      .getByLabel("Initial price (new pools only)")
-      .fill("ignored for existing pool");
+    await expect(page.getByLabel("Initial price (new pools only)")).toHaveCount(
+      0,
+    );
     await page.getByRole("button", { name: "Preview position" }).click();
     await expect(
       page.getByText("Existing pool: the initial-price input is ignored."),
@@ -536,13 +536,9 @@ async function checkPoolChart(
   native: boolean,
 ) {
   if (missingDecimals || native) return;
-  await page.getByRole("button", { name: "Find pools on chain" }).click();
   await expect(
     page.getByRole("img", { name: "Pool liquidity by price" }),
   ).toBeVisible({ timeout: 30000 });
-  await page.locator(".pool-edit summary").click();
-  await expect(page.getByText("Existing pool", { exact: true })).toBeVisible();
-  await page.locator(".pool-edit summary").click();
   const heights = await page
     .locator(".liquidity-chart rect")
     .evaluateAll((nodes) =>
@@ -626,19 +622,16 @@ async function checkCustomSpacing(
   await expect(control.locator("summary")).toContainText("0.0777%");
   await page.getByLabel("Lower price", { exact: true }).fill("0.98");
   await page.getByLabel("Upper price", { exact: true }).fill("1.02");
-  await page.getByRole("button", { name: "Find pools on chain" }).click();
-  await expect(
-    page.getByRole("button", { name: "Find pools on chain" }),
-  ).toBeEnabled();
+  await expect(page.getByLabel("Initial price (new pools only)")).toBeVisible();
   await expect(page.locator(".pool-options .selected")).toContainText(
     "0.0777%",
   );
-  await expect(page.getByLabel("Lower price", { exact: true })).toHaveValue(
-    "0.98",
-  );
-  await expect(page.getByLabel("Upper price", { exact: true })).toHaveValue(
-    "1.02",
-  );
+  expect(
+    Number(await page.getByLabel("Lower price", { exact: true }).inputValue()),
+  ).toBeCloseTo(0.98, 3);
+  expect(
+    Number(await page.getByLabel("Upper price", { exact: true }).inputValue()),
+  ).toBeCloseTo(1.02, 3);
   await control.locator("summary").click();
   await control.getByRole("button", { name: "0.6%", exact: true }).click();
   await page.getByText("Advanced pool settings", { exact: true }).click();
@@ -671,9 +664,7 @@ async function checkStableCreation(
   await checkTokenImports(page, tokens, false, false);
   await page.getByText("Advanced pool settings", { exact: true }).click();
   await page.getByLabel("Pool type", { exact: true }).selectOption("stable");
-  await page.locator(".pool-edit summary").click();
   await page.getByLabel("Exact fee (uint64)").fill("123456789");
-  await page.locator(".pool-edit summary").click();
   await page.getByLabel("Amplification exponent").fill("10");
   await page.getByLabel("Center tick (multiple of 16)").fill("16");
   await page.getByLabel("Initial price (new pools only)").fill("1");

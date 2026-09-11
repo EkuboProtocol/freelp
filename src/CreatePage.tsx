@@ -1,3 +1,8 @@
+import { snapCreateForm, snapPrice } from "./snapCreateForm";
+import { SnappedInput } from "./SnappedInput";
+import { PoolChart } from "./PoolChart";
+import { useSelectedPool } from "./useSelectedPool";
+import { tickPrice } from "./prices";
 import { CreateDeploymentGate } from "./CreateDeploymentGate";
 import { networkName } from "./networks";
 import { defaultCreateForm } from "./createForm";
@@ -38,7 +43,8 @@ type Quote = {
 };
 export function CreatePage() {
   const { settings, networks, selectNetwork, busy } = useSession();
-  const [form, setForm] = useCreateForm(settings.chainId);
+  const [sourceForm, setForm] = useCreateForm(settings.chainId);
+  const form = sourceForm;
   const network = networks.find((n) => n.chainId === form.chain);
   if (!network)
     return (
@@ -75,7 +81,8 @@ export function CreatePage() {
         <CreateDeploymentGate>
           <CreatePositionForm
             key={network.chainId}
-            form={form}
+            form={snapCreateForm(form, networkCurrencies(network))}
+            sourceForm={sourceForm}
             setForm={setForm}
           />
         </CreateDeploymentGate>
@@ -84,19 +91,26 @@ export function CreatePage() {
   );
 }
 function CreatePositionForm({
-  form,
+  sourceForm,
+  form: inputForm,
   setForm,
 }: {
   form: CreateForm;
+  sourceForm: CreateForm;
   setForm: Dispatch<SetStateAction<CreateForm>>;
 }) {
   const { settings, account, send, revision } = useSession();
+  const pool = useSelectedPool(inputForm);
+  const form = {
+    ...inputForm,
+    range: poolRangeDefaults(inputForm.range, pool.data),
+  };
   const [a, setA] = formField(form, setForm, "a");
   const [b, setB] = formField(form, setForm, "b");
   const [maxA, setMaxA] = formField(form, setForm, "maxA");
   const [maxB, setMaxB] = formField(form, setForm, "maxB");
   const [specified, setSpecified] = formField(form, setForm, "specified");
-  const [fee, setFee] = formField(form, setForm, "fee");
+  const fee = form.fee;
   const [range, setRange] = formField(form, setForm, "range");
   const [slippage, setSlippage] = formField(form, setForm, "slippage");
   const [failure, setFailure] = useState<{ key: string; error: string }>();
@@ -123,10 +137,10 @@ function CreatePositionForm({
     settings,
     account,
     revision,
+    pool.data?.key,
     a,
     b,
-    maxA,
-    maxB,
+    specified === 0 ? maxA : maxB,
     fee,
     range,
     specified,
@@ -136,7 +150,7 @@ function CreatePositionForm({
     form.amplification,
     form.center,
   ]);
-  const current = quote?.key === key ? quote : undefined;
+  const current = currentQuote(quote, key);
   const previewBusy = pendingKey === key;
   const previewError = scopedError(failure, key);
   const symbols = [a, b].map(
@@ -161,12 +175,14 @@ function CreatePositionForm({
         range,
         specified,
         options: form,
+        initialized: pool.data?.state.sqrtRatio !== 0n,
+        revision,
       });
       if (id !== request.current) return;
       if (next.adjusted) {
-        setMaxA(formatUnits(next.max0, next.tokens[0].decimals));
-        setMaxB(formatUnits(next.max1, next.tokens[1].decimals));
-        return;
+        if (specified === 0)
+          setMaxB(formatUnits(next.max1, next.tokens[1].decimals));
+        else setMaxA(formatUnits(next.max0, next.tokens[0].decimals));
       }
       setQuote({ ...next, key });
     } catch (e) {
@@ -175,20 +191,21 @@ function CreatePositionForm({
       if (id === request.current) setPendingKey(undefined);
     }
   }
-  const refreshPreview = useEffectEvent(preview);
+  const refreshPreview = useEffectEvent(() => {
+    if (pool.data && (specified === 0 ? maxA : maxB)) void preview();
+  });
   const invalidatePreview = useEffectEvent(() => {
     request.current++;
   });
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (isAddress(a) && isAddress(b) && a !== b && (maxA || maxB))
-        void refreshPreview();
+      refreshPreview();
     }, 450);
     return () => {
       clearTimeout(timer);
       invalidatePreview();
     };
-  }, [key, a, b, maxA, maxB]);
+  }, [key, pool.data]);
   async function create() {
     if (!current) throw new Error(t`Refresh the preview.`);
     if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
@@ -231,172 +248,165 @@ function CreatePositionForm({
           onChange={(token) => chooseCurrency(1, token)}
         />
       </div>
-      <PoolPicker
-        key={JSON.stringify([settings, a, b])}
-        range={range}
-        onRangeChange={setRange}
-        token0={a}
-        token1={b}
-        fee={fee}
-        options={form}
-        form={form}
-        setForm={setForm}
-        onFeeChange={(fee, exactFee) =>
-          setForm((previous) => ({ ...previous, fee, exactFee }))
-        }
-        spacing={range.spacing}
-        onSelect={(selectedFee, spacing, price) => {
-          setFee(selectedFee);
-          setRange({
-            ...range,
-            spacing,
-            prices: price
-              ? [
-                  range.prices[0] || decimalInput(Number(price) * 0.9),
-                  range.prices[1] || decimalInput(Number(price) * 1.1),
-                  price,
-                ]
-              : range.prices,
-          });
-        }}
-      />
-      <RangeFields
-        range={range}
-        setRange={setRange}
-        symbols={symbols}
-        stable={form.kind === "stable"}
-      />
-      <h3>
-        <Trans>Deposit amounts</Trans>
-      </h3>
-      <div className="grid deposit-inputs">
-        <div className="deposit-input">
-          <strong className="deposit-token">{symbols[0]}</strong>
-          <input
-            aria-label={t`${symbols[0]} amount`}
-            inputMode="decimal"
-            placeholder="0"
-            disabled={!!current?.inactive[0]}
-            data-testid="deposit-amount-0"
-            value={maxA}
-            onChange={(e) => {
-              setSpecified(0);
-              setMaxA(e.target.value);
-            }}
+      <PoolPicker form={form} sourceForm={sourceForm} setForm={setForm} />
+      <PoolLoadStatus pool={pool} />
+      {pool.data ? (
+        <>
+          <PoolChart
+            data={pool.data}
+            options={form}
+            spacing={range.spacing}
+            range={range}
+            onRangeChange={setRange}
           />
-          <TokenBalance
-            address={a}
-            fallback=""
-            onAmount={(value) => {
-              setSpecified(0);
-              setMaxA(value);
-            }}
+          <RangeFields
+            range={range}
+            sourceRange={sourceForm.range}
+            setRange={setRange}
+            symbols={symbols}
+            stable={form.kind === "stable"}
+            initialized={pool.data.state.sqrtRatio !== 0n}
           />
-        </div>
-        <div className="deposit-input">
-          <strong className="deposit-token">{symbols[1]}</strong>
-          <input
-            aria-label={t`${symbols[1]} amount`}
-            inputMode="decimal"
-            placeholder="0"
-            disabled={!!current?.inactive[1]}
-            data-testid="deposit-amount-1"
-            value={maxB}
-            onChange={(e) => {
-              setSpecified(1);
-              setMaxB(e.target.value);
-            }}
-          />
-          <TokenBalance
-            address={b}
-            fallback=""
-            onAmount={(value) => {
-              setSpecified(1);
-              setMaxB(value);
-            }}
-          />
-        </div>
-      </div>
-      <div className="slippage-control">
-        <Field label={<Trans>Slippage (basis points)</Trans>}>
-          <input
-            type="number"
-            min={0}
-            max={1000}
-            value={slippage}
-            onChange={(e) => setSlippage(Number(e.target.value))}
-          />
-        </Field>
-      </div>
-      <p className="row">
-        <button disabled={previewBusy} onClick={() => void preview()}>
-          <Trans>Preview position</Trans>
-        </button>
-      </p>
-      <ErrorText error={previewError} />
-      {previewBusy ? (
-        <p role="status">
-          <Trans>Updating deposit preview…</Trans>
-        </p>
-      ) : null}
-      {current ? (
-        <div className="panel">
           <h3>
-            <Trans>Deposit preview</Trans>
+            <Trans>Deposit amounts</Trans>
           </h3>
-          <PricePreview {...current} />
-          {current.tokens.map((t, i) => (
-            <p key={t.address}>
-              {t.symbol}:{" "}
-              {formatUnits(i === 0 ? current.used0 : current.used1, t.decimals)}{" "}
-              / <Trans>Balance:</Trans>{" "}
-              <span title={formatUnits(t.balance, t.decimals)}>
-                {displayAmount(t.balance, t.decimals)}
-              </span>{" "}
-              {t.balance < (i === 0 ? current.max0 : current.max1) ? (
-                <strong>
-                  <Trans>Insufficient {t.symbol} balance</Trans>
-                </strong>
-              ) : null}
-              {current.inactive[i] ? (
-                <small>
-                  <Trans>
-                    This token is not needed for the selected range.
-                  </Trans>
-                </small>
-              ) : null}
-            </p>
-          ))}
-          <p>
-            <Trans>Liquidity:</Trans> {current.liquidity.toString()}
-          </p>
-          <div className="row">
-            {current.tokens.map((t, i) => (
-              <ApprovalButton
-                key={t.address}
-                token={t}
-                amount={formatUnits(
-                  i === 0 ? current.max0 : current.max1,
-                  t.decimals,
-                )}
+          <div className="grid deposit-inputs">
+            <div className="deposit-input">
+              <strong className="deposit-token">{symbols[0]}</strong>
+              <SnappedInput
+                snapped={maxA}
+                aria-label={t`${symbols[0]} amount`}
+                inputMode="decimal"
+                placeholder="0"
+                disabled={!!current?.inactive[0]}
+                data-testid="deposit-amount-0"
+                value={sourceForm.maxA}
+                onChange={(e) => {
+                  setSpecified(0);
+                  setMaxA(e.target.value);
+                }}
               />
-            ))}
-            <Action
-              disabled={
-                previewBusy ||
-                current.liquidity === 0n ||
-                current.tokens.some(
-                  (t, i) =>
-                    t.allowance < (i === 0 ? current.max0 : current.max1) ||
-                    t.balance < (i === 0 ? current.max0 : current.max1),
-                )
-              }
-              run={create}
-            >
-              <Trans>Create position</Trans>
-            </Action>
+              <TokenBalance
+                address={a}
+                fallback=""
+                onAmount={(value) => {
+                  setSpecified(0);
+                  setMaxA(value);
+                }}
+              />
+            </div>
+            <div className="deposit-input">
+              <strong className="deposit-token">{symbols[1]}</strong>
+              <SnappedInput
+                snapped={maxB}
+                aria-label={t`${symbols[1]} amount`}
+                inputMode="decimal"
+                placeholder="0"
+                disabled={!!current?.inactive[1]}
+                data-testid="deposit-amount-1"
+                value={sourceForm.maxB}
+                onChange={(e) => {
+                  setSpecified(1);
+                  setMaxB(e.target.value);
+                }}
+              />
+              <TokenBalance
+                address={b}
+                fallback=""
+                onAmount={(value) => {
+                  setSpecified(1);
+                  setMaxB(value);
+                }}
+              />
+            </div>
           </div>
-        </div>
+          <div className="slippage-control">
+            <Field label={<Trans>Slippage (basis points)</Trans>}>
+              <SnappedInput
+                aria-label={t`Slippage (basis points)`}
+                snapped={slippage}
+                type="number"
+                min={0}
+                max={1000}
+                value={sourceForm.slippage}
+                onChange={(e) => setSlippage(Number(e.target.value))}
+              />
+            </Field>
+          </div>
+          <p className="row">
+            <button disabled={previewBusy} onClick={() => void preview()}>
+              <Trans>Preview position</Trans>
+            </button>
+          </p>
+          <ErrorText error={previewError} />
+          {previewBusy ? (
+            <p role="status">
+              <Trans>Updating deposit preview…</Trans>
+            </p>
+          ) : null}
+          {current ? (
+            <div className="panel">
+              <h3>
+                <Trans>Deposit preview</Trans>
+              </h3>
+              <PricePreview {...current} />
+              {current.tokens.map((t, i) => (
+                <p key={t.address}>
+                  {t.symbol}:{" "}
+                  {formatUnits(
+                    i === 0 ? current.used0 : current.used1,
+                    t.decimals,
+                  )}{" "}
+                  / <Trans>Balance:</Trans>{" "}
+                  <span title={formatUnits(t.balance, t.decimals)}>
+                    {displayAmount(t.balance, t.decimals)}
+                  </span>{" "}
+                  {t.balance < (i === 0 ? current.max0 : current.max1) ? (
+                    <strong>
+                      <Trans>Insufficient {t.symbol} balance</Trans>
+                    </strong>
+                  ) : null}
+                  {current.inactive[i] ? (
+                    <small>
+                      <Trans>
+                        This token is not needed for the selected range.
+                      </Trans>
+                    </small>
+                  ) : null}
+                </p>
+              ))}
+              <p>
+                <Trans>Liquidity:</Trans> {current.liquidity.toString()}
+              </p>
+              <div className="row">
+                {current.tokens.map((t, i) => (
+                  <ApprovalButton
+                    key={t.address}
+                    token={t}
+                    amount={formatUnits(
+                      i === 0 ? current.max0 : current.max1,
+                      t.decimals,
+                    )}
+                  />
+                ))}
+                <Action
+                  disabled={
+                    previewBusy ||
+                    current.liquidity === 0n ||
+                    current.tokens.some(
+                      (t, i) =>
+                        t.allowance < (i === 0 ? current.max0 : current.max1) ||
+                        t.balance < (i === 0 ? current.max0 : current.max1),
+                    )
+                  }
+                  run={create}
+                >
+                  <Trans>Create position</Trans>
+                </Action>
+              </div>
+            </div>
+          ) : null}
+        </>
       ) : null}
     </div>
   );
@@ -407,4 +417,47 @@ function scopedError(
   key: string,
 ) {
   return failure?.key === key ? failure.error : "";
+}
+
+function currentQuote(quote: Quote | undefined, key: string) {
+  return quote?.key === key ? quote : undefined;
+}
+function PoolLoadStatus({
+  pool,
+}: {
+  pool: ReturnType<typeof useSelectedPool>;
+}) {
+  return (
+    <>
+      {pool.loading ? (
+        <p role="status">
+          <Trans>Loading pool…</Trans>
+        </p>
+      ) : null}
+      <ErrorText error={pool.error || ""} />
+      {pool.error ? (
+        <button onClick={pool.refresh}>
+          <Trans>Retry pool data</Trans>
+        </button>
+      ) : null}
+    </>
+  );
+}
+
+function poolRangeDefaults(
+  range: CreateForm["range"],
+  pool: ReturnType<typeof useSelectedPool>["data"],
+) {
+  if (!pool || pool.state.sqrtRatio === 0n) return range;
+  const price = tickPrice(pool.state.tick, ...pool.decimals);
+  return {
+    ...range,
+    prices: [
+      range.prices[0] ||
+        snapPrice(decimalInput(price * 0.9), ...pool.decimals, range.spacing),
+      range.prices[1] ||
+        snapPrice(decimalInput(price * 1.1), ...pool.decimals, range.spacing),
+      decimalInput(price),
+    ] as CreateForm["range"]["prices"],
+  };
 }

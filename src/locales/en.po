@@ -48,6 +48,11 @@ msgstr "Add network"
 msgid "Add token {i} amount"
 msgstr "Add token {i} amount"
 
+#: src/SnappedInput.tsx
+#: src/TickSpacingControl.tsx
+msgid "Adjusted to nearest valid value"
+msgstr "Adjusted to nearest valid value"
+
 #: src/PoolPicker.tsx
 msgid "Advanced pool settings"
 msgstr "Advanced pool settings"
@@ -217,6 +222,11 @@ msgstr "Core, FreeLPDataFetcher, and the position manager must match this build 
 msgid "Core:"
 msgstr "Core:"
 
+#. js-lingui-explicit-id
+#: src/errors.ts
+msgid "rpcUnavailable"
+msgstr "Could not load data from this network. Retry or change its RPC URL in Settings."
+
 #: src/CreatePage.tsx
 #: src/PositionsPage.tsx
 msgid "Create position"
@@ -285,10 +295,6 @@ msgstr "Deposit amounts"
 msgid "Deposit preview"
 msgstr "Deposit preview"
 
-#: src/NetworkDetailsFields.tsx
-msgid "Detected network name"
-msgstr "Detected network name"
-
 #: src/DeployPage.tsx
 msgid "Deterministic deployment details"
 msgstr "Deterministic deployment details"
@@ -302,10 +308,6 @@ msgstr "Edit"
 msgid "Edit {0} RPC"
 msgstr "Edit {0} RPC"
 
-#: src/PoolPicker.tsx
-msgid "Edit fee"
-msgstr "Edit fee"
-
 #: src/SettingsPage.tsx
 msgid "Edit RPC"
 msgstr "Edit RPC"
@@ -313,6 +315,10 @@ msgstr "Edit RPC"
 #: src/TickSpacingControl.tsx
 msgid "Enter a positive spacing that rounds to 1–698605 integer ticks."
 msgstr "Enter a positive spacing that rounds to 1–698605 integer ticks."
+
+#: src/loadDepositQuote.ts
+msgid "Enter an amount greater than zero."
+msgstr "Enter an amount greater than zero."
 
 #: src/TickSpacingControl.tsx
 msgid "Enter exact ticks"
@@ -333,10 +339,6 @@ msgstr "Exact fee (uint64)"
 #: src/PricePreview.tsx
 msgid "Exact ticks"
 msgstr "Exact ticks"
-
-#: src/PoolPicker.tsx
-msgid "Existing pool"
-msgstr "Existing pool"
 
 #: src/PricePreview.tsx
 msgid "Existing pool: the initial-price input is ignored."
@@ -362,10 +364,6 @@ msgstr "Fee tier"
 #: src/PoolIdentity.tsx
 msgid "Fee:"
 msgstr "Fee:"
-
-#: src/PoolPicker.tsx
-msgid "Find pools on chain"
-msgstr "Find pools on chain"
 
 #: src/session.tsx
 msgid "Finish the pending transaction before changing settings."
@@ -451,6 +449,10 @@ msgstr "Loading balance"
 #: src/TokenBalance.tsx
 msgid "Loading balance…"
 msgstr "Loading balance…"
+
+#: src/CreatePage.tsx
+msgid "Loading pool…"
+msgstr "Loading pool…"
 
 #: src/RangeFields.tsx
 msgid "Lower price"
@@ -636,8 +638,8 @@ msgstr "Price range:"
 #. placeholder {0}: symbols[1]
 #. placeholder {1}: symbols[0]
 #: src/RangeFields.tsx
-msgid "Prices are {0} per {1}. Range prices round outward to valid ticks; review the resulting range in the preview."
-msgstr "Prices are {0} per {1}. Range prices round outward to valid ticks; review the resulting range in the preview."
+msgid "Prices are {0} per {1}. Prices snap to the nearest usable tick; review the resulting range in the preview."
+msgstr "Prices are {0} per {1}. Prices snap to the nearest usable tick; review the resulting range in the preview."
 
 #: src/PortfolioPosition.tsx
 #: src/PositionDetail.tsx
@@ -701,6 +703,10 @@ msgstr "Reset {0} approval"
 #: src/TokenBalance.tsx
 msgid "Retry balance"
 msgstr "Retry balance"
+
+#: src/CreatePage.tsx
+msgid "Retry pool data"
+msgstr "Retry pool data"
 
 #: src/SettingsPage.tsx
 msgid "RPC must use HTTP or HTTPS."
@@ -809,6 +815,11 @@ msgstr "Terms"
 msgid "Terms of Service"
 msgstr "Terms of Service"
 
+#. js-lingui-explicit-id
+#: src/errors.ts
+msgid "contractRejected"
+msgstr "The contract rejected this request. Check the pool settings and amounts, then retry."
+
 #: src/PositionDepositFields.tsx
 msgid "The matching amount is calculated from this position’s range and current pool price."
 msgstr "The matching amount is calculated from this position’s range and current pool price."
@@ -830,10 +841,6 @@ msgstr "The request failed. Please try again."
 msgid "The RPC returned an invalid chain ID."
 msgstr "The RPC returned an invalid chain ID."
 
-#: src/loadDepositQuote.ts
-msgid "The shared position manager is not deployed on this network yet. Open the Deploy tab to set it up once for everyone."
-msgstr "The shared position manager is not deployed on this network yet. Open the Deploy tab to set it up once for everyone."
-
 #: src/TermsPage.tsx
 msgid "There is no guarantee that any contract is correct, audited, secure, economically sound, or free from defects, exploits, malicious behavior, or administrative intervention. No one promises returns, liquidity, price accuracy, execution quality, asset value, withdrawal availability, recovery, refunds, insurance, compensation, continued hosting, updates, maintenance, or support. Simulation results, displayed balances, prices, and fee estimates may be incomplete, stale, or wrong."
 msgstr "There is no guarantee that any contract is correct, audited, secure, economically sound, or free from defects, exploits, malicious behavior, or administrative intervention. No one promises returns, liquidity, price accuracy, execution quality, asset value, withdrawal availability, recovery, refunds, insurance, compensation, continued hosting, updates, maintenance, or support. Simulation results, displayed balances, prices, and fee estimates may be incomplete, stale, or wrong."
@@ -846,13 +853,22 @@ msgstr "This build uses fixed contract addresses on every network. Custom networ
 msgid "This does not mean every token, extension, network, RPC endpoint, gateway, or other contract is ownerless. Those systems may have independent owners, administrators, upgrade powers, or restrictions. Their inclusion or availability through FreeLP is not an endorsement or a promise of safety. Software copyright and applicable license notices remain in effect."
 msgstr "This does not mean every token, extension, network, RPC endpoint, gateway, or other contract is ownerless. Those systems may have independent owners, administrators, upgrade powers, or restrictions. Their inclusion or availability through FreeLP is not an endorsement or a promise of safety. Software copyright and applicable license notices remain in effect."
 
-#: src/PoolPicker.tsx
+#. js-lingui-explicit-id
+#: src/errors.ts
+msgid "rpcRateLimit"
+msgstr "This network's RPC is busy. Wait a moment and retry, or change its RPC URL in Settings."
+
+#: src/PoolChart.tsx
 msgid "This pool is not initialized. Set its initial price when creating the first position."
 msgstr "This pool is not initialized. Set its initial price when creating the first position."
 
 #: src/CreatePage.tsx
 msgid "This token is not needed for the selected range."
 msgstr "This token is not needed for the selected range."
+
+#: src/loadDepositQuote.ts
+msgid "This token is not needed for the selected range. Enter an amount for the other token."
+msgstr "This token is not needed for the selected range. Enter an amount for the other token."
 
 #: src/readTokenMetadata.ts
 msgid "This token must provide a name, symbol, and valid decimals on chain."

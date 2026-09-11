@@ -2,7 +2,7 @@
 
 EVM liquidity position management using only RPC endpoints and an injected wallet. No swaps, TWAMM orders, indexer, hosted metadata, API keys, analytics, or application fee. Position records and NFT metadata are on-chain. Network gas still applies.
 
-**Private source:** keep this repository and npm package private until launch readiness. Successful CI builds have user-authorized public IPFS previews. Solidity changes live separately in EkuboProtocol/evm-contracts.
+**Private source:** this repository remains private; public npm publication is authorized after verification. Successful CI builds have user-authorized public IPFS previews. Solidity changes live separately in EkuboProtocol/evm-contracts.
 
 ## Run the packaged app
 
@@ -10,7 +10,7 @@ Once published, `bunx @ekubo/freelp` or `npx @ekubo/freelp` serves the complete 
 
 Trust the package publisher and your package manager's integrity checks. The package contains its static assets and has no runtime package dependencies. The launcher does not contact GitHub, download a second build, or handle wallet keys. The launcher requires Node 22+; the bunx command additionally requires Bun. No runtime binary is distributed.
 
-During private development, build with `bun install --frozen-lockfile && bun run pack:app`. Test the resulting tarball with `bun scripts/check-package.ts ekubo-freelp-0.1.1.tgz`, or run `node cli-dist/main.js` from the built checkout. Packing does not publish; `private: true` prevents accidental npm publication.
+Build locally with `bun install --frozen-lockfile && bun run pack:app`. Test the resulting tarball with `bun scripts/check-package.ts ekubo-freelp-0.1.1.tgz`, or run `node cli-dist/main.js` from the built checkout. Packing does not publish. The npm manifest uses `private: false` and `publishConfig.access: public`.
 
 ## Use FreeLP
 
@@ -28,7 +28,7 @@ Use Bun 1.4.0. Run `bun run dev`, `bun run lint`, `bun run check-ts`, `bun run t
 
 CI builds and packages each main commit and version tag. `bun scripts/package-release.ts SOURCE_COMMIT` produces the static site's CAR, manifest, and `deployment.json` with its CID and source commit. CI tests both an isolated IPFS gateway and the npm tarball, then retains artifacts in a private GitHub release. No npm publication occurs.
 
-Each successful branch or version-tag build is pinned on the persistent DigitalOcean IPFS node. Find its gateway URL in the commit’s **IPFS preview** status or the Actions job summary. The source repository and npm releases remain private. Never bring a historical private IPFS blockstore online; CI publishes only the current build’s CAR.
+Each successful branch or version-tag build is pinned on the persistent DigitalOcean IPFS node. Find its gateway URL in the commit’s **IPFS preview** status or the Actions job summary. The source repository remains private. Never bring a historical private IPFS blockstore online; CI publishes only the current build’s CAR.
 
 Stable IPNS updates remain a separate, launch-gated job. A CID identifies immutable content; IPNS identifies the selected stable release. Restore an authorized public deployment with `ipfs dag import site.car`.
 

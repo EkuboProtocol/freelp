@@ -18,9 +18,11 @@ function candidate(value: string, raw: boolean) {
 }
 export function TickSpacingControl({
   spacing,
+  sourceSpacing = spacing,
   onApply,
 }: {
   spacing: number;
+  sourceSpacing?: number;
   onApply: (spacing: number) => void;
 }) {
   const [raw, setRaw] = useState(false);
@@ -35,6 +37,11 @@ export function TickSpacingControl({
         <Trans>Tick spacing</Trans> ·{" "}
         {decimalDisplay(spacingPercent(spacing), 3)}%
       </summary>
+      {sourceSpacing !== spacing ? (
+        <small className="snapped-value">
+          <Trans>Adjusted to nearest valid value</Trans>
+        </small>
+      ) : null}
       <p>
         <Trans>
           Spacing is the price change between adjacent usable ticks. It is

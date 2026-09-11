@@ -1,7 +1,7 @@
+import { useCopied } from "./useCopied";
 import { Trans } from "@lingui/react/macro";
 import { t } from "@lingui/core/macro";
 import { keccak256, type Address } from "viem";
-import { useState } from "react";
 import { useSession } from "./session";
 import { errorMessage } from "./errors";
 
@@ -34,11 +34,11 @@ function Identicon({ address }: { address: Address }) {
 }
 export function AccountControl() {
   const session = useSession();
-  const [copied, setCopied] = useState(false);
+  const [copied, showCopied] = useCopied();
   async function copy() {
     try {
       await navigator.clipboard.writeText(session.account!);
-      setCopied(true);
+      showCopied();
     } catch (error) {
       session.setStatus(errorMessage(error));
     }

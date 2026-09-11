@@ -1,4 +1,3 @@
-import { verifyCode } from "./contracts";
 import { zeroAddress } from "viem";
 import { rpc } from "./rpc";
 import { DEFAULT_POSITION_DATA_FETCHER } from "./deployments";
@@ -18,20 +17,17 @@ export async function fetchPools(
       "Deploy or configure a FreeLP data fetcher for this Core to display liquidity.",
     );
   const client = rpc(settings);
-  const blockNumber = await client.getBlockNumber();
-  await verifyCode(settings, address, "FreeLPDataFetcher");
   const result = await client.readContract({
     address,
     abi: EVM_QUOTE_DATE_FETCHER_V3_ABI,
     functionName: "getQuoteData",
     args: [keys, 1],
-    blockNumber,
   });
   return result.map((entry) => {
     const parsed = parseQuoteDataFetcherResult(entry);
     if (!parsed)
       throw new Error("Invalid pool state returned by FreeLP data fetcher.");
-    return { ...parsed, blockNumber };
+    return parsed;
   });
 }
 // Fee/spacing presets reused from interface/constants/evm/poolConfigs.ts.

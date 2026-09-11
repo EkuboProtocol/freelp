@@ -4,6 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 test("wallet errors render messages and the connected account has a local header identicon", async ({
   page,
 }) => {
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.addInitScript(() => {
     let failed = false;
     window.addEventListener("eip6963:requestProvider", () => {
@@ -27,7 +28,9 @@ test("wallet errors render messages and the connected account has a local header
   });
   await page.goto("/#/build");
   await page.getByRole("button", { name: "Connect Test wallet" }).click();
-  await expect(page.locator(".status[role=status]")).toContainText("Request declined");
+  await expect(page.locator(".status[role=status]")).toContainText(
+    "Request declined",
+  );
   await expect(page.locator("body")).not.toContainText("[object Object]");
   await page.getByRole("button", { name: "Connect Test wallet" }).click();
   const account = page.locator("header .account-control");
@@ -36,6 +39,15 @@ test("wallet errors render messages and the connected account has a local header
   await expect(account.locator(".account-menu")).toContainText(
     "0x1111111111111111111111111111111111111111",
   );
+  await account
+    .getByRole("button", { name: "Copy address", exact: true })
+    .click();
+  await expect(
+    account.getByRole("button", { name: "Copied", exact: true }),
+  ).toBeVisible();
+  await expect(
+    account.getByRole("button", { name: "Copy address", exact: true }),
+  ).toBeVisible({ timeout: 2000 });
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 844 });
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);

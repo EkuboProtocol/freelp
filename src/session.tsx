@@ -1,3 +1,4 @@
+import { ensureNativeCurrency } from "./tokens";
 import { t } from "@lingui/core/macro";
 import {
   createContext,
@@ -75,6 +76,7 @@ function useSessionState() {
         t`Finish the pending transaction before changing settings.`,
       );
     next = validateSettings(next);
+    ensureNativeCurrency(next);
     setSettings(next);
     setNetworks((current) => updateNetworks(current, next));
     save("freelp:settings", next);

@@ -1,3 +1,4 @@
+import { useCopied } from "./useCopied";
 import { AccountControl } from "./AccountControl";
 import { t } from "@lingui/core/macro";
 import { useEffect, useState } from "react";
@@ -158,12 +159,12 @@ function MainNavigation({ route }: { route: string }) {
 }
 
 function Command({ command }: { command: string }) {
-  const [copied, setCopied] = useState(false);
+  const [copied, showCopied] = useCopied();
   const [error, setError] = useState("");
   async function copy() {
     try {
       await navigator.clipboard.writeText(command);
-      setCopied(true);
+      showCopied();
     } catch {
       setError(t`Select and copy the command manually.`);
     }

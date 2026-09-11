@@ -1,6 +1,6 @@
 # npm trusted publishing
 
-The GitHub side is prepared for `@ekubo/freelp`. Publishing remains disabled during private development: repository variable `FREELP_NPM_PUBLISH=false` and package.json `private: true` both block publication.
+The GitHub side is prepared for `@ekubo/freelp`. The maintainer authorized public npm publication after the pool-flow fixes pass verification. The source repository stays private. The manifest uses `private: false` and `publishConfig.access: public`; there is no npm `public: true` setting. Automated publication remains disabled with `FREELP_NPM_PUBLISH=false` until trusted publishing is configured.
 
 On npmjs, open https://www.npmjs.com/package/@ekubo/freelp/access and add a GitHub Actions trusted publisher:
 
@@ -14,11 +14,9 @@ On npmjs, open https://www.npmjs.com/package/@ekubo/freelp/access and add a GitH
 
 The GitHub `npm` environment only permits `v*` tags. The publish job requires the build job to pass, downloads that tag's tested npm tarball, validates its name/version/repository/launch readiness, and publishes it with Node 24/npm OIDC. No NPM_TOKEN is needed. The tag must equal `v` plus the package version. This is the workflow filename containing the publish job, not a separate publish.yml.
 
-The package must exist before its package settings can be configured. The maintainer authorized a restricted bootstrap publish before launch. Version `0.1.1` was prepared from the verified build at `783a04ee0f6278ea6e63c93a83659c03b4b023ca`, with `publishConfig.access: restricted` and provenance disabled. The interactive publish has not completed: npm's web authentication expired. Do not treat an access-status response of `private` as proof that a version was published; verify the authenticated registry version and tarball integrity after publishing.
+The package must exist before its package settings can be configured. Restricted bootstrap publication of `0.1.1` failed with npm E402: private-package billing was required. No version was created by those attempts. The maintainer subsequently authorized a public bootstrap publish after the requested fixes pass verification.
 
-Finish that restricted bootstrap using the maintainer's interactive npm authentication, then configure the trusted publisher above. Keep the source manifest private and `FREELP_NPM_PUBLISH=false` during private development. No npm write token is needed.
-
-At public launch, explicitly change the package visibility, remove `private: true` from the source manifest, and increment the version above the private bootstrap version. Build and test before tagging. After trusted publishing is configured and public launch is authorized, set `FREELP_NPM_PUBLISH=true`; future `v*` tags publish publicly only after verification. npmjs may require login and 2FA for setup or first publication.
+Publish the verified current tarball with `npm publish <tarball> --access public --ignore-scripts --provenance=false` using interactive maintainer authentication. Verify the registry version and tarball integrity after publication, then configure the trusted publisher above. Do not add an npm write token. Enable `FREELP_NPM_PUBLISH=true` only after that setup; future version tags can then publish through CI.
 
 The repository may remain private. npm provenance is enabled only when the source repository is public, because npm does not support provenance for private source repositories. Trusted publishing authentication itself works independently of that limitation.
 

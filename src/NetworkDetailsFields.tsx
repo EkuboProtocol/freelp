@@ -1,4 +1,3 @@
-import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
 export type NetworkDetailsInput = {
   name: string;
@@ -30,7 +29,7 @@ export function NetworkDetailsFields({
         <input
           value={value.name}
           maxLength={80}
-          placeholder={t`Detected network name`}
+          placeholder="Ethereum"
           onChange={(e) => update("name", e.target.value)}
         />
       </label>
