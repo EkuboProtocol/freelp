@@ -119,4 +119,4 @@ jobs:
       - name: Publish using npm trusted publishing
         env:
           NPM_CONFIG_PROVENANCE: ${{ !github.event.repository.private }}
-        run: npm publish release/ekubo-freelp-*.tgz --access public --ignore-scripts --registry=https://registry.npmjs.org/ --tag latest
+        run: npm publish ./release/ekubo-freelp-*.tgz --access public --ignore-scripts --registry=https://registry.npmjs.org/ --tag latest
