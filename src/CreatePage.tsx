@@ -1,3 +1,4 @@
+import { decimalInput } from "./decimalFormat";
 import { displayAmount } from "./displayAmount";
 import { TokenBalance } from "./TokenBalance";
 import { PoolPicker } from "./PoolPicker";
@@ -295,8 +296,8 @@ export function CreatePage() {
             spacing,
             prices: price
               ? [
-                  String(Number(price) * 0.9),
-                  String(Number(price) * 1.1),
+                  range.prices[0] || decimalInput(Number(price) * 0.9),
+                  range.prices[1] || decimalInput(Number(price) * 1.1),
                   price,
                 ]
               : range.prices,

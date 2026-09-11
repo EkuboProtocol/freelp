@@ -49,3 +49,33 @@ test("full range preserves initialization and existing pools ignore that input",
     "supported range",
   );
 });
+
+test("price displays use decimal notation without rounding tiny prices to zero", async () => {
+  const { displayPrice } = await import("../../src/prices");
+  const { decimalInput } = await import("../../src/decimalFormat");
+  expect(displayPrice(0.0000000123456789)).toBe("0.000000012345679");
+  expect(displayPrice(123456789000)).toBe("123456790000");
+  expect(displayPrice(1)).toBe("1");
+  expect(decimalInput(1.23e-18)).toBe("0.00000000000000000123");
+  expect(Number(decimalInput(1.23456789012345e-18))).toBe(1.23456789012345e-18);
+});
+
+test("custom percentage spacing rounds to legal ticks and rejects unsupported values", async () => {
+  const { spacingPercent, percentToSpacing, MAX_TICK_SPACING } =
+    await import("../../src/pools");
+  for (const spacing of [
+    1,
+    200,
+    777,
+    1000,
+    5982,
+    12345,
+    19802,
+    MAX_TICK_SPACING,
+  ])
+    expect(percentToSpacing(spacingPercent(spacing))).toBe(spacing);
+  expect(percentToSpacing(0.6)).toBe(5982);
+  expect(() => percentToSpacing(0)).toThrow();
+  expect(() => percentToSpacing(1000)).toThrow();
+  expect(() => percentToSpacing(Number.NaN)).toThrow();
+});

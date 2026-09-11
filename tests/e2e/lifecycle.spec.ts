@@ -360,6 +360,7 @@ for (const { missingDecimals, native } of [
     await page.getByLabel("Token 1 address").fill(tokens[1]);
     await checkPoolChart(page, missingDecimals, native);
     await captureChart(page, missingDecimals, native);
+    await checkCustomSpacing(page, missingDecimals, native);
     await page.getByLabel("Lower price", { exact: true }).fill("0.99");
     await page.getByLabel("Upper price", { exact: true }).fill("1.01");
     await page.getByTestId("deposit-amount-0").fill(amount(1));
@@ -568,4 +569,38 @@ async function captureChart(
     });
     await page.setViewportSize({ width: 1280, height: 720 });
   }
+}
+
+async function checkCustomSpacing(
+  page: Page,
+  missingDecimals: boolean,
+  native: boolean,
+) {
+  if (missingDecimals || native) return;
+  const control = page.locator(".tick-spacing-control");
+  await control.locator("summary").click();
+  await control.getByLabel("Enter exact ticks").check();
+  await control.getByLabel("Tick spacing (ticks)").fill("777");
+  await control.getByRole("button", { name: "Apply tick spacing" }).click();
+  await expect(control.locator("summary")).toContainText("0.0777%");
+  await page.getByLabel("Lower price", { exact: true }).fill("0.98");
+  await page.getByLabel("Upper price", { exact: true }).fill("1.02");
+  await page.getByRole("button", { name: "Find pools on chain" }).click();
+  await expect(
+    page.getByRole("button", { name: "Find pools on chain" }),
+  ).toBeEnabled();
+  await expect(page.locator(".pool-options .selected")).toContainText(
+    "0.0777%",
+  );
+  await expect(page.getByLabel("Lower price", { exact: true })).toHaveValue(
+    "0.98",
+  );
+  await expect(page.getByLabel("Upper price", { exact: true })).toHaveValue(
+    "1.02",
+  );
+  await control.locator("summary").click();
+  await control.getByRole("button", { name: "0.6%", exact: true }).click();
+  await expect(
+    page.getByRole("img", { name: "Pool liquidity by price" }),
+  ).toBeVisible();
 }

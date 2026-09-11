@@ -1,3 +1,5 @@
+import { decimalInput, decimalDisplay } from "./decimalFormat";
+import { spacingPercent } from "./pools";
 import { rangeTicks, tickPrice, type RangeInput } from "./prices";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { erc20Abi, getAddress, isAddress, zeroAddress } from "viem";
@@ -29,6 +31,7 @@ export function PoolPicker({
 }) {
   const { settings } = useSession();
   const active = useRef(true);
+  const request = useRef(0);
   useEffect(() => {
     active.current = true;
     return () => {
@@ -36,8 +39,8 @@ export function PoolPicker({
     };
   }, []);
   const [loaded, setLoaded] = useState<Loaded>();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [pending, setPending] = useState<string>();
+  const [failure, setFailure] = useState<{ key: string; error: string }>();
   const presets = POOL_PRESETS.some(
     (preset) => preset.fee === fee && preset.spacing === spacing,
   )
@@ -45,6 +48,8 @@ export function PoolPicker({
     : [...POOL_PRESETS, { fee, spacing }];
   const key = JSON.stringify([settings, token0, token1, presets]);
   const data = loaded?.key === key ? loaded : undefined;
+  const busy = pending === key;
+  const error = scopedPoolError(failure, key);
   const selected = presets.findIndex(
     (preset) => preset.fee === fee && preset.spacing === spacing,
   );
@@ -72,7 +77,7 @@ export function PoolPicker({
       state = result?.states[index];
     const price =
       state?.sqrtRatio && result
-        ? String(
+        ? decimalInput(
             Math.exp(state.tick * Math.log1p(0.000001)) *
               10 ** (result.decimals[0] - result.decimals[1]),
           )
@@ -80,8 +85,9 @@ export function PoolPicker({
     onSelect(preset.fee, preset.spacing, price);
   }
   async function discover() {
-    setBusy(true);
-    setError("");
+    const id = ++request.current;
+    setPending(key);
+    setFailure(undefined);
     try {
       const keys = presets.map((preset) => ({
         token0: getAddress(token0),
@@ -93,24 +99,30 @@ export function PoolPicker({
         decimals(token0),
         decimals(token1),
       ]);
-      if (!active.current) return;
+      if (!active.current || id !== request.current) return;
       const next: Loaded = { key, states, decimals: [d0, d1] };
       setLoaded(next);
-      const first = states.findIndex((state) => state.sqrtRatio !== 0n);
-      if (first >= 0) select(first, next);
+      if (selected >= 0 && states[selected].sqrtRatio !== 0n)
+        select(selected, next);
     } catch (error) {
-      setError(String(error));
+      if (id === request.current) setFailure({ key, error: String(error) });
     } finally {
-      setBusy(false);
+      if (id === request.current) setPending(undefined);
     }
   }
   const refreshPools = useEffectEvent(discover);
+  const invalidate = useEffectEvent(() => {
+    request.current++;
+  });
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isAddress(token0) && isAddress(token1) && token0 !== token1)
         void refreshPools();
     }, 250);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      invalidate();
+    };
   }, [key, token0, token1]);
   return (
     <section className="pool-picker">
@@ -143,7 +155,8 @@ export function PoolPicker({
               )}
             </small>
             <small>
-              <Trans>Tick spacing</Trans> {preset.spacing}
+              <Trans>Tick spacing</Trans>{" "}
+              {decimalDisplay(spacingPercent(preset.spacing), 3)}%
             </small>
           </button>
         ))}
@@ -188,8 +201,8 @@ function PoolChart({
           raw: false,
           full: false,
           prices: [
-            String(tickPrice(lower, ...data.decimals)),
-            String(tickPrice(upper, ...data.decimals)),
+            decimalInput(tickPrice(lower, ...data.decimals)),
+            decimalInput(tickPrice(upper, ...data.decimals)),
             range.prices[2],
           ],
         })
@@ -211,4 +224,11 @@ function chartSelection(range: RangeInput, decimals: [number, number]) {
   } catch {
     return undefined;
   }
+}
+
+function scopedPoolError(
+  failure: { key: string; error: string } | undefined,
+  key: string,
+) {
+  return failure?.key === key ? failure.error : "";
 }

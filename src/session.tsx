@@ -81,7 +81,14 @@ function useSessionState() {
   }, []);
   function selectNetwork(chainId: number) {
     const next = networks.find((network) => network.chainId === chainId);
-    if (next) configure(next);
+    if (!next || next.chainId === settings.chainId) return;
+    if (transactionLock.current)
+      throw new Error(
+        t`Finish the pending transaction before changing settings.`,
+      );
+    // Choosing an existing network does not invalidate balances or portfolio data.
+    setSettings(next);
+    save("freelp:settings", next);
   }
   async function send(tx: Transaction, target = settings) {
     if (!wallet || !account) throw new Error(t`Connect a wallet first.`);

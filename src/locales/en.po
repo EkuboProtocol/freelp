@@ -68,10 +68,28 @@ msgstr "All networks. Positions, pool data, and fees are read together from each
 msgid "Already deployed · code verified"
 msgstr "Already deployed · code verified"
 
+#. placeholder {0}: next.spacing
+#: src/TickSpacingControl.tsx
+msgid "Applies {0} ticks:"
+msgstr "Applies {0} ticks:"
+
+#: src/TickSpacingControl.tsx
+msgid "Apply tick spacing"
+msgstr "Apply tick spacing"
+
 #. placeholder {0}: token.symbol
 #: src/ApprovalButton.tsx
 msgid "Approve {0}"
 msgstr "Approve {0}"
+
+#: src/TokenPickerRows.tsx
+msgid "Balance"
+msgstr "Balance"
+
+#: src/TokenBalance.tsx
+#: src/TokenPickerRows.tsx
+msgid "Balance unavailable"
+msgstr "Balance unavailable"
 
 #: src/CreatePage.tsx
 #: src/TokenBalance.tsx
@@ -257,9 +275,21 @@ msgstr "Deposit preview"
 msgid "Deterministic deployment details"
 msgstr "Deterministic deployment details"
 
+#: src/TickSpacingControl.tsx
+msgid "Enter a positive spacing that rounds to 1–698605 integer ticks."
+msgstr "Enter a positive spacing that rounds to 1–698605 integer ticks."
+
+#: src/TickSpacingControl.tsx
+msgid "Enter exact ticks"
+msgstr "Enter exact ticks"
+
 #: src/common.tsx
 msgid "Error: {error}"
 msgstr "Error: {error}"
+
+#: src/PricePreview.tsx
+msgid "Exact ticks"
+msgstr "Exact ticks"
 
 #: src/PoolPicker.tsx
 msgid "Existing pool"
@@ -350,6 +380,14 @@ msgstr "Liquidity distribution"
 msgid "Liquidity:"
 msgstr "Liquidity:"
 
+#: src/TokenPickerRows.tsx
+msgid "Loading balance"
+msgstr "Loading balance"
+
+#: src/TokenBalance.tsx
+msgid "Loading balance…"
+msgstr "Loading balance…"
+
 #: src/RangeFields.tsx
 msgid "Lower price"
 msgstr "Lower price"
@@ -402,6 +440,10 @@ msgstr "No application fees. Network gas applies."
 msgid "No injected wallet detected. Open this page in a browser with a wallet extension."
 msgstr "No injected wallet detected. Open this page in a browser with a wallet extension."
 
+#: src/TokenPickerRows.tsx
+msgid "No matching tokens. Paste a contract address to import one."
+msgstr "No matching tokens. Paste a contract address to import one."
+
 #: src/PositionsPage.tsx
 msgid "No positions found on the available networks."
 msgstr "No positions found on the available networks."
@@ -433,6 +475,18 @@ msgstr "Open with your local IPFS gateway"
 #: src/App.tsx
 msgid "or"
 msgstr "or"
+
+#: src/TokenPickerRows.tsx
+msgid "Other tokens"
+msgstr "Other tokens"
+
+#: src/PortfolioPosition.tsx
+msgid "per"
+msgstr "per"
+
+#: src/PortfolioPosition.tsx
+msgid "Pool details"
+msgstr "Pool details"
 
 #: src/CreatePage.tsx
 msgid "Pool fee (%)"
@@ -489,6 +543,10 @@ msgstr "Price ({0} per {1}):"
 msgid "Price range"
 msgstr "Price range"
 
+#: src/PortfolioPosition.tsx
+msgid "Price range:"
+msgstr "Price range:"
+
 #. placeholder {0}: symbols[1]
 #. placeholder {1}: symbols[0]
 #: src/RangeFields.tsx
@@ -529,6 +587,10 @@ msgstr "Reading {pending} networks…"
 msgid "Recipient address"
 msgstr "Recipient address"
 
+#: src/TokenPickerRows.tsx
+msgid "Refresh balances"
+msgstr "Refresh balances"
+
 #: src/PositionsPage.tsx
 msgid "Refresh positions"
 msgstr "Refresh positions"
@@ -545,6 +607,10 @@ msgstr "Refresh the preview."
 #: src/ApprovalButton.tsx
 msgid "Reset {0} approval"
 msgstr "Reset {0} approval"
+
+#: src/TokenBalance.tsx
+msgid "Retry balance"
+msgstr "Retry balance"
 
 #: src/SettingsPage.tsx
 msgid "RPC reports chain {chain}."
@@ -623,6 +689,14 @@ msgstr "Slippage (basis points)"
 msgid "Slippage must be between 0 and 1000 basis points."
 msgstr "Slippage must be between 0 and 1000 basis points."
 
+#: src/TokenPickerRows.tsx
+msgid "Some balances could not be loaded. Refresh or check your RPC settings."
+msgstr "Some balances could not be loaded. Refresh or check your RPC settings."
+
+#: src/TickSpacingControl.tsx
+msgid "Spacing is the price change between adjacent usable ticks. It is independent of the pool fee."
+msgstr "Spacing is the price change between adjacent usable ticks. It is independent of the pool fee."
+
 #: src/App.tsx
 msgid "Terms"
 msgstr "Terms"
@@ -664,13 +738,17 @@ msgid "Tick range:"
 msgstr "Tick range:"
 
 #: src/PoolPicker.tsx
-#: src/RangeFields.tsx
+#: src/TickSpacingControl.tsx
 msgid "Tick spacing"
 msgstr "Tick spacing"
 
-#: src/PricePreview.tsx
-msgid "Ticks:"
-msgstr "Ticks:"
+#: src/TickSpacingControl.tsx
+msgid "Tick spacing (%)"
+msgstr "Tick spacing (%)"
+
+#: src/TickSpacingControl.tsx
+msgid "Tick spacing (ticks)"
+msgstr "Tick spacing (ticks)"
 
 #: src/CreatePage.tsx
 msgid "Token 0 address"
@@ -703,6 +781,10 @@ msgstr "Token metadata fallback"
 #: src/PositionDetail.tsx
 msgid "Token metadata unavailable."
 msgstr "Token metadata unavailable."
+
+#: src/TokenPickerRows.tsx
+msgid "Tokens"
+msgstr "Tokens"
 
 #: src/PositionDetail.tsx
 msgid "Transfer NFT to recipient"
@@ -770,6 +852,10 @@ msgstr "Using manually supplied decimals: {0}"
 msgid "Verify contracts"
 msgstr "Verify contracts"
 
+#: src/TokenPickerRows.tsx
+msgid "Wallet balances"
+msgstr "Wallet balances"
+
 #: src/session.tsx
 msgid "Wallet changed. Connect again to review the active account."
 msgstr "Wallet changed. Connect again to review the active account."
@@ -797,3 +883,7 @@ msgstr "Withdrawal percentage must be 1–100."
 #: src/PositionsPage.tsx
 msgid "Your positions"
 msgstr "Your positions"
+
+#: src/TokenPickerRows.tsx
+msgid "Your tokens"
+msgstr "Your tokens"

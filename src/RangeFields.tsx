@@ -1,7 +1,8 @@
+import { decimalInput } from "./decimalFormat";
+import { TickSpacingControl } from "./TickSpacingControl";
 import { Trans } from "@lingui/react/macro";
 import type { Dispatch, SetStateAction } from "react";
 import { Field } from "./common";
-import { MAX_TICK_SPACING } from "./pools";
 import type { RangeInput } from "./prices";
 
 export function RangeFields({
@@ -65,8 +66,8 @@ export function RangeFields({
                 raw: false,
                 full: false,
                 prices: [
-                  String(Number(range.prices[2]) * (1 - percent / 100)),
-                  String(Number(range.prices[2]) * (1 + percent / 100)),
+                  decimalInput(Number(range.prices[2]) * (1 - percent / 100)),
+                  decimalInput(Number(range.prices[2]) * (1 + percent / 100)),
                   range.prices[2],
                 ],
               })
@@ -86,18 +87,12 @@ export function RangeFields({
             />
           </Field>
         ))}
-        <Field label={<Trans>Tick spacing</Trans>}>
-          <input
-            type="number"
-            min={1}
-            max={MAX_TICK_SPACING}
-            value={range.spacing}
-            onChange={(event) =>
-              setRange({ ...range, spacing: Number(event.target.value) })
-            }
-          />
-        </Field>
       </div>
+      <TickSpacingControl
+        key={range.spacing}
+        spacing={range.spacing}
+        onApply={(spacing) => setRange({ ...range, spacing })}
+      />
       <button
         type="button"
         onClick={() => setRange({ ...range, full: !range.full })}

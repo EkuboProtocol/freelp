@@ -1,3 +1,6 @@
+import { TokenPickerRows, PickerBalanceStatus } from "./TokenPickerRows";
+import { tokenPickerKeyboard } from "./tokenPickerKeyboard";
+import { useTokenBalances } from "./useTokenBalances";
 import { networkName } from "./networks";
 import type { Settings } from "./types";
 import { useId, useRef, useState } from "react";
@@ -20,7 +23,10 @@ export function CurrencySelect({
   allNetworks?: boolean;
 }) {
   const titleId = useId();
-  const { settings, networks } = useSession();
+  const { settings, networks, account } = useSession();
+  const [open, setOpen] = useState(false);
+  const [refresh, setRefresh] = useState(0);
+  const searchInput = useRef<HTMLInputElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const [search, setSearch] = useState("");
   const tokens = currencies(settings.chainId, settings.nativeSymbol);
@@ -32,6 +38,7 @@ export function CurrencySelect({
     (token) => token.address.toLowerCase() === value.toLowerCase(),
   );
   const choices = allNetworks ? networks : [settings];
+  const balances = useTokenBalances(choices, open, refresh);
   const visible = choices
     .flatMap((network) =>
       currencies(network.chainId, network.nativeSymbol).map((token) => ({
@@ -47,6 +54,7 @@ export function CurrencySelect({
   function choose(token: Currency, chainId = settings.chainId) {
     onChange(token, chainId);
     dialog.current?.close();
+    setOpen(false);
   }
   async function inspect(network: Settings) {
     setBusy(true);
@@ -80,7 +88,9 @@ export function CurrencySelect({
           setSearch("");
           setCandidate(undefined);
           setError("");
+          setOpen(true);
           dialog.current?.showModal();
+          searchInput.current?.focus();
         }}
       >
         <span className="currency-mark">
@@ -89,8 +99,7 @@ export function CurrencySelect({
         <span>
           {selected?.symbol ?? <Trans>Select token</Trans>}{" "}
           <small>
-            {selected?.name}{" "}
-            {selectedNetworkLabel(selected, settings)}
+            {selected?.name} {selectedNetworkLabel(selected, settings)}
           </small>
         </span>
         <span aria-hidden="true">⌄</span>
@@ -99,6 +108,8 @@ export function CurrencySelect({
         ref={dialog}
         className="currency-dialog"
         aria-labelledby={titleId}
+        onClose={() => setOpen(false)}
+        onKeyDown={tokenPickerKeyboard}
       >
         <div className="row spread">
           <h2 id={titleId}>
@@ -113,6 +124,7 @@ export function CurrencySelect({
         </div>
         <Field label={<Trans>Search tokens or paste an address</Trans>}>
           <input
+            ref={searchInput}
             name="token-search"
             spellCheck={false}
             autoComplete="off"
@@ -123,22 +135,18 @@ export function CurrencySelect({
             }}
           />
         </Field>
+        <PickerBalanceStatus
+          connected={!!account}
+          balances={balances}
+          refresh={() => setRefresh((n) => n + 1)}
+        />
         <div className="token-list">
-          {visible.map(({ token, network }) => (
-            <button
-              className="token-option"
-              key={`${network.chainId}:${token.address}`}
-              onClick={() => choose(token, network.chainId)}
-            >
-              <span className="currency-mark">{token.symbol.slice(0, 1)}</span>
-              <span>
-                <strong>{token.symbol}</strong>
-                <small>{token.name}</small>
-                <small>{networkName(network.chainId, network.name)}</small>
-                <small className="mono">{token.address}</small>
-              </span>
-            </button>
-          ))}
+          <TokenPickerRows
+            entries={visible}
+            balances={balances}
+            connected={!!account}
+            choose={choose}
+          />
         </div>
         {isAddress(search) ? (
           <div className="row">
@@ -181,6 +189,9 @@ export function CurrencySelect({
   );
 }
 
-function selectedNetworkLabel(selected: Currency | undefined, settings: Settings) {
+function selectedNetworkLabel(
+  selected: Currency | undefined,
+  settings: Settings,
+) {
   return selected ? networkName(settings.chainId, settings.name) : "";
 }

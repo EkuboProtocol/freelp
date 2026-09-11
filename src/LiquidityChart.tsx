@@ -1,3 +1,4 @@
+import { decimalDisplay } from "./decimalFormat";
 import { t } from "@lingui/core/macro";
 import { useState } from "react";
 import { Trans } from "@lingui/react/macro";
@@ -32,10 +33,10 @@ export function LiquidityChart({
     1n,
   );
   const price = (tick: number) =>
-    (
-      Math.exp(tick * Math.log1p(0.000001)) *
-      10 ** (decimals0 - decimals1)
-    ).toPrecision(5);
+    decimalDisplay(
+      Math.exp(tick * Math.log1p(0.000001)) * 10 ** (decimals0 - decimals1),
+      5,
+    );
   const selected = samples[hover ?? 40];
   return (
     <div className="liquidity-chart">

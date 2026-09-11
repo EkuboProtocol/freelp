@@ -1,3 +1,4 @@
+import { decimalDisplay } from "./decimalFormat";
 import { checkSpacing } from "./pools";
 
 export const MAX_TICK = 88722835;
@@ -83,5 +84,5 @@ export function sqrtPrice(ratio: bigint, decimals0: number, decimals1: number) {
   return (Number(ratio) / 2 ** 128) ** 2 * 10 ** (decimals0 - decimals1);
 }
 export function displayPrice(price: number) {
-  return price.toPrecision(8);
+  return decimalDisplay(price);
 }
