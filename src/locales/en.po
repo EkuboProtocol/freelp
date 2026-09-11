@@ -32,14 +32,6 @@ msgstr "A transaction is already pending."
 msgid "About FreeLP"
 msgstr "About FreeLP"
 
-#: src/TermsPage.tsx
-msgid "Accept terms"
-msgstr "Accept terms"
-
-#: src/TermsPage.tsx
-msgid "Accepted for the connected wallet."
-msgstr "Accepted for the connected wallet."
-
 #: src/LiquidityChart.tsx
 msgid "Active liquidity"
 msgstr "Active liquidity"
@@ -104,10 +96,6 @@ msgstr "Balance:"
 #: src/TokenPickerRows.tsx
 msgid "Balance: {0}"
 msgstr "Balance: {0}"
-
-#: src/App.tsx
-msgid "Before any transaction, read and accept the <0>Terms of Service</0>. Use at your own risk."
-msgstr "Before any transaction, read and accept the <0>Terms of Service</0>. Use at your own risk."
 
 #: src/App.tsx
 msgid "Build details"
@@ -186,10 +174,6 @@ msgstr "Connect a wallet first."
 #: src/PositionsPage.tsx
 msgid "Connect a wallet to load positions directly from the chain."
 msgstr "Connect a wallet to load positions directly from the chain."
-
-#: src/TermsPage.tsx
-msgid "Connect a wallet to record your acceptance."
-msgstr "Connect a wallet to record your acceptance."
 
 #. placeholder {0}: session.account
 #: src/AccountControl.tsx
@@ -318,6 +302,10 @@ msgstr "Enter a positive spacing that rounds to 1–698605 integer ticks."
 msgid "Enter exact ticks"
 msgstr "Enter exact ticks"
 
+#: src/TermsPage.tsx
+msgid "Entirely at your own risk"
+msgstr "Entirely at your own risk"
+
 #: src/common.tsx
 msgid "Error: {error}"
 msgstr "Error: {error}"
@@ -379,6 +367,14 @@ msgstr "First token"
 msgid "Fixed salt:"
 msgstr "Fixed salt:"
 
+#: src/TermsPage.tsx
+msgid "FreeLP is independently runnable, noncustodial software. Its position manager has no protocol owner or administrator appointed to supervise your activity, manage your positions, reverse transactions, or recover your assets. Nobody undertakes to protect you merely because they wrote, contributed to, deployed, distributed, or hosted this software. Your wallet and position ownership do not create a customer, agency, fiduciary, or custodial relationship with any contributor."
+msgstr "FreeLP is independently runnable, noncustodial software. Its position manager has no protocol owner or administrator appointed to supervise your activity, manage your positions, reverse transactions, or recover your assets. Nobody undertakes to protect you merely because they wrote, contributed to, deployed, distributed, or hosted this software. Your wallet and position ownership do not create a customer, agency, fiduciary, or custodial relationship with any contributor."
+
+#: src/TermsPage.tsx
+msgid "FreeLP software is licensed under the MIT license. These notices do not narrow the permissions granted by that license, waive copyright, or replace the licenses of included components. The MIT warranty disclaimer and limitation of liability continue to apply. Preserve required copyright and license notices when copying or distributing the software."
+msgstr "FreeLP software is licensed under the MIT license. These notices do not narrow the permissions granted by that license, waive copyright, or replace the licenses of included components. The MIT warranty disclaimer and limitation of liability continue to apply. Preserve required copyright and license notices when copying or distributing the software."
+
 #: src/RangeFields.tsx
 msgid "Full range selected."
 msgstr "Full range selected."
@@ -386,10 +382,6 @@ msgstr "Full range selected."
 #: src/TokenBalance.tsx
 msgid "Half"
 msgstr "Half"
-
-#: src/TermsPage.tsx
-msgid "I have read and agree to the Terms of Service and understand that I use FreeLP at my own risk."
-msgstr "I have read and agree to the Terms of Service and understand that I use FreeLP at my own risk."
 
 #: src/CreatePage.tsx
 msgid "If a token has no decimals method, amounts use raw integer units. You can supply known decimals here to enter human-readable amounts."
@@ -419,6 +411,10 @@ msgstr "Insufficient {0} balance"
 #: src/PositionDetail.tsx
 msgid "Invalid slippage."
 msgstr "Invalid slippage."
+
+#: src/TermsPage.tsx
+msgid "Limitation of liability"
+msgstr "Limitation of liability"
 
 #: src/LiquidityChart.tsx
 msgid "Liquidity distribution"
@@ -462,6 +458,7 @@ msgid "Max"
 msgstr "Max"
 
 #: src/App.tsx
+#: src/TermsPage.tsx
 msgid "MIT license"
 msgstr "MIT license"
 
@@ -476,6 +473,10 @@ msgstr "New pool: creation will initialize its price."
 #: src/App.tsx
 msgid "No application fees. Network gas applies."
 msgstr "No application fees. Network gas applies."
+
+#: src/TermsPage.tsx
+msgid "No central operator or protection"
+msgstr "No central operator or protection"
 
 #: src/PositionsPage.tsx
 msgid "No matching positions. Try another search or show closed positions."
@@ -496,6 +497,10 @@ msgstr "No token contract at this address."
 #: src/AccountControl.tsx
 msgid "No wallet detected"
 msgstr "No wallet detected"
+
+#: src/TermsPage.tsx
+msgid "No warranties or guarantees"
+msgstr "No warranties or guarantees"
 
 #: src/DeploymentCard.tsx
 msgid "Not deployed · no code at this address"
@@ -610,6 +615,10 @@ msgstr "Range upper bound"
 #: src/PortfolioPosition.tsx
 msgid "raw units"
 msgstr "raw units"
+
+#: src/TermsPage.tsx
+msgid "Read the MIT license"
+msgstr "Read the MIT license"
 
 #. placeholder {0}: networkName(network.chainId, network.name)
 #: src/CurrencySelect.tsx
@@ -760,10 +769,6 @@ msgstr "Terms"
 msgid "Terms of Service"
 msgstr "Terms of Service"
 
-#: src/TermsPage.tsx
-msgid "Terms version: {TERMS_HASH}"
-msgstr "Terms version: {TERMS_HASH}"
-
 #: src/PositionDepositFields.tsx
 msgid "The matching amount is calculated from this position’s range and current pool price."
 msgstr "The matching amount is calculated from this position’s range and current pool price."
@@ -789,9 +794,17 @@ msgstr "The RPC returned an invalid chain ID."
 msgid "The shared position manager is not deployed on this network yet. Open the Deploy tab to set it up once for everyone."
 msgstr "The shared position manager is not deployed on this network yet. Open the Deploy tab to set it up once for everyone."
 
+#: src/TermsPage.tsx
+msgid "There is no guarantee that any contract is correct, audited, secure, economically sound, or free from defects, exploits, malicious behavior, or administrative intervention. No one promises returns, liquidity, price accuracy, execution quality, asset value, withdrawal availability, recovery, refunds, insurance, compensation, continued hosting, updates, maintenance, or support. Simulation results, displayed balances, prices, and fee estimates may be incomplete, stale, or wrong."
+msgstr "There is no guarantee that any contract is correct, audited, secure, economically sound, or free from defects, exploits, malicious behavior, or administrative intervention. No one promises returns, liquidity, price accuracy, execution quality, asset value, withdrawal availability, recovery, refunds, insurance, compensation, continued hosting, updates, maintenance, or support. Simulation results, displayed balances, prices, and fee estimates may be incomplete, stale, or wrong."
+
 #: src/DeployPage.tsx
 msgid "This build uses fixed contract addresses on every network. Custom networks must provide the standard CREATE2 factory."
 msgstr "This build uses fixed contract addresses on every network. Custom networks must provide the standard CREATE2 factory."
+
+#: src/TermsPage.tsx
+msgid "This does not mean every token, extension, network, RPC endpoint, gateway, or other contract is ownerless. Those systems may have independent owners, administrators, upgrade powers, or restrictions. Their inclusion or availability through FreeLP is not an endorsement or a promise of safety. Software copyright and applicable license notices remain in effect."
+msgstr "This does not mean every token, extension, network, RPC endpoint, gateway, or other contract is ownerless. Those systems may have independent owners, administrators, upgrade powers, or restrictions. Their inclusion or availability through FreeLP is not an endorsement or a promise of safety. Software copyright and applicable license notices remain in effect."
 
 #: src/PoolPicker.tsx
 msgid "This pool is not initialized. Set its initial price when creating the first position."
@@ -821,6 +834,14 @@ msgstr "Tick spacing (ticks)"
 #: src/PoolIdentity.tsx
 msgid "Tick spacing:"
 msgstr "Tick spacing:"
+
+#: src/TermsPage.tsx
+msgid "To the fullest extent permitted by law, the application, website, information, and contract interactions are provided as is and as available, with no express, implied, or statutory warranty. This includes no warranty of merchantability, fitness for a purpose, title, noninfringement, accuracy, security, reliability, or availability."
+msgstr "To the fullest extent permitted by law, the application, website, information, and contract interactions are provided as is and as available, with no express, implied, or statutory warranty. This includes no warranty of merchantability, fitness for a purpose, title, noninfringement, accuracy, security, reliability, or availability."
+
+#: src/TermsPage.tsx
+msgid "To the maximum extent permitted by applicable law, no author, copyright holder, contributor, maintainer, distributor, deployer, or host accepts liability for any claim, loss, damage, cost, or other liability arising from your use of, inability to use, or reliance on this application, website, software, information, or any connected contract or system. This includes lost assets, profits, data, opportunities, and direct, indirect, incidental, consequential, special, exemplary, or punitive damages, under contract, tort including negligence, or any other legal theory, even if advised of the possibility. You bear the consequences of what you do with this software. No statement here excludes liability or rights that applicable law does not permit to be excluded."
+msgstr "To the maximum extent permitted by applicable law, no author, copyright holder, contributor, maintainer, distributor, deployer, or host accepts liability for any claim, loss, damage, cost, or other liability arising from your use of, inability to use, or reliance on this application, website, software, information, or any connected contract or system. This includes lost assets, profits, data, opportunities, and direct, indirect, incidental, consequential, special, exemplary, or punitive damages, under contract, tort including negligence, or any other legal theory, even if advised of the possibility. You bear the consequences of what you do with this software. No statement here excludes liability or rights that applicable law does not permit to be excluded."
 
 #: src/CreatePage.tsx
 msgid "Token 0 fallback decimals"
@@ -928,6 +949,18 @@ msgstr "Withdrawal percentage must be 1–100."
 msgid "Withdrawal portion"
 msgstr "Withdrawal portion"
 
+#: src/TermsPage.tsx
+msgid "You alone decide whether and how to use FreeLP, this website, any copy of the application, or any contract accessed through it. You assume all risks and responsibility for your actions, transactions, permissions, and losses. You can lose all assets you commit or approve. Transactions may be irreversible, and assets may be permanently inaccessible."
+msgstr "You alone decide whether and how to use FreeLP, this website, any copy of the application, or any contract accessed through it. You assume all risks and responsibility for your actions, transactions, permissions, and losses. You can lose all assets you commit or approve. Transactions may be irreversible, and assets may be permanently inaccessible."
+
+#: src/TermsPage.tsx
+msgid "You are responsible for evaluating the software and every network, contract, extension, token, RPC endpoint, wallet, approval, recipient, amount, and transaction before using or signing anything. Risks include total loss, contract failures, malicious assets, unlimited approvals, compromised wallets or infrastructure, inaccurate data, price movements, liquidity losses, transaction ordering, network failures, and changes to external systems. Nothing here is investment, legal, tax, or other professional advice. You are responsible for complying with laws and obligations applicable to you."
+msgstr "You are responsible for evaluating the software and every network, contract, extension, token, RPC endpoint, wallet, approval, recipient, amount, and transaction before using or signing anything. Risks include total loss, contract failures, malicious assets, unlimited approvals, compromised wallets or infrastructure, inaccurate data, price movements, liquidity losses, transaction ordering, network failures, and changes to external systems. Nothing here is investment, legal, tax, or other professional advice. You are responsible for complying with laws and obligations applicable to you."
+
 #: src/PositionsPage.tsx
 msgid "Your positions"
 msgstr "Your positions"
+
+#: src/TermsPage.tsx
+msgid "Your responsibility"
+msgstr "Your responsibility"

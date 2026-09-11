@@ -1,19 +1,9 @@
 import { describe, test, expect } from "bun:test";
-import { accept, accepted, requireConsent } from "../../src/terms";
 import { assertWallet } from "../../src/transactions";
 import type { Provider } from "../../src/types";
 const account = "0x0000000000000000000000000000000000000001";
-describe("transaction consent boundary", () => {
-  test("requires explicit per-account acceptance", () => {
-    expect(() => requireConsent(account)).toThrow();
-    accept(account);
-    expect(accepted(account)).toBe(true);
-    expect(() =>
-      requireConsent("0x0000000000000000000000000000000000000002"),
-    ).toThrow();
-  });
+describe("transaction wallet boundary", () => {
   test("rejects account or chain changes", async () => {
-    accept(account);
     const provider: Provider = {
       request: async ({ method }) =>
         method === "eth_accounts" ? [account] : "0x1",
@@ -26,35 +16,8 @@ describe("transaction consent boundary", () => {
   });
 });
 
-test("the transaction entrypoint makes no wallet or RPC request before acceptance", async () => {
-  const { executeTransaction } = await import("../../src/transactions");
-  let calls = 0;
-  const provider: Provider = {
-    request: async () => {
-      calls++;
-      return null;
-    },
-  };
-  await expect(
-    executeTransaction(
-      provider,
-      "0x0000000000000000000000000000000000000099",
-      {
-        chainId: 1,
-        rpcUrl: "http://127.0.0.1:1",
-        core: account,
-        manager: account,
-        nativeSymbol: "ETH",
-      },
-      { data: "0x00" },
-    ),
-  ).rejects.toThrow("Terms of Service");
-  expect(calls).toBe(0);
-});
-
 test("an account change during gas estimation prevents any transaction request", async () => {
   const { executeTransaction } = await import("../../src/transactions");
-  accept(account);
   let current = account;
   const requests: string[] = [];
   const server = Bun.serve({
@@ -107,7 +70,6 @@ test("an account change during gas estimation prevents any transaction request",
 
 test("a position transaction requests its own network before wallet submission", async () => {
   const { executeTransaction } = await import("../../src/transactions");
-  accept(account);
   let chain = "0x2105";
   const methods: string[] = [];
   const server = Bun.serve({

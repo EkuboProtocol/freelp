@@ -124,12 +124,9 @@ legend {
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
-.terms {
-  white-space: pre-wrap;
-  max-height: 45vh;
-  overflow: auto;
-  border: 1px solid #aaa;
-  padding: 16px;
+.terms-page {
+  max-width: 76ch;
+  margin: 0 auto;
 }
 table {
   width: 100%;
@@ -576,7 +573,6 @@ header { flex-wrap: wrap; }
 .account-menu .mono { overflow-wrap: anywhere; font-size: 13px; }
 .wallet-connect { display: flex; gap: 8px; flex-wrap: wrap; }
 .wallet-unavailable { font-size: 13px; color: #555; }
-.consent-notice { font-size: 14px; }
 @media (max-width: 700px) { header nav { order: 3; flex-basis: 100%; } }
 .network-list { border-top: 1px solid #ddd; }
 .network-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid #ddd; }

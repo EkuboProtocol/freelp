@@ -116,7 +116,7 @@ for (const { missingDecimals, native } of [
   { missingDecimals: true, native: false },
   { missingDecimals: false, native: true },
 ])
-  test(`RPC-only LP lifecycle with terms enforced (missing decimals: ${missingDecimals}, native: ${native})`, async ({
+  test(`RPC-only LP lifecycle without terms acceptance (missing decimals: ${missingDecimals}, native: ${native})`, async ({
     page,
   }) => {
     await testClient.request({ method: "anvil_reset", params: [] });
@@ -254,15 +254,6 @@ for (const { missingDecimals, native } of [
     );
     await page.goto("/");
     await page.getByRole("button", { name: "Connect Local wallet" }).click();
-    await page.getByRole("link", { name: "Deploy", exact: true }).click();
-    await expect(
-      page.getByRole("button", { name: "Deploy Core", exact: true }),
-    ).toBeDisabled();
-    await page.getByRole("link", { name: "Terms", exact: true }).click();
-    await page.getByRole("checkbox").check();
-    await page
-      .getByRole("button", { name: "Accept terms", exact: true })
-      .click();
     await page.getByRole("link", { name: "Deploy", exact: true }).click();
     if (missingDecimals) {
       verificationFailure = "core";

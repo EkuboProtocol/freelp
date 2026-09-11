@@ -8,7 +8,7 @@ Axe reports zero violations for WCAG A/AA checks through 2.2 and applicable best
 
 Changes include visible current navigation, a working keyboard skip link, labeled dialogs, minimum button targets, reduced-motion support, sufficient secondary-text contrast, copyable launch commands, explicit setup actions, readable token symbols with full-address tooltips, independent per-chain portfolio responses, and a keyboard/touch control for exploring the liquidity graph. Position actions wait for fresh on-chain state after transactions, preventing a second action from using the pre-transaction position snapshot.
 
-Manual browser checks cover keyboard navigation, dialog opening/Escape/focus return, and mobile rendering. Seven browser tests exercise token imports, independent network settings, terms gates, browser contract/fetcher deployment, pool discovery and liquidity display, and complete native/ERC20/nonstandard-token LP lifecycles.
+Manual browser checks cover keyboard navigation, dialog opening/Escape/focus return, and mobile rendering. Browser tests exercise token imports, independent network settings, informational terms without transaction gating, browser contract/fetcher deployment, pool discovery and liquidity display, and complete native/ERC20/nonstandard-token LP lifecycles.
 
 CI retains raw accessibility and Lighthouse JSON reports with each release. It requires zero accessibility violations and no overflow, with Lighthouse thresholds of performance 90, accessibility 100, best practices 95, and SEO 90. These checks are complemented by functional tests; there is no invented aggregate UX score.
 

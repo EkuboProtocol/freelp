@@ -63,12 +63,12 @@ function BuildPage() {
   );
 }
 function Page({ route }: { route: string }) {
-  const { account, settings } = useSession();
+  const { settings } = useSession();
   switch (route.split("?")[0]) {
     case "#/settings":
       return <SettingsPage key={settings.chainId} />;
     case "#/terms":
-      return <TermsPage key={account ?? "disconnected"} />;
+      return <TermsPage />;
     case "#/deploy":
       return <DeployPage />;
     case "#/create":
@@ -104,16 +104,6 @@ export function App() {
         <MainNavigation route={route} />
         <AccountControl />
       </header>
-      <div className="consent-notice">
-        {!session.consent ? (
-          <p>
-            <Trans>
-              Before any transaction, read and accept the{" "}
-              <a href="#/terms">Terms of Service</a>. Use at your own risk.
-            </Trans>
-          </p>
-        ) : null}
-      </div>
       {session.status ? (
         <p role="status" className="status">
           {session.status}

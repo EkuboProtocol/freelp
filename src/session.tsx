@@ -14,7 +14,6 @@ import { loadNetworks, updateNetworks } from "./networks";
 import { loadSettings, validateSettings } from "./config";
 import { save } from "./storage";
 import { executeTransaction } from "./transactions";
-import { accepted, accept } from "./terms";
 import type { Settings, Transaction, Wallet } from "./types";
 function useSessionState() {
   const [networks, setNetworks] = useState(loadNetworks);
@@ -22,7 +21,6 @@ function useSessionState() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [wallet, setWallet] = useState<Wallet>();
   const [account, setAccount] = useState<Address>();
-  const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const transactionLock = useRef(false);
   const [status, setStatus] = useState("");
@@ -50,7 +48,6 @@ function useSessionState() {
     if (!wallet) return;
     const changed = () => {
       setAccount(undefined);
-      setConsent(false);
       setStatus(t`Wallet changed. Connect again to review the active account.`);
     };
     wallet.provider.on?.("accountsChanged", changed);
@@ -70,7 +67,6 @@ function useSessionState() {
     const address = getAddress(addresses[0]);
     setWallet(selected);
     setAccount(address);
-    setConsent(accepted(address));
     setStatus("");
   }
   const configure = useCallback((next: Settings) => {
@@ -117,12 +113,6 @@ function useSessionState() {
       setBusy(false);
     }
   }
-  function agree() {
-    if (account) {
-      accept(account);
-      setConsent(true);
-    }
-  }
   return {
     settings,
     networks,
@@ -131,8 +121,6 @@ function useSessionState() {
     wallets,
     account,
     connect,
-    consent,
-    agree,
     busy,
     status,
     setStatus,

@@ -25,7 +25,7 @@ export function Action({
   run: () => Promise<unknown>;
   disabled?: boolean;
 }) {
-  const { busy, consent, account, setStatus } = useSession();
+  const { busy, account, setStatus } = useSession();
   const [running, setRunning] = useState(false);
   async function act() {
     setRunning(true);
@@ -42,7 +42,7 @@ export function Action({
       type="button"
       aria-busy={running}
       className="primary-button"
-      disabled={disabled || busy || running || !consent || !account}
+      disabled={disabled || busy || running || !account}
       onClick={() => void act()}
     >
       {children}

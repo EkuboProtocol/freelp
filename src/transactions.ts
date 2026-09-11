@@ -3,7 +3,6 @@ import { CREATE2_FACTORY, verifyDeploymentTransaction } from "./deterministic";
 import { rpc } from "./rpc";
 import { verifyCode } from "./contracts";
 import { toHex, isAddressEqual, type Address } from "viem";
-import { requireConsent } from "./terms";
 import type { Provider, Settings, Transaction } from "./types";
 export async function assertWallet(
   provider: Provider,
@@ -22,7 +21,6 @@ export async function assertWallet(
     throw new Error("Wallet account changed. Review this transaction again.");
   if (typeof chain !== "string" || BigInt(chain) !== BigInt(chainId))
     throw new Error("Select the configured network in your wallet.");
-  requireConsent(account);
 }
 export async function executeTransaction(
   provider: Provider,
@@ -30,7 +28,6 @@ export async function executeTransaction(
   settings: Settings,
   tx: Transaction,
 ) {
-  requireConsent(account);
   const client = rpc(settings);
   if ((await client.getChainId()) !== settings.chainId)
     throw new Error("RPC chain ID does not match settings.");
@@ -70,6 +67,7 @@ export async function executeTransaction(
 }
 
 async function ensureWalletChain(provider: Provider, settings: Settings) {
-  const chain = await provider.request({method: "eth_chainId"});
-  if (typeof chain === "string" && BigInt(chain) !== BigInt(settings.chainId)) await switchWalletChain(provider, settings);
+  const chain = await provider.request({ method: "eth_chainId" });
+  if (typeof chain === "string" && BigInt(chain) !== BigInt(settings.chainId))
+    await switchWalletChain(provider, settings);
 }

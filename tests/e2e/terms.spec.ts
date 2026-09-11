@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 for (const storageAvailable of [true, false]) {
-  test(`terms require a fresh checkbox for each account (storage: ${storageAvailable})`, async ({
+  test(`terms stay informational across account changes (storage: ${storageAvailable})`, async ({
     page,
   }) => {
     await page.addInitScript(
@@ -67,45 +67,33 @@ for (const storageAvailable of [true, false]) {
       });
     });
     await page.goto("/#/terms");
-    await page.getByRole("button", { name: "Connect Test wallet" }).click();
-    await expect(page.getByRole("checkbox")).not.toBeChecked();
+    await expect(
+      page.getByRole("heading", { name: "No warranties or guarantees" }),
+    ).toBeVisible();
+    await expect(page.getByRole("checkbox")).toHaveCount(0);
+    await expect(
+      page.getByText("Terms version:", { exact: false }),
+    ).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "Accept terms", exact: true }),
-    ).toBeDisabled();
-    await page.getByRole("checkbox").check();
-    await page.evaluate(() =>
-      window.dispatchEvent(new Event("test:accountChanged")),
-    );
+    ).toHaveCount(0);
     await page.getByRole("button", { name: "Connect Test wallet" }).click();
-    await expect(page.getByRole("checkbox")).not.toBeChecked();
-    await page.getByRole("link", { name: "Deploy", exact: true }).click();
-    await expect(
-      page.getByRole("button", { name: "Deploy Core", exact: true }),
-    ).toBeDisabled();
-    await page.getByRole("link", { name: "Terms", exact: true }).click();
-    await page.getByRole("checkbox").check();
-    await page
-      .getByRole("button", { name: "Accept terms", exact: true })
-      .click();
     await page.getByRole("link", { name: "Deploy", exact: true }).click();
     await expect(
       page.getByRole("button", { name: "Deploy Core", exact: true }),
     ).toBeEnabled();
-    const requests = await page.evaluate(
-      () => Reflect.get(window, "testWalletRequests") as string[],
+    await page.evaluate(() =>
+      window.dispatchEvent(new Event("test:accountChanged")),
     );
-    expect(
-      requests.every((method) =>
-        ["eth_requestAccounts", "eth_accounts", "eth_chainId"].includes(method),
-      ),
-    ).toBe(true);
-    if (storageAvailable) await page.evaluate(() => localStorage.clear());
-    await page.goto("/#/terms");
-    await page.reload();
     await page.getByRole("button", { name: "Connect Test wallet" }).click();
-    await expect(page.getByRole("checkbox")).not.toBeChecked();
     await expect(
-      page.getByRole("button", { name: "Accept terms", exact: true }),
-    ).toBeDisabled();
+      page.getByRole("button", { name: "Deploy Core", exact: true }),
+    ).toBeEnabled();
+    await page.getByRole("link", { name: "Terms", exact: true }).click();
+    await page.reload();
+    await expect(page.getByRole("checkbox")).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Read the MIT license" }),
+    ).toHaveAttribute("href", "./licenses/freelp.txt");
   });
 }

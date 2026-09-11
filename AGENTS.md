@@ -12,7 +12,7 @@ Wrap user-facing copy in Lingui macros (`Trans`, `t`). Run `bun run messages:ext
 
 Run lint, typecheck, unit tests, production build, accessibility checks, and Lighthouse thresholds. Exercise changed transaction flows with the local-chain browser tests. Complexity is capped at 10; simplify functions rather than raising the limit or adding suppressions.
 
-Never bypass the shared terms/transaction gate. No executable runtime updates. Preserve reproducible inputs and per-commit IPFS records.
+Terms are informational: no acceptance gate, consent storage, or terms version. Preserve wallet confirmation, simulation, chain/account checks, and transaction locking. No executable runtime updates. Preserve reproducible inputs and per-commit IPFS records.
 
 Every successful branch/tag build pins on the dedicated DigitalOcean node and attaches its gateway URL to the commit status and Actions summary. Keep FREELP_PUBLIC_RELEASE=false until stable IPNS publication is authorized separately.
 
