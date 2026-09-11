@@ -23,23 +23,18 @@ test("amount parsing never silently rounds user maxima", () => {
   expect(() => parseAmount("1", 256)).toThrow();
 });
 
-test("legacy and omitted readers follow a custom Core without replacing custom readers", async () => {
+test("saved or imported settings cannot replace protocol contracts", async () => {
   const { validateSettings, DEFAULT_SETTINGS } =
     await import("../../src/config");
-  const { deploymentAddress } = await import("../../src/deterministic");
-  const core = "0x1111111111111111111111111111111111111111" as const;
-  const expected = deploymentAddress("FreeLPDataFetcher", core);
-  for (const freeLPDataFetcher of [
-    undefined,
-    "0xaf388FFa60a69D0bc59E0D31a9313D28EB8E3b18",
-  ] as const) {
-    expect(
-      validateSettings({ ...DEFAULT_SETTINGS, core, freeLPDataFetcher })
-        .freeLPDataFetcher,
-    ).toBe(expected);
-  }
-  expect(
-    validateSettings({ ...DEFAULT_SETTINGS, core, freeLPDataFetcher: core })
-      .freeLPDataFetcher,
-  ).toBe(core);
+  const { DEFAULT_CONTRACTS } = await import("../../src/deployments");
+  const address = "0x1111111111111111111111111111111111111111" as const;
+  const settings = validateSettings({
+    ...DEFAULT_SETTINGS,
+    core: address,
+    manager: address,
+    freeLPDataFetcher: address,
+  });
+  expect(settings.core).toBe(DEFAULT_CONTRACTS.core);
+  expect(settings.manager).toBe(DEFAULT_CONTRACTS.manager);
+  expect(settings.freeLPDataFetcher).toBe(DEFAULT_CONTRACTS.freeLPDataFetcher);
 });

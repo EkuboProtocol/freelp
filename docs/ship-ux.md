@@ -6,7 +6,7 @@
 - The home page has no deployment shortcut. Deploy remains a navigation tab. Positions are combined across networks without a global network selector.
 - The 11 EVM mainnets supported by the current official interface are bundled with RPCs and shared contract addresses. Settings has an explicit Add network action with persistent name, chain ID, RPC, native symbol, and contract configuration.
 - Core, FreeLP, and the fetchers deploy through the standard CREATE2 factory at `0x4e59b44847b379578588920cA78FbF26c0B4956C`, using the protocol salt `0x28f4114b40904ad1cfbb42175a55ad64187c1b299773bd6318baa292375cf0dd`. There is no account-dependent salt or editable deployment salt.
-- The canonical Core is `0x00000000000014aA86C5d3c41765bb24e11bd701`. With this Core and the pinned artifact, FreeLP is `0x573af249A268ed80c358dA77986D2e637978A611` for every deploying account and network. Changing constructor Core or bytecode necessarily changes the dependent CREATE2 address; custom-Core deployments show their actual prediction.
+- The canonical Core is `0x00000000000014aA86C5d3c41765bb24e11bd701`. With this Core and the pinned artifact, FreeLP is `0x573af249A268ed80c358dA77986D2e637978A611` for every deploying account and network. Core and dependent addresses are fixed in this build; custom-Core overrides are no longer supported.
 - Deployment cards show the predicted address, code presence and verification state, disable deployment while checking or when code exists, and allow adopting an already verified deployment. The transaction boundary rechecks chain, factory runtime, fixed payload, existing target code, and Core binding before simulation and wallet submission. Terms remain mandatory.
 
 ## Verification
@@ -45,3 +45,7 @@ Matching amounts are mandatory and follow the last edited amount. Fee and spacin
 FreeLPDataFetcher now inherits QuoteDataFetcher and TokenDataFetcher. Its predicted address for canonical Core is `0xE6965adE98F992e197554eDbF05c6E781e5127db`; it requires a new deployment per network. The manager address is unchanged. The app configures one reader address and no longer bundles or deploys the three standalone readers. Core remains a separate existing pool dependency and can still be deployed on a fresh network. Token group headings are removed, with refresh inline beside search and held balances first.
 
 Validation: 27 unit tests, 14 browser tests, no Axe violations at mobile/desktop sizes; Lighthouse performance 97 mobile/100 desktop and accessibility 100. The new Solidity quote/balance integration test and all 23 FreeLP tests pass; the full snapshot run has 979 passing tests and the same four pre-existing ExposedStorage failures previously reproduced on the parent.
+
+## Fixed contracts, network dialogs and account header
+
+Saved protocol address overrides are normalized to the bundled deployments. Deployment has no activation button. Settings now list all networks, with RPC-only Add/Edit dialogs that detect and validate chain identity. Import/export and manual verification controls are removed; transaction verification remains automatic. A local monochrome identicon and address menu sit in the header. Create is accessed from Positions. IPFS/IPNS information is removed from the application, with distribution links retained in CI/docs. Wallet errors extract readable messages instead of stringifying objects.

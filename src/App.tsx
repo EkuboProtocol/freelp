@@ -1,4 +1,4 @@
-import { IPNS_NAME } from "./distribution";
+import { AccountControl } from "./AccountControl";
 import { t } from "@lingui/core/macro";
 import { useEffect, useState } from "react";
 import { Trans } from "@lingui/react/macro";
@@ -46,39 +46,6 @@ function BuildPage() {
           Use a version suffix to keep a specific release, for example
           @ekubo/freelp@0.1.1. The package opens a local web server; your wallet
           signs transactions in the browser.
-        </Trans>
-      </p>
-      <h3>
-        <Trans>Open through IPFS</Trans>
-      </h3>
-      <p>
-        <Trans>
-          After public launch, the IPNS address follows the latest stable
-          release. Each release also includes its immutable IPFS address and a
-          CAR you can pin yourself.
-        </Trans>
-      </p>
-      <p>
-        <code>ipns://{IPNS_NAME}</code>
-      </p>
-      <p>
-        <a href={`http://127.0.0.1:8080/ipns/${IPNS_NAME}/`}>
-          <Trans>Open with your local IPFS gateway</Trans>
-        </a>
-      </p>
-      <p>
-        <a
-          href={`https://${IPNS_NAME}.ipns.dweb.link/`}
-          target="_blank"
-          rel="noreferrer"
-        >
-          <Trans>Open with a public IPFS gateway</Trans>
-        </a>
-      </p>
-      <p>
-        <Trans>
-          The IPNS address is reserved during private development. Public
-          gateway links become usable after launch.
         </Trans>
       </p>
       <p className="row">
@@ -135,34 +102,9 @@ export function App() {
       <header>
         <h1>FreeLP</h1>
         <MainNavigation route={route} />
+        <AccountControl />
       </header>
-      <div className="panel">
-        <div className="row">
-          {session.account ? (
-            <span className="mono">{session.account}</span>
-          ) : (
-            session.wallets.map((w) => (
-              <button
-                key={w.info.uuid}
-                onClick={() =>
-                  void session
-                    .connect(w)
-                    .catch((e) => session.setStatus(String(e)))
-                }
-              >
-                <Trans>Connect {w.info.name}</Trans>
-              </button>
-            ))
-          )}
-          {!session.account && session.wallets.length === 0 ? (
-            <span>
-              <Trans>
-                No injected wallet detected. Open this page in a browser with a
-                wallet extension.
-              </Trans>
-            </span>
-          ) : null}
-        </div>
+      <div className="consent-notice">
         {!session.consent ? (
           <p>
             <Trans>
@@ -208,12 +150,6 @@ function MainNavigation({ route }: { route: string }) {
         }
       >
         <Trans>Positions</Trans>
-      </a>
-      <a
-        href="#/create"
-        aria-current={route.startsWith("#/create") ? "page" : undefined}
-      >
-        <Trans>Create</Trans>
       </a>
       <a
         href="#/settings"

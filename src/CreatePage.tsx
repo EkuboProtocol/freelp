@@ -1,3 +1,4 @@
+import { errorMessage } from "./errors";
 import { PoolKeyFields } from "./PoolKeyFields";
 import { decimalInput } from "./decimalFormat";
 import { displayAmount } from "./displayAmount";
@@ -166,7 +167,7 @@ function CreatePositionForm({
       }
       setQuote({ ...next, key });
     } catch (e) {
-      if (id === request.current) setFailure({ key, error: String(e) });
+      if (id === request.current) setFailure({ key, error: errorMessage(e) });
     } finally {
       if (id === request.current) setPendingKey(undefined);
     }

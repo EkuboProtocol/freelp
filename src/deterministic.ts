@@ -1,3 +1,4 @@
+import { errorMessage } from "./errors";
 import { concatHex, getCreate2Address, type Address } from "viem";
 import { deployment, verifyCode, type ContractKind } from "./contracts";
 import { rpc } from "./rpc";
@@ -30,7 +31,7 @@ export async function deploymentStatus(settings: Settings, kind: ContractKind) {
     await verifyCode(settings, address, kind);
   } catch (error) {
     throw new Error(
-      `Code is present at ${address}, but verification failed: ${String(error)}`,
+      `Code is present at ${address}, but verification failed: ${errorMessage(error)}`,
       { cause: error },
     );
   }

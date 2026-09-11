@@ -30,7 +30,11 @@ function useSessionState() {
   useEffect(() => {
     const listener = (event: Event) => {
       const detail = (event as CustomEvent<Wallet>).detail;
-      if (detail?.provider && detail.info?.uuid)
+      if (
+        typeof detail?.provider?.request === "function" &&
+        typeof detail.info?.uuid === "string" &&
+        typeof detail.info.name === "string"
+      )
         setWallets((prev) =>
           prev.some((w) => w.info.uuid === detail.info.uuid)
             ? prev
@@ -67,13 +71,14 @@ function useSessionState() {
     setWallet(selected);
     setAccount(address);
     setConsent(accepted(address));
+    setStatus("");
   }
   const configure = useCallback((next: Settings) => {
     if (transactionLock.current)
       throw new Error(
         t`Finish the pending transaction before changing settings.`,
       );
-    validateSettings(next);
+    next = validateSettings(next);
     setSettings(next);
     setNetworks((current) => updateNetworks(current, next));
     save("freelp:settings", next);

@@ -1,3 +1,4 @@
+import { errorMessage } from "./errors";
 import { useEffect, useEffectEvent, useState } from "react";
 import { tokenBalances } from "./balances";
 import { currencies } from "./tokens";
@@ -27,7 +28,7 @@ export function useTokenBalances(
     for (const plan of plans) {
       void tokenBalances(plan.settings, account, plan.tokens, revision, refresh)
         .then((balances) => ({ balances }))
-        .catch((error) => ({ error: String(error) }))
+        .catch((error) => ({ error: errorMessage(error) }))
         .then((result) => {
           if (active)
             setLoaded((previous) => ({

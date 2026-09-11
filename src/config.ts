@@ -1,7 +1,5 @@
 import { retiredDefault } from "./retiredNetworks";
 import { DEFAULT_CONTRACTS } from "./deployments";
-import { deploymentAddress } from "./deterministic";
-import { isAddress } from "viem";
 import { load } from "./storage";
 import type { Settings } from "./types";
 export const DEFAULT_SETTINGS: Settings = {
@@ -28,8 +26,13 @@ export function validateSettings(value: Settings) {
     (typeof value.name !== "string" || value.name.length > 80)
   )
     throw new Error("Invalid network name.");
-  validateAddresses(value);
-  return migrateFetcher(value);
+  return {
+    name: value.name,
+    rpcUrl: value.rpcUrl,
+    chainId: value.chainId,
+    nativeSymbol: value.nativeSymbol,
+    ...DEFAULT_CONTRACTS,
+  };
 }
 
 export function loadSettings() {
@@ -41,26 +44,4 @@ export function loadSettings() {
   } catch {
     return DEFAULT_SETTINGS;
   }
-}
-
-function validateAddresses(value: Settings) {
-  const addresses = [
-    value.core,
-    value.manager,
-    value.freeLPDataFetcher ?? "0x0000000000000000000000000000000000000000",
-  ];
-  if (!addresses.every((address) => isAddress(address)))
-    throw new Error("Invalid contract address.");
-}
-
-function migrateFetcher(value: Settings) {
-  return {
-    ...value,
-    freeLPDataFetcher:
-      !value.freeLPDataFetcher ||
-      value.freeLPDataFetcher.toLowerCase() ===
-        "0xaf388ffa60a69d0bc59e0d31a9313d28eb8e3b18"
-        ? deploymentAddress("FreeLPDataFetcher", value.core)
-        : value.freeLPDataFetcher,
-  };
 }

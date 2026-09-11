@@ -81,3 +81,39 @@ jobs:
             tag="build-$GITHUB_SHA"
             gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false --title "Build $GITHUB_SHA" --notes-file docs/release-notes.md release/*
           fi
+
+  publish-npm:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') && vars.FREELP_NPM_PUBLISH == 'true'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Download the verified release package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --pattern 'ekubo-freelp-*.tgz' --dir release
+      - name: Validate release identity and launch readiness
+        shell: bash
+        run: |
+          packages=(release/ekubo-freelp-*.tgz)
+          test "${#packages[@]}" -eq 1
+          tar -xOf "${packages[0]}" package/package.json > manifest.json
+          node --input-type=module <<'JS'
+          import { readFileSync } from 'node:fs';
+          const p = JSON.parse(readFileSync('manifest.json', 'utf8'));
+          if (p.name !== '@ekubo/freelp' || `v${p.version}` !== process.env.GITHUB_REF_NAME || p.private === true || p.repository?.url !== 'git+https://github.com/EkuboProtocol/freelp.git') {
+            throw new Error('Package name, version, repository or launch readiness does not match this release.');
+          }
+          JS
+      - name: Publish using npm trusted publishing
+        env:
+          NPM_CONFIG_PROVENANCE: ${{ !github.event.repository.private }}
+        run: npm publish release/ekubo-freelp-*.tgz --access public --ignore-scripts

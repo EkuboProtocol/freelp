@@ -1,3 +1,4 @@
+import { errorMessage } from "./errors";
 import { TokenPickerRows, PickerBalanceStatus } from "./TokenPickerRows";
 import { tokenPickerKeyboard } from "./tokenPickerKeyboard";
 import { useTokenBalances } from "./useTokenBalances";
@@ -74,7 +75,7 @@ export function CurrencySelect({
       ]);
       setCandidate({ address, symbol, name, decimals });
     } catch (error) {
-      setError(String(error));
+      setError(errorMessage(error));
     } finally {
       setBusy(false);
     }

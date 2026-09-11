@@ -1,3 +1,4 @@
+import { errorMessage } from "./errors";
 import { t } from "@lingui/core/macro";
 import { parseAmount } from "./amounts";
 import { ApprovalButton } from "./ApprovalButton";
@@ -49,7 +50,7 @@ export function PositionDetail({ position: p }: { position: Position }) {
         }
       })
       .catch((e) => {
-        if (active) setStatus(String(e));
+        if (active) setStatus(errorMessage(e));
       });
     return () => {
       active = false;

@@ -1,7 +1,7 @@
+import { errorMessage } from "./errors";
 import { useEffect, useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import { t } from "@lingui/core/macro";
-import { zeroAddress } from "viem";
 import { useSession } from "./session";
 import { verifyCode, type ContractKind } from "./contracts";
 import {
@@ -10,25 +10,9 @@ import {
   prepareDeployment,
 } from "./deterministic";
 import { Action, ErrorText } from "./common";
-import type { Settings } from "./types";
 
-const FIELDS = {
-  Core: "core",
-  FreeLP: "manager",
-  FreeLPDataFetcher: "freeLPDataFetcher",
-} as const;
-function configured(settings: Settings, kind: ContractKind) {
-  const address = deploymentAddress(kind, settings.core);
-  if (kind !== "Core") return { ...settings, [FIELDS[kind]]: address };
-  return {
-    ...settings,
-    core: address,
-    manager: deploymentAddress("FreeLP", address),
-    freeLPDataFetcher: deploymentAddress("FreeLPDataFetcher", address),
-  };
-}
 export function DeploymentCard({ kind }: { kind: ContractKind }) {
-  const { settings, configure, send, revision, setStatus } = useSession();
+  const { settings, send, revision, setStatus } = useSession();
   const [checked, setChecked] = useState<{
     scope: string;
     exists?: boolean;
@@ -39,7 +23,6 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
   const address = deploymentAddress(kind, settings.core);
   const current = checked?.scope === scope ? checked : undefined;
   const usesCore = kind !== "Core";
-  const inUse = isConfigured(settings, kind, address);
   useEffect(() => {
     let active = true;
     deploymentStatus(settings, kind)
@@ -47,21 +30,18 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
         if (active) setChecked({ scope, exists });
       })
       .catch((e) => {
-        if (active) setChecked({ scope, error: String(e) });
+        if (active) setChecked({ scope, error: errorMessage(e) });
       });
     return () => {
       active = false;
     };
   }, [settings, kind, scope]);
-  async function activateExisting() {
-    await verifyCode(settings, address, kind);
-    configure(configured(settings, kind));
-    setStatus(t`Using ${kind} at ${address}.`);
-  }
   async function deploy() {
     const transaction = await prepareDeployment(settings, kind);
     await send(transaction);
-    await activateExisting();
+    await verifyCode(settings, address, kind);
+    setStatus(t`Deployed ${kind} at ${address}.`);
+    setRefresh((n) => n + 1);
   }
   return (
     <article className="panel">
@@ -77,22 +57,9 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
       </p>
       <ErrorText error={current?.error ?? ""} />
       <div className="row">
-        <Action
-          run={deploy}
-          disabled={deploymentDisabled(current, usesCore, settings)}
-        >
+        <Action run={deploy} disabled={deploymentDisabled(current)}>
           <Trans>Deploy {kind}</Trans>
         </Action>
-        {current?.exists ? (
-          <button
-            disabled={inUse}
-            onClick={() =>
-              void activateExisting().catch((e) => setStatus(String(e)))
-            }
-          >
-            {inUse ? <Trans>In use</Trans> : <Trans>Use this address</Trans>}
-          </button>
-        ) : null}
         <button onClick={() => setRefresh((n) => n + 1)}>
           <Trans>Refresh status</Trans>
         </button>
@@ -102,17 +69,8 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
 }
 
 type Check = { exists?: boolean; error?: string } | undefined;
-function deploymentDisabled(
-  current: Check,
-  usesCore: boolean,
-  settings: Settings,
-) {
-  return (
-    !current ||
-    !!current.error ||
-    current.exists ||
-    (usesCore && settings.core === zeroAddress)
-  );
+function deploymentDisabled(current: Check) {
+  return !current || !!current.error || current.exists;
 }
 function DeploymentMessage({ current }: { current: Check }) {
   if (!current) return <Trans>Checking code on this network…</Trans>;
@@ -122,8 +80,4 @@ function DeploymentMessage({ current }: { current: Check }) {
       <Trans>Unable to verify this address. Deployment is disabled.</Trans>
     );
   return <Trans>Not deployed · no code at this address</Trans>;
-}
-
-function isConfigured(settings: Settings, kind: ContractKind, address: string) {
-  return settings[FIELDS[kind]]?.toLowerCase() === address.toLowerCase();
 }

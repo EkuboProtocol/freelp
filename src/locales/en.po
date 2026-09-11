@@ -56,10 +56,6 @@ msgstr "Add network"
 msgid "Advanced pool settings"
 msgstr "Advanced pool settings"
 
-#: src/App.tsx
-msgid "After public launch, the IPNS address follows the latest stable release. Each release also includes its immutable IPFS address and a CAR you can pin yourself."
-msgstr "After public launch, the IPNS address follows the latest stable release. Each release also includes its immutable IPFS address and a CAR you can pin yourself."
-
 #: src/PositionsPage.tsx
 msgid "All networks. Positions, pool data, and fees are read together from each chain."
 msgstr "All networks. Positions, pool data, and fees are read together from each chain."
@@ -113,21 +109,13 @@ msgstr "Build details"
 msgid "Burn empty NFT"
 msgstr "Burn empty NFT"
 
-#: src/SettingsPage.tsx
-msgid "Canonical deployment"
-msgstr "Canonical deployment"
-
 #: src/PoolKeyFields.tsx
 msgid "Center tick (multiple of 16)"
 msgstr "Center tick (multiple of 16)"
 
 #: src/SettingsPage.tsx
-msgid "Chain ID"
-msgstr "Chain ID"
-
-#: src/DeployPage.tsx
-msgid "Changing the Core constructor address or contract bytecode changes dependent contract addresses. Custom networks must provide the standard CREATE2 factory."
-msgstr "Changing the Core constructor address or contract bytecode changes dependent contract addresses. Custom networks must provide the standard CREATE2 factory."
+msgid "Chain {chainId}"
+msgstr "Chain {chainId}"
 
 #: src/DeploymentCard.tsx
 msgid "Checking code on this network…"
@@ -145,6 +133,10 @@ msgstr "Choose two different tokens in address order."
 msgid "Choose your tokens and pool, set a price range, and enter either deposit amount. The matching amount and preview update automatically."
 msgstr "Choose your tokens and pool, set a price range, and enter either deposit amount. The matching amount and preview update automatically."
 
+#: src/SettingsPage.tsx
+msgid "Close network dialog"
+msgstr "Close network dialog"
+
 #: src/CurrencySelect.tsx
 msgid "Close token selector"
 msgstr "Close token selector"
@@ -157,14 +149,6 @@ msgstr "Collect fees"
 msgid "Concentrated liquidity"
 msgstr "Concentrated liquidity"
 
-#: src/SettingsPage.tsx
-msgid "Configuration file"
-msgstr "Configuration file"
-
-#: src/SettingsPage.tsx
-msgid "Configuration JSON"
-msgstr "Configuration JSON"
-
 #: src/CreatePage.tsx
 msgid "Configure this network in Settings before using this link."
 msgstr "Configure this network in Settings before using this link."
@@ -175,7 +159,7 @@ msgid "Confirmed: {0}"
 msgstr "Confirmed: {0}"
 
 #. placeholder {0}: w.info.name
-#: src/App.tsx
+#: src/AccountControl.tsx
 msgid "Connect {0}"
 msgstr "Connect {0}"
 
@@ -191,41 +175,35 @@ msgstr "Connect a wallet to load positions directly from the chain."
 msgid "Connect a wallet to record your acceptance."
 msgstr "Connect a wallet to record your acceptance."
 
-#: src/SettingsPage.tsx
-msgid "Connected to chain {chain}."
-msgstr "Connected to chain {chain}."
+#. placeholder {0}: session.account
+#: src/AccountControl.tsx
+msgid "Connected wallet: {0}"
+msgstr "Connected wallet: {0}"
 
 #: src/SettingsPage.tsx
-msgid "Connection settings"
-msgstr "Connection settings"
+msgid "Connecting…"
+msgstr "Connecting…"
 
 #: src/App.tsx
 msgid "Contract license"
 msgstr "Contract license"
 
+#: src/AccountControl.tsx
 #: src/App.tsx
 msgid "Copied"
 msgstr "Copied"
+
+#: src/AccountControl.tsx
+msgid "Copy address"
+msgstr "Copy address"
 
 #: src/App.tsx
 msgid "Copy command"
 msgstr "Copy command"
 
-#: src/SettingsPage.tsx
-msgid "Core address"
-msgstr "Core address"
-
-#: src/SettingsPage.tsx
-msgid "Core, position manager and data fetcher match the bundled contract artifacts."
-msgstr "Core, position manager and data fetcher match the bundled contract artifacts."
-
 #: src/DeploymentCard.tsx
 msgid "Core:"
 msgstr "Core:"
-
-#: src/App.tsx
-msgid "Create"
-msgstr "Create"
 
 #: src/CreatePage.tsx
 #: src/PositionsPage.tsx
@@ -239,10 +217,6 @@ msgstr "CREATE2 factory:"
 #: src/LiquidityChart.tsx
 msgid "Current pool liquidity, read directly from chain"
 msgstr "Current pool liquidity, read directly from chain"
-
-#: src/SettingsPage.tsx
-msgid "Data fetcher address"
-msgstr "Data fetcher address"
 
 #: src/CurrencySelect.tsx
 msgid "decimals"
@@ -276,6 +250,10 @@ msgstr "Deploy contracts"
 msgid "Deploy missing contracts once for everyone on this network. Addresses depend on the fixed salt and contract code, never on your wallet. Existing contracts are detected before any deployment."
 msgstr "Deploy missing contracts once for everyone on this network. Addresses depend on the fixed salt and contract code, never on your wallet. Existing contracts are detected before any deployment."
 
+#: src/DeploymentCard.tsx
+msgid "Deployed {kind} at {address}."
+msgstr "Deployed {kind} at {address}."
+
 #: src/NetworkSettingSelect.tsx
 msgid "Deployment network"
 msgstr "Deployment network"
@@ -288,9 +266,22 @@ msgstr "Deposit preview"
 msgid "Deterministic deployment details"
 msgstr "Deterministic deployment details"
 
+#: src/SettingsPage.tsx
+msgid "Edit"
+msgstr "Edit"
+
+#. placeholder {0}: networkName(network.chainId, network.name)
+#: src/SettingsPage.tsx
+msgid "Edit {0} RPC"
+msgstr "Edit {0} RPC"
+
 #: src/PoolPicker.tsx
 msgid "Edit fee"
 msgstr "Edit fee"
+
+#: src/SettingsPage.tsx
+msgid "Edit RPC"
+msgstr "Edit RPC"
 
 #: src/TickSpacingControl.tsx
 msgid "Enter a positive spacing that rounds to 1–698605 integer ticks."
@@ -320,13 +311,14 @@ msgstr "Existing pool"
 msgid "Existing pool: the initial-price input is ignored."
 msgstr "Existing pool: the initial-price input is ignored."
 
+#. placeholder {0}: editing.chainId
+#: src/SettingsPage.tsx
+msgid "Expected chain {0}, but this RPC reports {chainId}."
+msgstr "Expected chain {0}, but this RPC reports {chainId}."
+
 #: src/LiquidityChart.tsx
 msgid "Explore liquidity by price"
 msgstr "Explore liquidity by price"
-
-#: src/SettingsPage.tsx
-msgid "Export settings"
-msgstr "Export settings"
 
 #: src/PoolKeyFields.tsx
 msgid "Extension address"
@@ -372,17 +364,9 @@ msgstr "I have read and agree to the Terms of Service and understand that I use 
 msgid "If a token has no decimals method, amounts use raw integer units. You can supply known decimals here to enter human-readable amounts."
 msgstr "If a token has no decimals method, amounts use raw integer units. You can supply known decimals here to enter human-readable amounts."
 
-#: src/SettingsPage.tsx
-msgid "Import settings"
-msgstr "Import settings"
-
 #: src/CurrencySelect.tsx
 msgid "Import token"
 msgstr "Import token"
-
-#: src/DeploymentCard.tsx
-msgid "In use"
-msgstr "In use"
 
 #: src/RangeFields.tsx
 msgid "Initial price (new pools only)"
@@ -442,20 +426,8 @@ msgid "MIT license"
 msgstr "MIT license"
 
 #: src/SettingsPage.tsx
-msgid "Native token symbol"
-msgstr "Native token symbol"
-
-#: src/SettingsPage.tsx
-msgid "Network configuration"
-msgstr "Network configuration"
-
-#: src/SettingsPage.tsx
-msgid "Network name"
-msgstr "Network name"
-
-#: src/SettingsPage.tsx
-msgid "New network"
-msgstr "New network"
+msgid "Networks"
+msgstr "Networks"
 
 #: src/PricePreview.tsx
 msgid "New pool: creation will initialize its price."
@@ -465,10 +437,6 @@ msgstr "New pool: creation will initialize its price."
 msgid "No application fees. Network gas applies."
 msgstr "No application fees. Network gas applies."
 
-#: src/App.tsx
-msgid "No injected wallet detected. Open this page in a browser with a wallet extension."
-msgstr "No injected wallet detected. Open this page in a browser with a wallet extension."
-
 #: src/TokenPickerRows.tsx
 msgid "No matching tokens. Paste a contract address to import one."
 msgstr "No matching tokens. Paste a contract address to import one."
@@ -476,6 +444,10 @@ msgstr "No matching tokens. Paste a contract address to import one."
 #: src/PositionsPage.tsx
 msgid "No positions found on the available networks."
 msgstr "No positions found on the available networks."
+
+#: src/AccountControl.tsx
+msgid "No wallet detected"
+msgstr "No wallet detected"
 
 #: src/DeploymentCard.tsx
 msgid "Not deployed · no code at this address"
@@ -488,18 +460,6 @@ msgstr "Official source repository:"
 #: src/LiquidityChart.tsx
 msgid "Only the on-chain tick range fetched is shown. Empty space outside that range is not assumed to have zero liquidity."
 msgstr "Only the on-chain tick range fetched is shown. Empty space outside that range is not assumed to have zero liquidity."
-
-#: src/App.tsx
-msgid "Open through IPFS"
-msgstr "Open through IPFS"
-
-#: src/App.tsx
-msgid "Open with a public IPFS gateway"
-msgstr "Open with a public IPFS gateway"
-
-#: src/App.tsx
-msgid "Open with your local IPFS gateway"
-msgstr "Open with your local IPFS gateway"
 
 #: src/App.tsx
 msgid "or"
@@ -537,10 +497,6 @@ msgstr "Position #{0}"
 #: src/DeploymentCard.tsx
 msgid "Position manager"
 msgstr "Position manager"
-
-#: src/SettingsPage.tsx
-msgid "Position manager address"
-msgstr "Position manager address"
 
 #: src/PricePreview.tsx
 msgid "Position range:"
@@ -638,16 +594,12 @@ msgid "Retry balance"
 msgstr "Retry balance"
 
 #: src/SettingsPage.tsx
-msgid "RPC reports chain {chain}."
-msgstr "RPC reports chain {chain}."
+msgid "RPC must use HTTP or HTTPS."
+msgstr "RPC must use HTTP or HTTPS."
 
 #: src/SettingsPage.tsx
 msgid "RPC URL"
 msgstr "RPC URL"
-
-#: src/SettingsPage.tsx
-msgid "RPC URLs can contain credentials. Copy a configuration with a public RPC URL for sharing."
-msgstr "RPC URLs can contain credentials. Copy a configuration with a public RPC URL for sharing."
 
 #: src/App.tsx
 msgid "Run locally"
@@ -658,8 +610,8 @@ msgid "Run the installed app locally with"
 msgstr "Run the installed app locally with"
 
 #: src/SettingsPage.tsx
-msgid "Save settings"
-msgstr "Save settings"
+msgid "Save network"
+msgstr "Save network"
 
 #: src/CurrencySelect.tsx
 msgid "Search tokens or paste an address"
@@ -692,10 +644,6 @@ msgstr "Select token"
 #: src/App.tsx
 msgid "Settings"
 msgstr "Settings"
-
-#: src/SettingsPage.tsx
-msgid "Settings saved."
-msgstr "Settings saved."
 
 #: src/session.tsx
 msgid "Simulating and requesting wallet confirmation…"
@@ -744,20 +692,29 @@ msgid "Terms version: {TERMS_HASH}"
 msgstr "Terms version: {TERMS_HASH}"
 
 #: src/SettingsPage.tsx
-msgid "Test RPC"
-msgstr "Test RPC"
-
-#: src/App.tsx
-msgid "The IPNS address is reserved during private development. Public gateway links become usable after launch."
-msgstr "The IPNS address is reserved during private development. Public gateway links become usable after launch."
+msgid "The network is detected from your RPC URL."
+msgstr "The network is detected from your RPC URL."
 
 #: src/App.tsx
 msgid "The package contains the complete application. Your package manager handles package integrity; the launcher serves local files without fetching a separate build or contacting GitHub."
 msgstr "The package contains the complete application. Your package manager handles package integrity; the launcher serves local files without fetching a separate build or contacting GitHub."
 
+#. js-lingui-explicit-id
+#: src/errors.ts
+msgid "requestFailed"
+msgstr "The request failed. Please try again."
+
+#: src/SettingsPage.tsx
+msgid "The RPC returned an invalid chain ID."
+msgstr "The RPC returned an invalid chain ID."
+
 #: src/loadDepositQuote.ts
 msgid "The shared position manager is not deployed on this network yet. Open the Deploy tab to set it up once for everyone."
 msgstr "The shared position manager is not deployed on this network yet. Open the Deploy tab to set it up once for everyone."
+
+#: src/DeployPage.tsx
+msgid "This build uses fixed contract addresses on every network. Custom networks must provide the standard CREATE2 factory."
+msgstr "This build uses fixed contract addresses on every network. Custom networks must provide the standard CREATE2 factory."
 
 #: src/PoolPicker.tsx
 msgid "This pool is not initialized. Set its initial price when creating the first position."
@@ -845,10 +802,6 @@ msgstr "Upper tick"
 msgid "Use 95%"
 msgstr "Use 95%"
 
-#: src/SettingsPage.tsx
-msgid "Use a public RPC or your own node. No API key is required. Settings stay in this browser."
-msgstr "Use a public RPC or your own node. No API key is required. Settings stay in this browser."
-
 #: src/App.tsx
 msgid "Use a version suffix to keep a specific release, for example @ekubo/freelp@0.1.1. The package opens a local web server; your wallet signs transactions in the browser."
 msgstr "Use a version suffix to keep a specific release, for example @ekubo/freelp@0.1.1. The package opens a local web server; your wallet signs transactions in the browser."
@@ -861,26 +814,18 @@ msgstr "Use custom range"
 msgid "Use full range"
 msgstr "Use full range"
 
+#: src/SettingsPage.tsx
+msgid "Use public RPC URLs or your own nodes. Settings stay in this browser."
+msgstr "Use public RPC URLs or your own nodes. Settings stay in this browser."
+
 #: src/RangeFields.tsx
 msgid "Use raw ticks"
 msgstr "Use raw ticks"
-
-#: src/DeploymentCard.tsx
-msgid "Use this address"
-msgstr "Use this address"
-
-#: src/DeploymentCard.tsx
-msgid "Using {kind} at {address}."
-msgstr "Using {kind} at {address}."
 
 #. placeholder {0}: t.decimals
 #: src/CreatePage.tsx
 msgid "Using manually supplied decimals: {0}"
 msgstr "Using manually supplied decimals: {0}"
-
-#: src/SettingsPage.tsx
-msgid "Verify contracts"
-msgstr "Verify contracts"
 
 #: src/session.tsx
 msgid "Wallet changed. Connect again to review the active account."

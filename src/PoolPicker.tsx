@@ -1,3 +1,4 @@
+import { errorMessage } from "./errors";
 import { decimalInput, decimalDisplay } from "./decimalFormat";
 import { spacingPercent } from "./pools";
 import { rangeTicks, tickPrice, type RangeInput } from "./prices";
@@ -115,7 +116,7 @@ export function PoolPicker({
       if (selected >= 0 && states[selected].sqrtRatio !== 0n)
         select(selected, next);
     } catch (error) {
-      if (id === request.current) setFailure({ key, error: String(error) });
+      if (id === request.current) setFailure({ key, error: errorMessage(error) });
     } finally {
       if (id === request.current) setPending(undefined);
     }

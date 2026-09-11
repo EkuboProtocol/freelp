@@ -1,3 +1,4 @@
+import { errorMessage } from "./errors";
 import { useState, type ReactNode } from "react";
 import { Trans } from "@lingui/react/macro";
 import { useSession } from "./session";
@@ -31,7 +32,7 @@ export function Action({
     try {
       await run();
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : String(error));
+      setStatus(error instanceof Error ? error.message : errorMessage(error));
     } finally {
       setRunning(false);
     }

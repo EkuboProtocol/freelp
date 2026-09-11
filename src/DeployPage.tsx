@@ -31,9 +31,8 @@ export function DeployPage() {
         </p>
         <p>
           <Trans>
-            Changing the Core constructor address or contract bytecode changes
-            dependent contract addresses. Custom networks must provide the
-            standard CREATE2 factory.
+            This build uses fixed contract addresses on every network.
+            Custom networks must provide the standard CREATE2 factory.
           </Trans>
         </p>
       </details>

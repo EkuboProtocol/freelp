@@ -104,8 +104,8 @@ for (const { missingDecimals, native } of [
       missingDecimals
         ? (BigInt(value) * 10n ** 18n).toString()
         : value.toString();
-    const core = zeroAddress;
-    const manager = zeroAddress;
+    const core = "0x00000000000014aA86C5d3c41765bb24e11bd701";
+    const manager = "0x573af249A268ed80c358dA77986D2e637978A611";
     const tokens = [
       native ? zeroAddress : await deploy(tokenArtifact, [account.address]),
       await deploy(tokenArtifact, [account.address]),
@@ -262,7 +262,7 @@ for (const { missingDecimals, native } of [
       .getByRole("button", { name: "Deploy Core", exact: true })
       .click();
     await expect(page.locator(".status[role=status]")).toContainText(
-      "Using Core at",
+      "Deployed Core at",
       { timeout: 30000 },
     );
     deployedCore = await page.evaluate(
@@ -276,7 +276,7 @@ for (const { missingDecimals, native } of [
       .getByRole("button", { name: "Deploy FreeLP", exact: true })
       .click();
     await expect(page.locator(".status[role=status]")).toContainText(
-      "Using FreeLP at",
+      "Deployed FreeLP at",
       { timeout: 30000 },
     );
     await expect(
@@ -301,7 +301,10 @@ for (const { missingDecimals, native } of [
     const deployedManager = await page.evaluate(
       () => JSON.parse(localStorage.getItem("freelp:settings")!).manager as Hex,
     );
-    await page.getByRole("link", { name: "Create", exact: true }).click();
+    await page.getByRole("link", { name: "Positions", exact: true }).click();
+    await page
+      .getByRole("link", { name: "Create position", exact: true })
+      .click();
     await page.getByText("Advanced pool settings", { exact: true }).click();
     await page.getByLabel("Token 0 address").fill(tokens[0]);
     await page.getByLabel("Token 1 address").fill(tokens[1]);
@@ -356,7 +359,10 @@ for (const { missingDecimals, native } of [
     await expect(
       page.getByRole("button", { name: "#1", exact: true }),
     ).toBeVisible({ timeout: 30000 });
-    await page.getByRole("link", { name: "Create", exact: true }).click();
+    await page.getByRole("link", { name: "Positions", exact: true }).click();
+    await page
+      .getByRole("link", { name: "Create position", exact: true })
+      .click();
     await page.getByText("Advanced pool settings", { exact: true }).click();
     await page.getByLabel("Token 0 address").fill(tokens[0]);
     await page.getByLabel("Token 1 address").fill(tokens[1]);
@@ -487,7 +493,7 @@ async function deployFetchers(page: Page) {
     .getByRole("button", { name: "Deploy FreeLPDataFetcher", exact: true })
     .click();
   await expect(page.locator(".status[role=status]")).toContainText(
-    "Using FreeLPDataFetcher at",
+    "Deployed FreeLPDataFetcher at",
     { timeout: 30000 },
   );
 }
@@ -616,7 +622,10 @@ async function checkStableCreation(
     });
     await client.waitForTransactionReceipt({ hash });
   }
-  await page.getByRole("link", { name: "Create", exact: true }).click();
+  await page.getByRole("link", { name: "Positions", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Create position", exact: true })
+    .click();
   await page.getByText("Advanced pool settings", { exact: true }).click();
   await page.getByLabel("Token 0 address").fill(tokens[0]);
   await page.getByLabel("Token 1 address").fill(tokens[1]);

@@ -1,3 +1,4 @@
+import { errorMessage } from "./errors";
 import { displayAmount } from "./displayAmount";
 import { useEffect, useState } from "react";
 import { Trans } from "@lingui/react/macro";
@@ -81,7 +82,7 @@ function UnknownBalance({ address, fallback, onAmount }: Props) {
         if (active) setLoaded({ scope, token });
       })
       .catch((error) => {
-        if (active) setLoaded({ scope, error: String(error) });
+        if (active) setLoaded({ scope, error: errorMessage(error) });
       });
     return () => {
       active = false;

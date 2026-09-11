@@ -1,3 +1,4 @@
+import { errorMessage } from "./errors";
 import { useEffect, useState } from "react";
 import { positions } from "./contracts";
 import { useSession } from "./session";
@@ -25,7 +26,7 @@ export function usePortfolio(refresh: number) {
         .catch((error) => ({
           settings,
           items: [],
-          error: String(error),
+          error: errorMessage(error),
           scope,
         }))
         .then((row) => {
