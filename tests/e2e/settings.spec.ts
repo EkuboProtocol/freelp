@@ -101,3 +101,25 @@ test("network RPC settings remain independent and bundled currencies follow the 
     "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   );
 });
+
+test("Robinhood defaults include USDG and tokenized assets without wrapping ETH", async ({
+  page,
+}) => {
+  await page.goto("/#/create");
+  await page.getByLabel("Active network").selectOption("4663");
+  await page.getByRole("button", { name: "Select first token" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("button", { name: /WETH/ })).toHaveCount(0);
+  await dialog.getByLabel("Search tokens or paste an address").fill("NVDA");
+  await expect(dialog.getByRole("button", { name: /NVDA/ })).toBeVisible();
+  await dialog.getByLabel("Search tokens or paste an address").fill("USDG");
+  await dialog.getByRole("button", { name: /USDG/ }).click();
+  await expect(page.getByLabel("Token 0 address")).toHaveValue(
+    "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+  );
+  await page.getByRole("button", { name: "Select second token" }).click();
+  await dialog.getByRole("button", { name: /ETH/ }).click();
+  await expect(page.getByLabel("Token 0 address")).toHaveValue(
+    "0x0000000000000000000000000000000000000000",
+  );
+});
