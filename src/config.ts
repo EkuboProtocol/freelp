@@ -1,3 +1,4 @@
+import { validateNativeCurrency } from "./nativeCurrency";
 import { retiredDefault } from "./retiredNetworks";
 import { DEFAULT_CONTRACTS } from "./deployments";
 import { load } from "./storage";
@@ -30,7 +31,7 @@ export function validateSettings(value: Settings) {
     name: value.name,
     rpcUrl: value.rpcUrl,
     chainId: value.chainId,
-    nativeSymbol: value.nativeSymbol,
+    ...validateNativeCurrency(value),
     ...DEFAULT_CONTRACTS,
   };
 }

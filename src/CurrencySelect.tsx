@@ -1,3 +1,4 @@
+import { readTokenMetadata } from "./readTokenMetadata";
 import { errorMessage } from "./errors";
 import { TokenPickerRows, PickerBalanceStatus } from "./TokenPickerRows";
 import { tokenPickerKeyboard } from "./tokenPickerKeyboard";
@@ -7,43 +8,41 @@ import type { Settings } from "./types";
 import { useId, useRef, useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import { t } from "@lingui/core/macro";
-import { erc20Abi, getAddress, isAddress } from "viem";
-import { currencies, importCurrency, type Currency } from "./tokens";
-import { useSession, rpc } from "./session";
+import { isAddress } from "viem";
+import { networkCurrencies, importCurrency, type Currency } from "./tokens";
+import { useSession } from "./session";
 import { ErrorText } from "./common";
 
 export function CurrencySelect({
   value,
   label,
   onChange,
-  allNetworks = false,
 }: {
   value: string;
   label: string;
   onChange: (token: Currency, chainId: number) => void;
-  allNetworks?: boolean;
 }) {
   const titleId = useId();
-  const { settings, networks, account } = useSession();
+  const { settings, account } = useSession();
   const [open, setOpen] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const searchInput = useRef<HTMLInputElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
+  const request = useRef(0);
   const [search, setSearch] = useState("");
-  const tokens = currencies(settings.chainId, settings.nativeSymbol);
+  const tokens = networkCurrencies(settings);
   const [importNetwork, setImportNetwork] = useState(settings);
   const [candidate, setCandidate] = useState<Currency>();
-  const [missingDecimals, setMissingDecimals] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const selected = tokens.find(
     (token) => token.address.toLowerCase() === value.toLowerCase(),
   );
-  const choices = allNetworks ? networks : [settings];
+  const choices = [settings];
   const balances = useTokenBalances(choices, open, refresh);
   const visible = choices
     .flatMap((network) =>
-      currencies(network.chainId, network.nativeSymbol).map((token) => ({
+      networkCurrencies(network).map((token) => ({
         token,
         network,
       })),
@@ -59,36 +58,18 @@ export function CurrencySelect({
     setOpen(false);
   }
   async function inspect(network: Settings) {
+    const id = ++request.current;
     setBusy(true);
+    setCandidate(undefined);
     setImportNetwork(network);
     setError("");
     try {
-      const address = getAddress(search);
-      const client = rpc(network);
-      const [symbol, name, decimals] = await Promise.allSettled([
-        client.readContract({ address, abi: erc20Abi, functionName: "symbol" }),
-        client.readContract({ address, abi: erc20Abi, functionName: "name" }),
-        client.readContract({
-          address,
-          abi: erc20Abi,
-          functionName: "decimals",
-        }),
-      ]);
-      const code = await client.getCode({ address });
-      if (!code || code === "0x")
-        throw new Error(t`No token contract at this address.`);
-      setMissingDecimals(decimals.status === "rejected");
-      setCandidate({
-        address,
-        symbol:
-          symbol.status === "fulfilled" ? symbol.value : address.slice(0, 8),
-        name: name.status === "fulfilled" ? name.value : address,
-        decimals: decimals.status === "fulfilled" ? decimals.value : 0,
-      });
+      const token = await readTokenMetadata(network, search);
+      if (id === request.current) setCandidate(token);
     } catch (error) {
-      setError(errorMessage(error));
+      if (id === request.current) setError(errorMessage(error));
     } finally {
-      setBusy(false);
+      if (id === request.current) setBusy(false);
     }
   }
   return (
@@ -97,6 +78,8 @@ export function CurrencySelect({
         className="currency-select"
         aria-label={label}
         onClick={() => {
+          request.current++;
+          setBusy(false);
           setSearch("");
           setCandidate(undefined);
           setError("");
@@ -105,9 +88,6 @@ export function CurrencySelect({
           searchInput.current?.focus();
         }}
       >
-        <span className="currency-mark">
-          {selected?.symbol.slice(0, 1) ?? "+"}
-        </span>
         <span>
           {selected?.symbol ?? <UnlistedToken value={value} />}{" "}
           <small>{selectedNetworkLabel(selected, settings)}</small>
@@ -142,6 +122,8 @@ export function CurrencySelect({
             autoComplete="off"
             value={search}
             onChange={(event) => {
+              request.current++;
+              setBusy(false);
               setSearch(event.target.value);
               setCandidate(undefined);
             }}
@@ -187,11 +169,6 @@ export function CurrencySelect({
               {candidate.name} · {candidate.decimals} <Trans>decimals</Trans>
             </p>
             <p className="mono">{candidate.address}</p>
-            <ImportDecimals
-              visible={missingDecimals}
-              candidate={candidate}
-              setCandidate={setCandidate}
-            />
             <button
               onClick={() => {
                 const imported = importCurrency(
@@ -216,32 +193,6 @@ function selectedNetworkLabel(
   settings: Settings,
 ) {
   return selected ? networkName(settings.chainId, settings.name) : "";
-}
-
-function ImportDecimals({
-  visible,
-  candidate,
-  setCandidate,
-}: {
-  visible: boolean;
-  candidate: Currency;
-  setCandidate: (value: Currency) => void;
-}) {
-  if (!visible) return null;
-  return (
-    <label>
-      <Trans>Token decimals (0 for raw units)</Trans>
-      <input
-        type="number"
-        min={0}
-        max={255}
-        value={candidate.decimals}
-        onChange={(event) =>
-          setCandidate({ ...candidate, decimals: Number(event.target.value) })
-        }
-      />
-    </label>
-  );
 }
 
 function UnlistedToken({ value }: { value: string }) {

@@ -6,6 +6,8 @@ export type Settings = {
   core: Address;
   manager: Address;
   nativeSymbol: string;
+  nativeName?: string;
+  nativeDecimals?: number;
   freeLPDataFetcher?: Address;
 };
 export type Descriptor = {

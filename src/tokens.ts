@@ -1,3 +1,5 @@
+import { nativeCurrency } from "./nativeCurrency";
+import type { Settings } from "./types";
 import { getAddress, isAddress, zeroAddress, type Address } from "viem";
 import defaultTokens from "./default-tokens.json";
 import { load, save } from "./storage";
@@ -27,7 +29,12 @@ const lists: Record<number, Currency[]> = Object.fromEntries(
     ],
   ]),
 );
-export function currencies(chainId: number, nativeSymbol = "ETH"): Currency[] {
+export function currencies(
+  chainId: number,
+  nativeSymbol = "ETH",
+  nativeName?: string,
+  nativeDecimals?: number,
+): Currency[] {
   const imported = load<Currency[]>(`freelp:tokens:${chainId}`, []);
   const valid = Array.isArray(imported)
     ? imported.filter(
@@ -53,8 +60,7 @@ export function currencies(chainId: number, nativeSymbol = "ETH"): Currency[] {
     token.address === zeroAddress
       ? {
           ...token,
-          symbol: nativeSymbol,
-          name: nativeSymbol === "ETH" ? "Ether" : nativeSymbol,
+          ...nativeCurrency({ nativeSymbol, nativeName, nativeDecimals }),
         }
       : token,
   );
@@ -68,6 +74,7 @@ export function importCurrency(chainId: number, token: Currency) {
   };
   if (
     !next.symbol ||
+    !next.name ||
     !Number.isInteger(next.decimals) ||
     next.decimals < 0 ||
     next.decimals > 255
@@ -78,4 +85,13 @@ export function importCurrency(chainId: number, token: Currency) {
     next,
   ]);
   return next;
+}
+
+export function networkCurrencies(settings: Settings) {
+  return currencies(
+    settings.chainId,
+    settings.nativeSymbol,
+    settings.nativeName,
+    settings.nativeDecimals,
+  );
 }

@@ -1,3 +1,4 @@
+import { mockDeployments } from "../support/deploymentRpc";
 import { test, expect } from "@playwright/test";
 import {
   createFormHash,
@@ -9,6 +10,7 @@ test("create links restore all pool parameters and amounts on reload and history
   page,
 }) => {
   await page.route("https://**", (route) => route.abort());
+  await mockDeployments(page);
   const form = {
     ...defaultCreateForm(8453),
     a: "0x0000000000000000000000000000000000000000",
@@ -23,8 +25,6 @@ test("create links restore all pool parameters and amounts on reload and history
     maxB: "2.5",
     specified: 1 as const,
     slippage: 77,
-    fallbackA: "18",
-    fallbackB: "6",
   };
   await page.goto("/" + createFormHash(form));
   await page.getByText("Advanced pool settings", { exact: true }).click();
@@ -46,7 +46,7 @@ test("create links restore all pool parameters and amounts on reload and history
     page.getByLabel("Calculate the matching token amount"),
   ).toHaveCount(0);
   await page.locator(".pool-edit summary").click();
-  await expect(page.locator(".pool-options")).not.toBeVisible();
+  await expect(page.locator(".pool-options")).toBeVisible();
   await page.getByLabel("Amplification exponent").fill("26");
   await expect
     .poll(() => readCreateForm(new URL(page.url()).hash, 1).amplification)
@@ -69,6 +69,7 @@ test("pool fee editors stay synchronized and deposit amounts follow pool configu
   page,
 }) => {
   await page.route("https://**", (route) => route.abort());
+  await mockDeployments(page);
   await page.goto("/#/create");
   await expect(page.getByLabel("Slippage (basis points)")).toBeVisible();
   await expect(page.getByLabel("Token 0 address", { exact: true })).toHaveCount(

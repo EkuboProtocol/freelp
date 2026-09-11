@@ -113,7 +113,6 @@ async function approveDeposits(
 }
 for (const { missingDecimals, native } of [
   { missingDecimals: false, native: false },
-  { missingDecimals: true, native: false },
   { missingDecimals: false, native: true },
 ])
   test(`RPC-only LP lifecycle without terms acceptance (missing decimals: ${missingDecimals}, native: ${native})`, async ({
@@ -264,7 +263,7 @@ for (const { missingDecimals, native } of [
       ).toBeDisabled();
       await expect(
         page
-          .getByText("Unable to verify this address. Deployment is disabled.")
+          .getByText("Unable to read this address. Deployment is disabled.")
           .first(),
       ).toBeVisible();
       verificationFailure = undefined;
@@ -320,7 +319,6 @@ for (const { missingDecimals, native } of [
     await page
       .getByRole("link", { name: "Create position", exact: true })
       .click();
-    await page.getByText("Advanced pool settings", { exact: true }).click();
     await checkTokenImports(page, tokens, missingDecimals, native);
     await page.getByLabel("Initial price (new pools only)").fill("1");
     await page.getByLabel("Lower price", { exact: true }).fill("0.99");
@@ -376,7 +374,6 @@ for (const { missingDecimals, native } of [
     await page
       .getByRole("link", { name: "Create position", exact: true })
       .click();
-    await page.getByText("Advanced pool settings", { exact: true }).click();
     await checkTokenImports(page, tokens, missingDecimals, native);
     await checkPoolChart(page, missingDecimals, native);
     await captureChart(page, missingDecimals, native);
@@ -620,6 +617,7 @@ async function checkCustomSpacing(
   native: boolean,
 ) {
   if (missingDecimals || native) return;
+  await page.getByText("Advanced pool settings", { exact: true }).click();
   const control = page.locator(".tick-spacing-control");
   await control.locator("summary").click();
   await control.getByLabel("Enter exact ticks").check();
@@ -643,6 +641,7 @@ async function checkCustomSpacing(
   );
   await control.locator("summary").click();
   await control.getByRole("button", { name: "0.6%", exact: true }).click();
+  await page.getByText("Advanced pool settings", { exact: true }).click();
   await expect(
     page.getByRole("img", { name: "Pool liquidity by price" }),
   ).toBeVisible();
@@ -669,8 +668,8 @@ async function checkStableCreation(
   await page
     .getByRole("link", { name: "Create position", exact: true })
     .click();
-  await page.getByText("Advanced pool settings", { exact: true }).click();
   await checkTokenImports(page, tokens, false, false);
+  await page.getByText("Advanced pool settings", { exact: true }).click();
   await page.getByLabel("Pool type", { exact: true }).selectOption("stable");
   await page.locator(".pool-edit summary").click();
   await page.getByLabel("Exact fee (uint64)").fill("123456789");

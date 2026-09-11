@@ -7,7 +7,9 @@ const settings = {
   rpcUrl: "http://127.0.0.1:18545",
   core: zeroAddress,
   manager: zeroAddress,
-  nativeSymbol: "ETH",
+  nativeSymbol: "TST",
+  nativeName: "Test Coin",
+  nativeDecimals: 6,
 };
 test("unknown wallet networks can be added from the saved configuration", async () => {
   const calls: { method: string; params?: unknown[] }[] = [];
@@ -29,7 +31,7 @@ test("unknown wallet networks can be added from the saved configuration", async 
     {
       chainId: "0x7a69",
       chainName: settings.name,
-      nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+      nativeCurrency: { name: "Test Coin", symbol: "TST", decimals: 6 },
       rpcUrls: [settings.rpcUrl],
     },
   ]);

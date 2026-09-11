@@ -4,7 +4,7 @@ import type { Currency } from "./tokens";
 import { displayPrice, tickPrice } from "./prices";
 import { t } from "@lingui/core/macro";
 import { Trans } from "@lingui/react/macro";
-import { currencies } from "./tokens";
+import { networkCurrencies } from "./tokens";
 import { networkName } from "./networks";
 import { displayAmount } from "./displayAmount";
 import type { Position, Settings } from "./types";
@@ -19,7 +19,7 @@ export function PortfolioPosition({
 }) {
   const tokens = [p.descriptor.poolKey.token0, p.descriptor.poolKey.token1].map(
     (address) =>
-      currencies(settings.chainId, settings.nativeSymbol).find(
+      networkCurrencies(settings).find(
         (t) => t.address.toLowerCase() === address.toLowerCase(),
       ),
   );

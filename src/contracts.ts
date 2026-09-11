@@ -1,5 +1,5 @@
+import { nativeCurrency } from "./nativeCurrency";
 import { DEFAULT_POSITION_DATA_FETCHER } from "./deployments";
-import { assertRuntime } from "./runtime";
 import {
   encodeFunctionData,
   decodeFunctionResult,
@@ -102,8 +102,7 @@ export async function token(
   if (address === zeroAddress)
     return {
       address,
-      symbol: settings.nativeSymbol,
-      decimals: 18,
+      ...nativeCurrency(settings),
       balance: await client.getBalance({ address: holder }),
       allowance: 2n ** 256n - 1n,
       metadataMissing: false,
@@ -155,13 +154,7 @@ export async function verifyCode(
   address: Address,
   kind: ContractKind,
 ) {
-  const artifact = CONTRACT_ARTIFACTS[kind];
   const code = await rpc(settings).getCode({ address });
-  if (!code) throw new Error("No contract at this address.");
-  assertRuntime(artifact, code, settings.core);
-  if (kind === "FreeLP") {
-    const core = await read<Address>({ ...settings, manager: address }, "CORE");
-    if (core.toLowerCase() !== settings.core.toLowerCase())
-      throw new Error("Position manager uses a different Core.");
-  }
+  if (!code || code === "0x")
+    throw new Error(`${kind} is not deployed at this address.`);
 }

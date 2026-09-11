@@ -1,5 +1,4 @@
 import { decimalInput } from "./decimalFormat";
-import { TickSpacingControl } from "./TickSpacingControl";
 import { Trans } from "@lingui/react/macro";
 import type { Dispatch, SetStateAction } from "react";
 import { Field } from "./common";
@@ -97,11 +96,6 @@ export function RangeFields({
       {!stable ? (
         <>
           {" "}
-          <TickSpacingControl
-            key={range.spacing}
-            spacing={range.spacing}
-            onApply={(spacing) => setRange({ ...range, spacing })}
-          />
           <button
             type="button"
             onClick={() => setRange({ ...range, full: !range.full })}

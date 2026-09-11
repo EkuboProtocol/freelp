@@ -1,13 +1,14 @@
+import { CreateDeploymentGate } from "./CreateDeploymentGate";
+import { networkName } from "./networks";
+import { defaultCreateForm } from "./createForm";
 import { errorMessage } from "./errors";
-import { PoolKeyFields } from "./PoolKeyFields";
 import { decimalInput } from "./decimalFormat";
 import { displayAmount } from "./displayAmount";
 import { TokenBalance } from "./TokenBalance";
 import { PoolPicker } from "./PoolPicker";
-import { currencies, type Currency } from "./tokens";
+import { networkCurrencies, type Currency } from "./tokens";
 import { CurrencySelect } from "./CurrencySelect";
 import { t } from "@lingui/core/macro";
-import { DEFAULT_RANGE } from "./prices";
 import { RangeFields } from "./RangeFields";
 import { ApprovalButton } from "./ApprovalButton";
 import { PricePreview } from "./PricePreview";
@@ -36,7 +37,7 @@ type Quote = {
   inactive: boolean[];
 };
 export function CreatePage() {
-  const { settings, networks } = useSession();
+  const { settings, networks, selectNetwork, busy } = useSession();
   const [form, setForm] = useCreateForm(settings.chainId);
   const network = networks.find((n) => n.chainId === form.chain);
   if (!network)
@@ -49,7 +50,36 @@ export function CreatePage() {
     );
   return (
     <NetworkScope settings={network}>
-      <CreatePositionForm form={form} setForm={setForm} />
+      <section className="create-position">
+        <h2>
+          <Trans>Create position</Trans>
+        </h2>
+        <Field label={<Trans>Network</Trans>}>
+          <select
+            aria-label={t`Network`}
+            disabled={busy}
+            value={form.chain}
+            onChange={(event) => {
+              const chain = Number(event.target.value);
+              selectNetwork(chain);
+              setForm(defaultCreateForm(chain));
+            }}
+          >
+            {networks.map((n) => (
+              <option key={n.chainId} value={n.chainId}>
+                {networkName(n.chainId, n.name)}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <CreateDeploymentGate>
+          <CreatePositionForm
+            key={network.chainId}
+            form={form}
+            setForm={setForm}
+          />
+        </CreateDeploymentGate>
+      </section>
     </NetworkScope>
   );
 }
@@ -60,7 +90,7 @@ function CreatePositionForm({
   form: CreateForm;
   setForm: Dispatch<SetStateAction<CreateForm>>;
 }) {
-  const { settings, account, send, revision, selectNetwork } = useSession();
+  const { settings, account, send, revision } = useSession();
   const [a, setA] = formField(form, setForm, "a");
   const [b, setB] = formField(form, setForm, "b");
   const [maxA, setMaxA] = formField(form, setForm, "maxA");
@@ -69,39 +99,18 @@ function CreatePositionForm({
   const [fee, setFee] = formField(form, setForm, "fee");
   const [range, setRange] = formField(form, setForm, "range");
   const [slippage, setSlippage] = formField(form, setForm, "slippage");
-  const [fallbackA, setFallbackA] = formField(form, setForm, "fallbackA");
-  const [fallbackB, setFallbackB] = formField(form, setForm, "fallbackB");
   const [failure, setFailure] = useState<{ key: string; error: string }>();
   const [pendingKey, setPendingKey] = useState<string>();
   const request = useRef(0);
   const [quote, setQuote] = useState<Quote>();
-  function chooseCurrency(side: 0 | 1, token: Currency, chainId: number) {
-    if (chainId !== settings.chainId) {
-      selectNetwork(chainId);
-      setForm((previous) => ({ ...previous, chain: chainId }));
-      setSpecified(0);
-      setA(token.address);
-      setB("");
-      setMaxA("");
-      setMaxB("");
-      setQuote(undefined);
-      setFallbackA(String(token.decimals));
-      setFallbackB("");
-      setRange({ ...DEFAULT_RANGE, prices: ["", "", ""] });
-      return;
-    }
+  function chooseCurrency(side: 0 | 1, token: Currency) {
     const pair = side === 0 ? [token.address, b] : [a, token.address];
-    const fallback =
-      side === 0
-        ? [String(token.decimals), fallbackB]
-        : [fallbackA, String(token.decimals)];
     if (
       isAddress(pair[0]) &&
       isAddress(pair[1]) &&
       BigInt(pair[0]) > BigInt(pair[1])
     ) {
       pair.reverse();
-      fallback.reverse();
       setMaxA(maxB);
       setMaxB(maxA);
       setSpecified((previous) => (previous === 0 ? 1 : 0));
@@ -109,8 +118,6 @@ function CreatePositionForm({
     setQuote(undefined);
     setA(pair[0]);
     setB(pair[1]);
-    setFallbackA(fallback[0]);
-    setFallbackB(fallback[1]);
   }
   const key = JSON.stringify([
     settings,
@@ -122,8 +129,6 @@ function CreatePositionForm({
     maxB,
     fee,
     range,
-    fallbackA,
-    fallbackB,
     specified,
     form.kind,
     form.extension,
@@ -136,7 +141,7 @@ function CreatePositionForm({
   const previewError = scopedError(failure, key);
   const symbols = [a, b].map(
     (address, index) =>
-      currencies(settings.chainId, settings.nativeSymbol).find(
+      networkCurrencies(settings).find(
         (token) => token.address.toLowerCase() === address.toLowerCase(),
       )?.symbol ?? (index === 0 ? t`First token` : t`Second token`),
   );
@@ -152,8 +157,6 @@ function CreatePositionForm({
         b,
         maxA,
         maxB,
-        fallbackA,
-        fallbackB,
         fee,
         range,
         specified,
@@ -209,10 +212,7 @@ function CreatePositionForm({
     window.location.hash = "#/positions";
   }
   return (
-    <section className="create-position">
-      <h2>
-        <Trans>Create position</Trans>
-      </h2>
+    <div>
       <p>
         <Trans>
           Choose your tokens and pool, set a price range, and enter either
@@ -223,23 +223,14 @@ function CreatePositionForm({
         <CurrencySelect
           value={a}
           label={t`Select first token`}
-          allNetworks
-          onChange={(token, chainId) => chooseCurrency(0, token, chainId)}
+          onChange={(token) => chooseCurrency(0, token)}
         />
         <CurrencySelect
           value={b}
           label={t`Select second token`}
-          onChange={(token, chainId) => chooseCurrency(1, token, chainId)}
+          onChange={(token) => chooseCurrency(1, token)}
         />
       </div>
-      <details className="advanced-settings">
-        <summary>
-          <Trans>Advanced pool settings</Trans>
-        </summary>
-        <div className="grid">
-          <PoolKeyFields form={form} setForm={setForm} />
-        </div>
-      </details>
       <PoolPicker
         key={JSON.stringify([settings, a, b])}
         range={range}
@@ -248,6 +239,8 @@ function CreatePositionForm({
         token1={b}
         fee={fee}
         options={form}
+        form={form}
+        setForm={setForm}
         onFeeChange={(fee, exactFee) =>
           setForm((previous) => ({ ...previous, fee, exactFee }))
         }
@@ -273,37 +266,6 @@ function CreatePositionForm({
         symbols={symbols}
         stable={form.kind === "stable"}
       />
-      <details>
-        <summary>
-          <Trans>Token metadata fallback</Trans>
-        </summary>
-        <p>
-          <Trans>
-            If a token has no decimals method, amounts use raw integer units.
-            You can supply known decimals here to enter human-readable amounts.
-          </Trans>
-        </p>
-        <div className="grid">
-          <Field label={<Trans>Token 0 fallback decimals</Trans>}>
-            <input
-              type="number"
-              min={0}
-              max={255}
-              value={fallbackA}
-              onChange={(e) => setFallbackA(e.target.value)}
-            />
-          </Field>
-          <Field label={<Trans>Token 1 fallback decimals</Trans>}>
-            <input
-              type="number"
-              min={0}
-              max={255}
-              value={fallbackB}
-              onChange={(e) => setFallbackB(e.target.value)}
-            />
-          </Field>
-        </div>
-      </details>
       <h3>
         <Trans>Deposit amounts</Trans>
       </h3>
@@ -324,7 +286,7 @@ function CreatePositionForm({
           />
           <TokenBalance
             address={a}
-            fallback={fallbackA}
+            fallback=""
             onAmount={(value) => {
               setSpecified(0);
               setMaxA(value);
@@ -347,7 +309,7 @@ function CreatePositionForm({
           />
           <TokenBalance
             address={b}
-            fallback={fallbackB}
+            fallback=""
             onAmount={(value) => {
               setSpecified(1);
               setMaxB(value);
@@ -403,19 +365,6 @@ function CreatePositionForm({
                   </Trans>
                 </small>
               ) : null}
-              {t.metadataMissing ? (
-                <strong>
-                  {(i === 0 ? fallbackA : fallbackB) === "" ? (
-                    <Trans>
-                      Decimals unavailable: amounts are raw integer units.
-                    </Trans>
-                  ) : (
-                    <Trans>
-                      Using manually supplied decimals: {t.decimals}
-                    </Trans>
-                  )}
-                </strong>
-              ) : null}
             </p>
           ))}
           <p>
@@ -449,7 +398,7 @@ function CreatePositionForm({
           </div>
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }
 

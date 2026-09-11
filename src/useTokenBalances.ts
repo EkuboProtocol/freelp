@@ -1,7 +1,7 @@
 import { errorMessage } from "./errors";
 import { useEffect, useEffectEvent, useState } from "react";
 import { tokenBalances } from "./balances";
-import { currencies } from "./tokens";
+import { networkCurrencies } from "./tokens";
 import { useSession } from "./session";
 import type { Settings } from "./types";
 export type BalanceState = { balances?: Map<string, bigint>; error?: string };
@@ -13,9 +13,7 @@ export function useTokenBalances(
   const { account, revision } = useSession();
   const plans = networks.map((settings) => ({
     settings,
-    tokens: currencies(settings.chainId, settings.nativeSymbol).map(
-      (t) => t.address,
-    ),
+    tokens: networkCurrencies(settings).map((t) => t.address),
   }));
   const key = JSON.stringify([plans, account, revision, refresh]);
   const [loaded, setLoaded] = useState<{

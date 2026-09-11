@@ -122,8 +122,8 @@ export function App() {
         <a href="#/build">
           <Trans>About FreeLP</Trans>
         </a>
-        <span>
-          <Trans>No application fees. Network gas applies.</Trans>
+        <span className="free-forever">
+          <Trans>No fees, completely free to use, forever</Trans>
         </span>
       </footer>
     </main>

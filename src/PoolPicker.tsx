@@ -1,15 +1,19 @@
+import { PoolKeyFields } from "./PoolKeyFields";
+import { TickSpacingControl } from "./TickSpacingControl";
+import type { CreateForm } from "./createForm";
+import type { Dispatch, SetStateAction } from "react";
 import { exactFeeFromPercent, percentFromExactFee } from "./fee";
 import { errorMessage } from "./errors";
 import { decimalInput, decimalDisplay } from "./decimalFormat";
 import { spacingPercent } from "./pools";
 import { rangeTicks, tickPrice, type RangeInput } from "./prices";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { erc20Abi, getAddress, isAddress, zeroAddress } from "viem";
+import { getAddress, isAddress } from "viem";
 import { Trans } from "@lingui/react/macro";
-import { useSession, rpc } from "./session";
+import { useSession } from "./session";
 import { fetchPools, POOL_PRESETS } from "./poolData";
 import { poolConfig, stableBounds, type PoolOptions } from "./poolOptions";
-import { currencies } from "./tokens";
+import { networkCurrencies } from "./tokens";
 import { LiquidityChart } from "./LiquidityChart";
 import { Field, ErrorText } from "./common";
 type PoolStates = Awaited<ReturnType<typeof fetchPools>>;
@@ -19,6 +23,8 @@ export function PoolPicker({
   token1,
   fee,
   options,
+  form,
+  setForm,
   onFeeChange,
   spacing,
   onSelect,
@@ -29,6 +35,8 @@ export function PoolPicker({
   token1: string;
   fee: string;
   options: PoolOptions;
+  form: CreateForm;
+  setForm: Dispatch<SetStateAction<CreateForm>>;
   onFeeChange: (fee: string, exactFee: string) => void;
   spacing: number;
   range: RangeInput;
@@ -63,26 +71,19 @@ export function PoolPicker({
   const busy = pending === key;
   const error = scopedPoolError(failure, key);
   const selected = presets.findIndex(
-    (preset) => preset.fee === fee && preset.spacing === spacing,
+    (preset) =>
+      preset.exactFee === (options.exactFee || exactFeeFromPercent(fee)) &&
+      preset.spacing === spacing,
   );
-  async function decimals(address: string) {
-    if (address === zeroAddress) return 18;
-    try {
-      return await rpc(settings).readContract({
-        address: getAddress(address),
-        abi: erc20Abi,
-        functionName: "decimals",
-      });
-    } catch (error) {
-      const imported = currencies(settings.chainId, settings.nativeSymbol).find(
-        (token) => token.address.toLowerCase() === address.toLowerCase(),
-      );
-      if (imported) return imported.decimals;
+  function decimals(address: string) {
+    const currency = networkCurrencies(settings).find(
+      (token) => token.address.toLowerCase() === address.toLowerCase(),
+    );
+    if (!currency)
       throw new Error(
-        "Import token decimals before displaying its price chart.",
-        { cause: error },
+        "Import this token's on-chain metadata before displaying its price chart.",
       );
-    }
+    return currency.decimals;
   }
   function select(index: number, result = data) {
     const preset = presets[index],
@@ -94,6 +95,7 @@ export function PoolPicker({
               10 ** (result.decimals[0] - result.decimals[1]),
           )
         : undefined;
+    onFeeChange(preset.fee, preset.custom ? preset.exactFee : "");
     onSelect(preset.fee, preset.spacing, price);
   }
   async function discover() {
@@ -104,7 +106,10 @@ export function PoolPicker({
       const keys = presets.map((preset) => ({
         token0: getAddress(token0),
         token1: getAddress(token1),
-        config: poolConfig(preset.fee, preset.spacing, options),
+        config: poolConfig(preset.fee, preset.spacing, {
+          ...options,
+          exactFee: preset.exactFee,
+        }),
       }));
       const [states, d0, d1] = await Promise.all([
         fetchPools(settings, keys),
@@ -161,6 +166,21 @@ export function PoolPicker({
         data={data}
         select={select}
       />
+      <details className="advanced-settings">
+        <summary>
+          <Trans>Advanced pool settings</Trans>
+        </summary>
+        <div className="grid">
+          <PoolKeyFields form={form} setForm={setForm} />
+        </div>
+        {options.kind === "concentrated" ? (
+          <TickSpacingControl
+            key={spacing}
+            spacing={spacing}
+            onApply={(spacing) => onRangeChange({ ...range, spacing })}
+          />
+        ) : null}
+      </details>
       {data && selected >= 0 ? (
         <PoolChart
           options={options}
@@ -254,11 +274,18 @@ function scopedPoolError(
 }
 
 function poolPresets(fee: string, spacing: number, options: PoolOptions) {
-  if (options.kind === "stable" || options.exactFee !== "")
-    return [{ fee, spacing }];
-  return POOL_PRESETS.some((p) => p.fee === fee && p.spacing === spacing)
-    ? POOL_PRESETS
-    : [...POOL_PRESETS, { fee, spacing }];
+  const presets = POOL_PRESETS.map((preset) => ({
+    ...preset,
+    spacing: options.kind === "stable" ? spacing : preset.spacing,
+    exactFee: exactFeeFromPercent(preset.fee),
+    custom: false,
+  }));
+  const exactFee = options.exactFee || exactFeeFromPercent(fee);
+  return presets.some(
+    (preset) => preset.exactFee === exactFee && preset.spacing === spacing,
+  )
+    ? presets
+    : [...presets, { fee, spacing, exactFee, custom: true }];
 }
 function FeeOptions({
   onFeeChange,
@@ -270,7 +297,7 @@ function FeeOptions({
   select,
 }: {
   onFeeChange: (fee: string, exactFee: string) => void;
-  presets: { fee: string; spacing: number }[];
+  presets: { fee: string; spacing: number; exactFee: string }[];
   options: PoolOptions;
   fee: string;
   selected: number;
@@ -278,37 +305,17 @@ function FeeOptions({
   select: (index: number) => void;
 }) {
   return (
-    <details className="pool-edit">
-      <summary>
-        <Trans>Edit fee</Trans> · {feeDisplay(fee, options)}%
-      </summary>
-      <Field label={<Trans>Pool fee (%)</Trans>}>
-        <input
-          inputMode="decimal"
-          value={options.exactFee ? percentFromExactFee(options.exactFee) : fee}
-          onChange={(e) => onFeeChange(e.target.value, "")}
-        />
-      </Field>
-      <Field label={<Trans>Exact fee (uint64)</Trans>}>
-        <input
-          inputMode="numeric"
-          value={options.exactFee || exactFeeFromPercent(fee)}
-          onChange={(e) =>
-            onFeeChange(percentFromExactFee(e.target.value), e.target.value)
-          }
-        />
-      </Field>
+    <>
       <div className="pool-options">
         {presets.map((preset, index) => (
           <button
             key={`${preset.fee}:${preset.spacing}`}
             className={selected === index ? "selected" : ""}
-            onClick={() => {
-              onFeeChange(preset.fee, "");
-              select(index);
-            }}
+            onClick={() => select(index)}
           >
-            <strong>{feeDisplay(preset.fee, options)}%</strong>
+            <strong>
+              {decimalDisplay(Number(percentFromExactFee(preset.exactFee)))}%
+            </strong>
             <small>
               {data?.states[index].sqrtRatio ? (
                 <Trans>Existing pool</Trans>
@@ -329,7 +336,30 @@ function FeeOptions({
           </button>
         ))}
       </div>
-    </details>
+      <details className="pool-edit">
+        <summary>
+          <Trans>Edit fee</Trans> · {feeDisplay(fee, options)}%
+        </summary>
+        <Field label={<Trans>Pool fee (%)</Trans>}>
+          <input
+            inputMode="decimal"
+            value={
+              options.exactFee ? percentFromExactFee(options.exactFee) : fee
+            }
+            onChange={(e) => onFeeChange(e.target.value, "")}
+          />
+        </Field>
+        <Field label={<Trans>Exact fee (uint64)</Trans>}>
+          <input
+            inputMode="numeric"
+            value={options.exactFee || exactFeeFromPercent(fee)}
+            onChange={(e) =>
+              onFeeChange(percentFromExactFee(e.target.value), e.target.value)
+            }
+          />
+        </Field>
+      </details>
+    </>
   );
 }
 

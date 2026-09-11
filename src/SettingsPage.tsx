@@ -1,3 +1,9 @@
+import {
+  NetworkDetailsFields,
+  EMPTY_NETWORK_DETAILS,
+  type NetworkDetailsInput,
+} from "./NetworkDetailsFields";
+import { nativeCurrency } from "./nativeCurrency";
 import { t } from "@lingui/core/macro";
 import { useRef, useState } from "react";
 import { Trans } from "@lingui/react/macro";
@@ -13,11 +19,22 @@ export function SettingsPage() {
   const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState<Settings>();
+  const [details, setDetails] = useState(EMPTY_NETWORK_DETAILS);
   const [rpcUrl, setRpcUrl] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   function open(network?: Settings) {
     setEditing(network);
+    setDetails(
+      network
+        ? {
+            name: network.name ?? "",
+            nativeSymbol: network.nativeSymbol,
+            nativeName: nativeCurrency(network).name,
+            nativeDecimals: String(nativeCurrency(network).decimals),
+          }
+        : EMPTY_NETWORK_DETAILS,
+    );
     setRpcUrl(network?.rpcUrl ?? "");
     setError("");
     dialog.current?.showModal();
@@ -27,7 +44,12 @@ export function SettingsPage() {
     setBusy(true);
     setError("");
     try {
-      configure(await detectNetwork(rpcUrl, networks, editing));
+      configure(
+        applyNetworkDetails(
+          await detectNetwork(rpcUrl, networks, editing),
+          details,
+        ),
+      );
       dialog.current?.close();
     } catch (error) {
       setError(errorMessage(error));
@@ -112,6 +134,11 @@ export function SettingsPage() {
           <p className="network-hint">
             <Trans>The network is detected from your RPC URL.</Trans>
           </p>
+          <NetworkDetailsFields
+            value={details}
+            onChange={setDetails}
+            disabled={busy}
+          />
           {error ? (
             <p role="alert" className="error">
               {error}
@@ -158,10 +185,31 @@ async function detectNetwork(
 
 function networkDetails(
   chainId: number,
-  known?: { name?: string; nativeSymbol: string },
+  known?: Pick<
+    Settings,
+    "name" | "nativeSymbol" | "nativeName" | "nativeDecimals"
+  >,
 ) {
   return {
     name: known?.name ?? t`Chain ${chainId}`,
     nativeSymbol: known?.nativeSymbol ?? "native",
+    nativeName: known?.nativeName,
+    nativeDecimals: known?.nativeDecimals,
+  };
+}
+
+function applyNetworkDetails(
+  network: Settings,
+  details: NetworkDetailsInput,
+): Settings {
+  return {
+    ...network,
+    name: details.name.trim() || network.name,
+    nativeSymbol: details.nativeSymbol.trim() || network.nativeSymbol,
+    nativeName: details.nativeName.trim() || network.nativeName,
+    nativeDecimals:
+      details.nativeDecimals === ""
+        ? network.nativeDecimals
+        : Number(details.nativeDecimals),
   };
 }

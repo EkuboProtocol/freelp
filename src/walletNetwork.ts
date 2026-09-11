@@ -1,3 +1,4 @@
+import { nativeCurrency } from "./nativeCurrency";
 import type { Provider, Settings } from "./types";
 export async function switchWalletChain(
   provider: Provider,
@@ -25,11 +26,7 @@ export async function switchWalletChain(
         {
           chainId,
           chainName: settings.name || `Chain ${settings.chainId}`,
-          nativeCurrency: {
-            name: settings.nativeSymbol,
-            symbol: settings.nativeSymbol,
-            decimals: 18,
-          },
+          nativeCurrency: nativeCurrency(settings),
           rpcUrls: [settings.rpcUrl],
         },
       ],

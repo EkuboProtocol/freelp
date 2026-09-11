@@ -1,3 +1,4 @@
+import { networkCurrencies } from "./tokens";
 import { t } from "@lingui/core/macro";
 import { getAddress, zeroAddress } from "viem";
 import { token, read } from "./contracts";
@@ -15,8 +16,6 @@ type Input = {
   b: string;
   maxA: string;
   maxB: string;
-  fallbackA: string;
-  fallbackB: string;
   fee: string;
   range: RangeInput;
   specified: 0 | 1;
@@ -24,19 +23,24 @@ type Input = {
 };
 async function loadTokens(input: Input) {
   const owner = input.account ?? zeroAddress;
-  const entries = [
-    [input.a, input.fallbackA],
-    [input.b, input.fallbackB],
-  ] as const;
+  const metadata = networkCurrencies(input.settings);
   const [a, b] = await Promise.all(
-    entries.map(([address, fallback]) =>
-      token(
-        input.settings,
-        getAddress(address),
-        owner,
-        fallback === "" ? undefined : Number(fallback),
-      ),
-    ),
+    [input.a, input.b].map(async (address) => {
+      const currency = metadata.find(
+        (entry) => entry.address.toLowerCase() === address.toLowerCase(),
+      );
+      if (!currency)
+        throw new Error(
+          t`Import this token's on-chain metadata before creating a position.`,
+        );
+      const result = await token(input.settings, getAddress(address), owner);
+      return {
+        ...result,
+        symbol: currency.symbol,
+        decimals: currency.decimals,
+        metadataMissing: false,
+      };
+    }),
   );
   return [a, b] as [typeof a, typeof b];
 }

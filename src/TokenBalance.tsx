@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import { formatUnits, getAddress, isAddress, zeroAddress } from "viem";
 import { token, type Token } from "./contracts";
-import { currencies, type Currency } from "./tokens";
+import { networkCurrencies, type Currency } from "./tokens";
 import { useSession } from "./session";
 import { useTokenBalances } from "./useTokenBalances";
 type Props = {
@@ -15,7 +15,7 @@ type Props = {
 export function TokenBalance(props: Props) {
   const { settings, account } = useSession();
   if (!account || !isAddress(props.address)) return null;
-  const currency = currencies(settings.chainId, settings.nativeSymbol).find(
+  const currency = networkCurrencies(settings).find(
     (t) => t.address.toLowerCase() === props.address.toLowerCase(),
   );
   return currency ? (

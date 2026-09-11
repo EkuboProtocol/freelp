@@ -48,7 +48,7 @@ msgstr "Add network"
 msgid "Add token {i} amount"
 msgstr "Add token {i} amount"
 
-#: src/CreatePage.tsx
+#: src/PoolPicker.tsx
 msgid "Advanced pool settings"
 msgstr "Advanced pool settings"
 
@@ -61,8 +61,8 @@ msgid "All positions"
 msgstr "All positions"
 
 #: src/DeploymentCard.tsx
-msgid "Already deployed · code verified"
-msgstr "Already deployed · code verified"
+msgid "Already deployed"
+msgstr "Already deployed"
 
 #: src/PoolKeyFields.tsx
 msgid "Amplification exponent"
@@ -117,9 +117,17 @@ msgstr "Center tick (multiple of 16)"
 msgid "Chain {chainId}"
 msgstr "Chain {chainId}"
 
+#: src/CreateDeploymentGate.tsx
+msgid "Check again"
+msgstr "Check again"
+
 #: src/DeploymentCard.tsx
 msgid "Checking code on this network…"
 msgstr "Checking code on this network…"
+
+#: src/CreateDeploymentGate.tsx
+msgid "Checking required contracts…"
+msgstr "Checking required contracts…"
 
 #: src/PoolPicker.tsx
 msgid "Choose a pool"
@@ -201,6 +209,10 @@ msgstr "Copy address"
 msgid "Copy command"
 msgstr "Copy command"
 
+#: src/CreateDeploymentGate.tsx
+msgid "Core, FreeLPDataFetcher, and the position manager must match this build before you can create a position on this network."
+msgstr "Core, FreeLPDataFetcher, and the position manager must match this build before you can create a position on this network."
+
 #: src/DeploymentCard.tsx
 msgid "Core:"
 msgstr "Core:"
@@ -229,10 +241,6 @@ msgstr "Current price {0}; range {1} to {2}"
 msgid "decimals"
 msgstr "decimals"
 
-#: src/CreatePage.tsx
-msgid "Decimals unavailable: amounts are raw integer units."
-msgstr "Decimals unavailable: amounts are raw integer units."
-
 #: src/PositionDetail.tsx
 msgid "Decimals unavailable: displayed and deposit amounts use raw integer units."
 msgstr "Decimals unavailable: displayed and deposit amounts use raw integer units."
@@ -253,6 +261,10 @@ msgstr "Deploy {kind}"
 msgid "Deploy contracts"
 msgstr "Deploy contracts"
 
+#: src/CreateDeploymentGate.tsx
+msgid "Deploy contracts to create positions"
+msgstr "Deploy contracts to create positions"
+
 #: src/DeployPage.tsx
 msgid "Deploy missing contracts once for everyone on this network. Addresses depend on the fixed salt and contract code, never on your wallet. Existing contracts are detected before any deployment."
 msgstr "Deploy missing contracts once for everyone on this network. Addresses depend on the fixed salt and contract code, never on your wallet. Existing contracts are detected before any deployment."
@@ -272,6 +284,10 @@ msgstr "Deposit amounts"
 #: src/CreatePage.tsx
 msgid "Deposit preview"
 msgstr "Deposit preview"
+
+#: src/NetworkDetailsFields.tsx
+msgid "Detected network name"
+msgstr "Detected network name"
 
 #: src/DeployPage.tsx
 msgid "Deterministic deployment details"
@@ -379,13 +395,17 @@ msgstr "FreeLP software is licensed under the MIT license. These notices do not 
 msgid "Full range selected."
 msgstr "Full range selected."
 
+#: src/CreateDeploymentGate.tsx
+msgid "Go to Deploy"
+msgstr "Go to Deploy"
+
 #: src/TokenBalance.tsx
 msgid "Half"
 msgstr "Half"
 
-#: src/CreatePage.tsx
-msgid "If a token has no decimals method, amounts use raw integer units. You can supply known decimals here to enter human-readable amounts."
-msgstr "If a token has no decimals method, amounts use raw integer units. You can supply known decimals here to enter human-readable amounts."
+#: src/loadDepositQuote.ts
+msgid "Import this token's on-chain metadata before creating a position."
+msgstr "Import this token's on-chain metadata before creating a position."
 
 #: src/CurrencySelect.tsx
 msgid "Import token"
@@ -462,6 +482,26 @@ msgstr "Max"
 msgid "MIT license"
 msgstr "MIT license"
 
+#: src/NetworkDetailsFields.tsx
+msgid "Native token decimals"
+msgstr "Native token decimals"
+
+#: src/NetworkDetailsFields.tsx
+msgid "Native token name"
+msgstr "Native token name"
+
+#: src/NetworkDetailsFields.tsx
+msgid "Native token symbol"
+msgstr "Native token symbol"
+
+#: src/CreatePage.tsx
+msgid "Network"
+msgstr "Network"
+
+#: src/NetworkDetailsFields.tsx
+msgid "Network name"
+msgstr "Network name"
+
 #: src/SettingsPage.tsx
 msgid "Networks"
 msgstr "Networks"
@@ -470,13 +510,13 @@ msgstr "Networks"
 msgid "New pool: creation will initialize its price."
 msgstr "New pool: creation will initialize its price."
 
-#: src/App.tsx
-msgid "No application fees. Network gas applies."
-msgstr "No application fees. Network gas applies."
-
 #: src/TermsPage.tsx
 msgid "No central operator or protection"
 msgstr "No central operator or protection"
+
+#: src/App.tsx
+msgid "No fees, completely free to use, forever"
+msgstr "No fees, completely free to use, forever"
 
 #: src/PositionsPage.tsx
 msgid "No matching positions. Try another search or show closed positions."
@@ -490,7 +530,7 @@ msgstr "No matching tokens. Paste a contract address to import one."
 msgid "No positions found on the available networks."
 msgstr "No positions found on the available networks."
 
-#: src/CurrencySelect.tsx
+#: src/readTokenMetadata.ts
 msgid "No token contract at this address."
 msgstr "No token contract at this address."
 
@@ -814,6 +854,10 @@ msgstr "This pool is not initialized. Set its initial price when creating the fi
 msgid "This token is not needed for the selected range."
 msgstr "This token is not needed for the selected range."
 
+#: src/readTokenMetadata.ts
+msgid "This token must provide a name, symbol, and valid decimals on chain."
+msgstr "This token must provide a name, symbol, and valid decimals on chain."
+
 #: src/PortfolioPosition.tsx
 msgid "Tick range:"
 msgstr "Tick range:"
@@ -843,22 +887,6 @@ msgstr "To the fullest extent permitted by law, the application, website, inform
 msgid "To the maximum extent permitted by applicable law, no author, copyright holder, contributor, maintainer, distributor, deployer, or host accepts liability for any claim, loss, damage, cost, or other liability arising from your use of, inability to use, or reliance on this application, website, software, information, or any connected contract or system. This includes lost assets, profits, data, opportunities, and direct, indirect, incidental, consequential, special, exemplary, or punitive damages, under contract, tort including negligence, or any other legal theory, even if advised of the possibility. You bear the consequences of what you do with this software. No statement here excludes liability or rights that applicable law does not permit to be excluded."
 msgstr "To the maximum extent permitted by applicable law, no author, copyright holder, contributor, maintainer, distributor, deployer, or host accepts liability for any claim, loss, damage, cost, or other liability arising from your use of, inability to use, or reliance on this application, website, software, information, or any connected contract or system. This includes lost assets, profits, data, opportunities, and direct, indirect, incidental, consequential, special, exemplary, or punitive damages, under contract, tort including negligence, or any other legal theory, even if advised of the possibility. You bear the consequences of what you do with this software. No statement here excludes liability or rights that applicable law does not permit to be excluded."
 
-#: src/CreatePage.tsx
-msgid "Token 0 fallback decimals"
-msgstr "Token 0 fallback decimals"
-
-#: src/CreatePage.tsx
-msgid "Token 1 fallback decimals"
-msgstr "Token 1 fallback decimals"
-
-#: src/CurrencySelect.tsx
-msgid "Token decimals (0 for raw units)"
-msgstr "Token decimals (0 for raw units)"
-
-#: src/CreatePage.tsx
-msgid "Token metadata fallback"
-msgstr "Token metadata fallback"
-
 #: src/PositionDetail.tsx
 msgid "Token metadata unavailable."
 msgstr "Token metadata unavailable."
@@ -868,8 +896,8 @@ msgid "Transfer NFT to recipient"
 msgstr "Transfer NFT to recipient"
 
 #: src/DeploymentCard.tsx
-msgid "Unable to verify this address. Deployment is disabled."
-msgstr "Unable to verify this address. Deployment is disabled."
+msgid "Unable to read this address. Deployment is disabled."
+msgstr "Unable to read this address. Deployment is disabled."
 
 #: src/PortfolioPosition.tsx
 #: src/PositionDetail.tsx
@@ -911,11 +939,6 @@ msgstr "Use public RPC URLs or your own nodes. Settings stay in this browser."
 #: src/RangeFields.tsx
 msgid "Use raw ticks"
 msgstr "Use raw ticks"
-
-#. placeholder {0}: t.decimals
-#: src/CreatePage.tsx
-msgid "Using manually supplied decimals: {0}"
-msgstr "Using manually supplied decimals: {0}"
 
 #: src/PositionDetail.tsx
 msgid "Wait for the matching deposit amount."

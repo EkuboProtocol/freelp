@@ -1,4 +1,3 @@
-import { errorMessage } from "./errors";
 import { concatHex, getCreate2Address, type Address } from "viem";
 import { deployment, verifyCode, type ContractKind } from "./contracts";
 import { rpc } from "./rpc";
@@ -27,14 +26,6 @@ export async function deploymentStatus(settings: Settings, kind: ContractKind) {
   if (chainId !== settings.chainId)
     throw new Error("RPC chain does not match the selected network.");
   if (!code || code === "0x") return { address, exists: false };
-  try {
-    await verifyCode(settings, address, kind);
-  } catch (error) {
-    throw new Error(
-      `Code is present at ${address}, but verification failed: ${errorMessage(error)}`,
-      { cause: error },
-    );
-  }
   return { address, exists: true };
 }
 export async function prepareDeployment(

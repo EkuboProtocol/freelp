@@ -1,10 +1,11 @@
+import { mockDeployments } from "../support/deploymentRpc";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { decodeFunctionData, encodeFunctionResult, zeroAddress } from "viem";
 import { NETWORKS } from "../../src/networks";
 import fetcher from "../../artifacts/FreeLPDataFetcher.json" with { type: "json" };
 
-test("picker batches balances across networks, caches reads, and supports keyboard selection", async ({
+test("picker batches balances only on the selected network, caches reads, and supports keyboard selection", async ({
   page,
 }) => {
   const calls = new Map<number, number>();
@@ -53,18 +54,21 @@ test("picker batches balances across networks, caches reads, and supports keyboa
       ),
     );
   });
+  await mockDeployments(page);
   await page.goto("/#/create");
   await page.getByRole("button", { name: "Connect Balance wallet" }).click();
   await page.getByRole("button", { name: "Select first token" }).click();
   const dialog = page.getByRole("dialog");
   await expect(
     dialog.locator(".token-row-balance strong", { hasText: "12.5" }),
-  ).toHaveCount(11);
+  ).toHaveCount(1);
   await expect(
     dialog.getByRole("heading", { name: /Your tokens|Other tokens/ }),
   ).toHaveCount(0);
-  expect(calls.size).toBe(11);
-  expect([...calls.values()]).toEqual(Array(11).fill(1));
+  expect(calls.size).toBe(1);
+  expect(calls.has(1)).toBe(true);
+  await expect(page.locator(".currency-mark")).toHaveCount(0);
+  expect([...calls.values()]).toEqual([1]);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.screenshot({
     path: test.info().outputPath("balances-desktop.png"),
@@ -90,5 +94,5 @@ test("picker batches balances across networks, caches reads, and supports keyboa
   await expect(page.locator(".balance-actions").first()).toContainText(
     "12.5 ETH",
   );
-  expect([...calls.values()]).toEqual(Array(11).fill(1));
+  expect([...calls.values()]).toEqual([1]);
 });

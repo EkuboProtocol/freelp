@@ -1,3 +1,4 @@
+import { mockDeployments } from "../support/deploymentRpc";
 import { readCreateForm } from "../../src/createForm";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
@@ -37,8 +38,14 @@ test("RPC-only add dialog detects networks, rejects failures and persists fixed 
   await page.getByRole("button", { name: "Add network", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByLabel("RPC URL")).toBeFocused();
-  await expect(dialog.locator("input")).toHaveCount(1);
+  await expect(dialog.locator("input")).toHaveCount(5);
   await dialog.getByLabel("RPC URL").fill(url);
+  await dialog
+    .getByLabel("Network name", { exact: true })
+    .fill("My custom chain");
+  await dialog.getByLabel("Native token symbol").fill("TST");
+  await dialog.getByLabel("Native token name").fill("Test Coin");
+  await dialog.getByLabel("Native token decimals").fill("6");
   await dialog.getByRole("button", { name: "Save network" }).click();
   await expect(dialog.getByRole("alert")).toContainText("RPC unavailable");
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
@@ -46,7 +53,7 @@ test("RPC-only add dialog detects networks, rejects failures and persists fixed 
   await dialog.getByRole("button", { name: "Save network" }).click();
   await expect(dialog).not.toBeVisible();
   await expect(
-    page.locator(".network-row").filter({ hasText: "Chain 31337" }),
+    page.locator(".network-row").filter({ hasText: "My custom chain" }),
   ).toContainText(url);
   const saved = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("freelp:settings")!),
@@ -55,10 +62,14 @@ test("RPC-only add dialog detects networks, rejects failures and persists fixed 
     ...DEFAULT_CONTRACTS,
     chainId: 31337,
     rpcUrl: url,
+    name: "My custom chain",
+    nativeSymbol: "TST",
+    nativeName: "Test Coin",
+    nativeDecimals: 6,
   });
   await page.reload();
   await expect(
-    page.locator(".network-row").filter({ hasText: "Chain 31337" }),
+    page.locator(".network-row").filter({ hasText: "My custom chain" }),
   ).toContainText(url);
 });
 
@@ -98,6 +109,7 @@ test("editing an RPC checks chain identity and preserves other networks", async 
 test("positions expose creation while header and app omit removed controls and IPFS", async ({
   page,
 }) => {
+  await mockDeployments(page);
   await page.goto("/");
   await expect(
     page.locator("header").getByRole("link", { name: "Create", exact: true }),
@@ -118,7 +130,11 @@ test("positions expose creation while header and app omit removed controls and I
 test("Robinhood defaults include USDG and tokenized assets without wrapping ETH", async ({
   page,
 }) => {
+  await mockDeployments(page);
   await page.goto("/#/create");
+  await page
+    .getByLabel("Network", { exact: true })
+    .selectOption({ label: "Robinhood Chain" });
   await page.getByRole("button", { name: "Select first token" }).click();
   const dialog = page.getByRole("dialog");
   await dialog

@@ -1,3 +1,4 @@
+import { mockDeployments } from "../tests/support/deploymentRpc";
 import { chromium, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -22,6 +23,7 @@ try {
       reducedMotion: "reduce",
     });
     const page = await context.newPage();
+    await mockDeployments(page);
     for (const route of [
       "positions",
       "create",

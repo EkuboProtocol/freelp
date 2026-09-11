@@ -21,8 +21,6 @@ test("every create form field round-trips through a gateway-safe hash", () => {
     center: "-160",
     amplification: "26",
     slippage: 73,
-    fallbackA: "18",
-    fallbackB: "6",
     range: {
       raw: true,
       full: true,

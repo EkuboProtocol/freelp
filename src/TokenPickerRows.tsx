@@ -35,9 +35,6 @@ export function TokenPickerRows({
           onClick={() => choose(token, network.chainId)}
           title={token.address}
         >
-          <span className="currency-mark" aria-hidden="true">
-            {token.symbol.slice(0, 2)}
-          </span>
           <span className="token-identity">
             <strong title={token.name}>{token.symbol}</strong>
             <span className="token-network">

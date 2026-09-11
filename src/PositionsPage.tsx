@@ -1,6 +1,6 @@
 import { t } from "@lingui/core/macro";
 import { positionState } from "./PositionRange";
-import { currencies } from "./tokens";
+import { networkCurrencies } from "./tokens";
 import type { Position, Settings } from "./types";
 import { useState } from "react";
 import { Trans } from "@lingui/react/macro";
@@ -151,7 +151,7 @@ function matchesPosition(
 ) {
   const { token0, token1 } = position.descriptor.poolKey;
   const addresses = [token0.toLowerCase(), token1.toLowerCase()];
-  const names = currencies(settings.chainId, settings.nativeSymbol)
+  const names = networkCurrencies(settings)
     .filter((token) => addresses.includes(token.address.toLowerCase()))
     .map((token) => `${token.symbol} ${token.name}`);
   return [

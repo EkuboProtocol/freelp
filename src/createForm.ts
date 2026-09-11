@@ -16,8 +16,6 @@ export function defaultCreateForm(chain: number) {
     center: "0",
     range: { ...DEFAULT_RANGE, prices: ["", "", ""] } as RangeInput,
     slippage: 50,
-    fallbackA: "",
-    fallbackB: "",
   };
 }
 export type CreateForm = ReturnType<typeof defaultCreateForm>;
@@ -31,8 +29,6 @@ const strings = [
   "extension",
   "amplification",
   "center",
-  "fallbackA",
-  "fallbackB",
 ] as const;
 export function readCreateForm(hash: string, chain: number): CreateForm {
   const result = defaultCreateForm(chain);

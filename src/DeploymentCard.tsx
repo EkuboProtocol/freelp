@@ -74,10 +74,8 @@ function deploymentDisabled(current: Check) {
 }
 function DeploymentMessage({ current }: { current: Check }) {
   if (!current) return <Trans>Checking code on this network…</Trans>;
-  if (current.exists) return <Trans>Already deployed · code verified</Trans>;
+  if (current.exists) return <Trans>Already deployed</Trans>;
   if (current.error)
-    return (
-      <Trans>Unable to verify this address. Deployment is disabled.</Trans>
-    );
+    return <Trans>Unable to read this address. Deployment is disabled.</Trans>;
   return <Trans>Not deployed · no code at this address</Trans>;
 }
