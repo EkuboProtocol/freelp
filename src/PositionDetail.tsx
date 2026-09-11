@@ -33,7 +33,7 @@ export function PositionDetail({ position: p }: { position: Position }) {
   const [recipient, setRecipient] = useState(account ?? "");
   const [portion, setPortion] = useState(100);
   const [slippage, setSlippage] = useState(50);
-  const deposit = usePositionDeposit(settings, p, tokens);
+  const deposit = usePositionDeposit(p, tokens);
   useEffect(() => {
     let active = true;
     if (!account) return;
@@ -222,6 +222,7 @@ export function PositionDetail({ position: p }: { position: Position }) {
         </p>
       </fieldset>
       <PositionDepositFields
+        batchSupported={batchSupported}
         position={p}
         tokens={tokens}
         deposit={deposit}

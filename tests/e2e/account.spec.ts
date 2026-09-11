@@ -32,6 +32,12 @@ test("wallet errors render messages and the connected account has a local header
     "Request declined",
   );
   await expect(page.locator("body")).not.toContainText("[object Object]");
+  await expect(page.locator(".notification-toast")).toHaveCSS(
+    "position",
+    "fixed",
+  );
+  await page.getByRole("button", { name: "Dismiss notification" }).click();
+  await expect(page.locator(".notification-toast")).toHaveCount(0);
   await page.getByRole("button", { name: "Connect Test wallet" }).click();
   const account = page.locator("header .account-control");
   await expect(account.locator("svg")).toBeVisible();

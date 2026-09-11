@@ -61,11 +61,18 @@ async function approveDeposits(
   tokens: Hex[],
   amount: string,
   missingDecimals: boolean,
+  batch: boolean,
 ) {
   await expect(page.getByTestId("position-amount-0")).not.toHaveValue("");
   await expect(
     page.getByRole("button", { name: "Add liquidity", exact: true }),
   ).toBeEnabled();
+  if (batch) {
+    await expect(
+      page.getByRole("button", { name: /^(Reset TT approval|Approve TT)$/ }),
+    ).toHaveCount(0);
+    return;
+  }
   const required = await Promise.all(
     tokens
       .filter((address) => address !== zeroAddress)
@@ -489,6 +496,7 @@ for (const { missingDecimals, native, batch } of [
       tokens,
       amount(2),
       missingDecimals,
+      batch,
     );
     await page
       .getByRole("button", { name: "Add liquidity", exact: true })
@@ -709,6 +717,8 @@ async function checkStableCreation(
     });
     await client.waitForTransactionReceipt({ hash });
   }
+  await page.reload();
+  await page.getByRole("button", { name: "Connect Local wallet" }).click();
   await page.getByRole("link", { name: "Positions", exact: true }).click();
   await page
     .getByRole("link", { name: "Create position", exact: true })

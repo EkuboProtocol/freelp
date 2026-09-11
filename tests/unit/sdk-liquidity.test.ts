@@ -58,7 +58,10 @@ test("chart integrates liquidity changes and reports both token reserves across 
 test("batch support does not require atomic capability", async () => {
   for (const status of ["supported", "ready", "unsupported"]) {
     const provider = {
-      request: async () => ({ "0x1": { atomic: { status } } }),
+      request: async ({ params }: { params?: unknown }) => {
+        expect(params).toEqual([zeroAddress, ["0x1"]]);
+        return { "0x1": { atomic: { status } } };
+      },
     };
     expect(await supportsCalls(provider, zeroAddress, DEFAULT_SETTINGS)).toBe(
       true,

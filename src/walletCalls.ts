@@ -23,8 +23,8 @@ export async function supportsCalls(
       provider,
       account,
       settings,
-    ).getCapabilities({ account });
-    return Object.hasOwn(capabilities, settings.chainId);
+    ).getCapabilities({ account, chainId: settings.chainId });
+    return capabilities !== undefined && capabilities !== null;
   } catch {
     return false;
   }

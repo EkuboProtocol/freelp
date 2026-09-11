@@ -689,3 +689,21 @@ header { flex-wrap: wrap; }
 .chart-tooltip { min-height: 2rem; display: flex; flex-wrap: wrap; gap: .75rem; font-size: .85rem; overflow-wrap: anywhere; }
 .liquidity-chart .depth-chart { height: clamp(180px, 24vw, 240px); }
 .chart-axis { font-size: .8rem; margin-block: .3rem .65rem; }
+
+.notification-toast {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 1rem;
+  border: 1px solid currentColor;
+  background: #fff;
+  color: #000;
+  box-shadow: 0 4px 20px #0002;
+}
+.notification-toast .status { margin: 0; padding: 0; border: 0; overflow-wrap: anywhere; flex: 1; }
+.notification-toast button { flex: none; padding: 0.1rem 0.5rem; font-size: 1.25rem; line-height: 1.25; }

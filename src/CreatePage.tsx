@@ -8,9 +8,7 @@ import { MAX_TICK, tickPrice } from "./prices";
 import { CreateDeploymentGate } from "./CreateDeploymentGate";
 import { networkName } from "./networks";
 import { defaultCreateForm } from "./createForm";
-import { errorMessage } from "./errors";
 import { decimalInput } from "./decimalFormat";
-import { displayAmount } from "./displayAmount";
 import { TokenBalance } from "./TokenBalance";
 import { PoolPicker } from "./PoolPicker";
 import { networkCurrencies, type Currency } from "./tokens";
@@ -18,29 +16,14 @@ import { CurrencySelect } from "./CurrencySelect";
 import { RangeFields } from "./RangeFields";
 import { ApprovalButton } from "./ApprovalButton";
 import { PricePreview } from "./PricePreview";
-import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { loadDepositQuote } from "./loadDepositQuote";
+import { useCreateDeposit } from "./useCreateDeposit";
 import { formatUnits, isAddress, zeroAddress } from "viem";
 import { useCreateForm, formField } from "./useCreateForm";
 import type { CreateForm } from "./createForm";
 import type { Dispatch, SetStateAction } from "react";
 import { NetworkScope, useSession } from "./session";
-import { managerData, type Token } from "./contracts";
+import { managerData } from "./contracts";
 import { Action, Field, ErrorText } from "./common";
-import type { Descriptor } from "./types";
-type Quote = {
-  descriptor: Descriptor;
-  initialTick: number;
-  sqrtRatio: bigint;
-  tokens: [Token, Token];
-  max0: bigint;
-  max1: bigint;
-  liquidity: bigint;
-  used0: bigint;
-  used1: bigint;
-  key: string;
-  inactive: boolean[];
-};
 export function CreatePage() {
   const { settings, networks, selectNetwork, busy } = useSession();
   const [sourceForm, setForm] = useCreateForm(settings.chainId);
@@ -95,7 +78,7 @@ function CreatePositionForm({
   sourceForm: CreateForm;
   setForm: Dispatch<SetStateAction<CreateForm>>;
 }) {
-  const { settings, account, send, revision } = useSession();
+  const { settings, send } = useSession();
   const batchSupported = useBatchSupport();
   const pool = useSelectedPool(inputForm);
   const form = {
@@ -106,14 +89,9 @@ function CreatePositionForm({
   const [b, setB] = formField(form, setForm, "b");
   const [maxA, setMaxA] = formField(form, setForm, "maxA");
   const [maxB, setMaxB] = formField(form, setForm, "maxB");
-  const [specified, setSpecified] = formField(form, setForm, "specified");
-  const fee = form.fee;
+  const [, setSpecified] = formField(form, setForm, "specified");
   const [range, setRange] = formField(form, setForm, "range");
   const [slippage, setSlippage] = formField(form, setForm, "slippage");
-  const [failure, setFailure] = useState<{ key: string; error: string }>();
-  const [pendingKey, setPendingKey] = useState<string>();
-  const request = useRef(0);
-  const [quote, setQuote] = useState<Quote>();
   function chooseCurrency(side: 0 | 1, token: Currency) {
     const pair = side === 0 ? [token.address, b] : [a, token.address];
     if (
@@ -126,86 +104,24 @@ function CreatePositionForm({
       setMaxB(maxA);
       setSpecified((previous) => (previous === 0 ? 1 : 0));
     }
-    setQuote(undefined);
     setA(pair[0]);
     setB(pair[1]);
   }
-  const key = JSON.stringify([
-    settings,
-    account,
-    revision,
-    pool.data?.key,
-    a,
-    b,
-    specified === 0 ? maxA : maxB,
-    fee,
-    range,
-    specified,
-    form.kind,
-    form.extension,
-    form.exactFee,
-    form.amplification,
-    form.center,
-  ]);
-  const current = currentQuote(quote, key);
-  const previewBusy = pendingKey === key;
-  const previewError = scopedError(failure, key);
+  const { current, ready, previewError } = useCreateDeposit(
+    form,
+    pool,
+    setMaxA,
+    setMaxB,
+  );
   const symbols = [a, b].map(
     (address, index) =>
       networkCurrencies(settings).find(
         (token) => token.address.toLowerCase() === address.toLowerCase(),
       )?.symbol ?? (index === 0 ? "First token" : "Second token"),
   );
-  async function preview() {
-    const id = ++request.current;
-    setPendingKey(key);
-    setFailure(undefined);
-    try {
-      const next = await loadDepositQuote({
-        settings,
-        account,
-        a,
-        b,
-        maxA,
-        maxB,
-        fee,
-        range,
-        specified,
-        options: form,
-        initialized: pool.data?.state.sqrtRatio !== 0n,
-        revision,
-        state: pool.data!.state,
-      });
-      if (id !== request.current) return;
-      if (next.adjusted) {
-        if (specified === 0)
-          setMaxB(formatUnits(next.max1, next.tokens[1].decimals));
-        else setMaxA(formatUnits(next.max0, next.tokens[0].decimals));
-      }
-      setQuote({ ...next, key });
-    } catch (e) {
-      if (id === request.current) setFailure({ key, error: errorMessage(e) });
-    } finally {
-      if (id === request.current) setPendingKey(undefined);
-    }
-  }
-  const refreshPreview = useEffectEvent(() => {
-    if (pool.data && (specified === 0 ? maxA : maxB)) void preview();
-  });
-  const invalidatePreview = useEffectEvent(() => {
-    request.current++;
-  });
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      refreshPreview();
-    }, 450);
-    return () => {
-      clearTimeout(timer);
-      invalidatePreview();
-    };
-  }, [key, pool.data]);
   async function create() {
-    if (!current) throw new Error("Enter a deposit amount.");
+    if (!current || !ready)
+      throw new Error("Wait for balances and allowances to load.");
     if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
       throw new Error("Slippage must be between 0 and 1000 basis points.");
     const limits = {
@@ -343,7 +259,6 @@ function CreatePositionForm({
             </Field>
           </div>
           <ErrorText error={previewError} />
-          {previewBusy ? <p role="status">Updating deposit preview…</p> : null}
           {current ? (
             <div className="panel">
               <h3>Deposit preview</h3>
@@ -355,11 +270,8 @@ function CreatePositionForm({
                     i === 0 ? current.used0 : current.used1,
                     t.decimals,
                   )}{" "}
-                  / Balance:{" "}
-                  <span title={formatUnits(t.balance, t.decimals)}>
-                    {displayAmount(t.balance, t.decimals)}
-                  </span>{" "}
-                  {t.balance < (i === 0 ? current.max0 : current.max1) ? (
+                  {ready &&
+                  t.balance < (i === 0 ? current.max0 : current.max1) ? (
                     <strong>Insufficient {t.symbol} balance</strong>
                   ) : null}
                   {current.inactive[i] ? (
@@ -371,19 +283,22 @@ function CreatePositionForm({
               ))}
               <p>Liquidity: {current.liquidity.toString()}</p>
               <div className="row">
-                {current.tokens.map((t, i) => (
-                  <ApprovalButton
-                    key={t.address}
-                    token={t}
-                    amount={formatUnits(
-                      i === 0 ? current.max0 : current.max1,
-                      t.decimals,
-                    )}
-                  />
-                ))}
+                {(ready && batchSupported === false ? current.tokens : []).map(
+                  (t, i) => (
+                    <ApprovalButton
+                      key={t.address}
+                      token={t}
+                      amount={formatUnits(
+                        i === 0 ? current.max0 : current.max1,
+                        t.decimals,
+                      )}
+                    />
+                  ),
+                )}
                 <Action
                   disabled={
-                    previewBusy ||
+                    batchSupported === undefined ||
+                    !ready ||
                     current.liquidity === 0n ||
                     current.tokens.some(
                       (t, i) =>
@@ -406,16 +321,6 @@ function CreatePositionForm({
   );
 }
 
-function scopedError(
-  failure: { key: string; error: string } | undefined,
-  key: string,
-) {
-  return failure?.key === key ? failure.error : "";
-}
-
-function currentQuote(quote: Quote | undefined, key: string) {
-  return quote?.key === key ? quote : undefined;
-}
 function PoolLoadStatus({
   pool,
 }: {

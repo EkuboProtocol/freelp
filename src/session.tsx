@@ -1,3 +1,4 @@
+import { errorMessage } from "./errors";
 import { ensureNativeCurrency } from "./tokens";
 import {
   createContext,
@@ -136,6 +137,9 @@ function useSessionState() {
           ));
       setStatus(`Confirmed: ${receipt.transactionHash}`);
       return receipt;
+    } catch (error) {
+      setStatus(errorMessage(error));
+      throw error;
     } finally {
       setRevision((n) => n + 1);
       transactionLock.current = false;

@@ -1,10 +1,10 @@
-FreeLP 0.1.3 improves network settings, liquidity selection, and deposits:
+FreeLP 0.1.4 improves position management:
 
-- Remove the translation framework and simplify the README.
-- Publish tested releases through GitHub CI.
-- Enable mainnets from viem's chain catalog, with optional RPC overrides.
-- Explore both token amounts in the liquidity chart with hover, zoom, and range selection.
-- Calculate matching deposit amounts locally using the Ekubo SDK.
-- Batch approvals and deposits with supported wallets; withdraw and claim fees through multicalls.
+- Only mark enabled networks unavailable after confirming their contracts are deployed.
+- Calculate matching deposit amounts immediately with the Ekubo SDK, sharing cached balance and allowance reads with the token picker.
+- Use 25%, 50%, and 100% balance shortcuts.
+- Show persistent notifications as dismissible toasts.
+- Stack both token amounts in each liquidity-chart bucket.
+- Query wallet batching support for the selected chain and hide separate approvals when approve-plus-deposit batching is available.
 
 Run `bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest`.

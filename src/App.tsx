@@ -97,9 +97,18 @@ export function App() {
         <AccountControl />
       </header>
       {session.status ? (
-        <p role="status" className="status">
-          {session.status}
-        </p>
+        <div className="notification-toast" aria-label="Notification">
+          <p role="status" className="status">
+            {session.status}
+          </p>
+          <button
+            type="button"
+            aria-label="Dismiss notification"
+            onClick={() => session.setStatus("")}
+          >
+            ×
+          </button>
+        </div>
       ) : null}
       <div id="main-content" tabIndex={-1}>
         <Suspense fallback={<p role="status">Loading…</p>}>

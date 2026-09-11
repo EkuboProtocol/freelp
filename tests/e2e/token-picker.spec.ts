@@ -106,5 +106,17 @@ test("picker batches balances only on the selected network, caches reads, and su
   await expect(page.locator(".balance-actions").first()).toContainText(
     "12.5 ETH",
   );
+  for (const [percent, amount] of [
+    [25, "3.125"],
+    [50, "6.25"],
+    [100, "12.5"],
+  ] as const) {
+    await page
+      .locator(".balance-actions")
+      .first()
+      .getByRole("button", { name: `${percent}%`, exact: true })
+      .click();
+    await expect(page.getByTestId("deposit-amount-0")).toHaveValue(amount);
+  }
   expect([...calls.values()]).toEqual([1]);
 });

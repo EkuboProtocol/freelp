@@ -37,7 +37,7 @@ export function LiquidityChart({
     Number(formatUnits(b.amounts[0], decimals0)) * priceNow,
     Number(formatUnits(b.amounts[1], decimals1)),
   ]);
-  const max = Math.max(...values.flat(), Number.MIN_VALUE);
+  const max = Math.max(...values.map(([a, b]) => a + b), Number.MIN_VALUE);
   const x = (tick: number) =>
     Math.max(
       0,
@@ -112,15 +112,16 @@ export function LiquidityChart({
             {bucket.amounts.map((amount, side) => (
               <rect
                 key={side}
-                x={
-                  x(bucket.lower) +
-                  ((x(bucket.upper) - x(bucket.lower)) * side) / 2
+                x={x(bucket.lower)}
+                y={
+                  210 -
+                  (values[i]
+                    .slice(0, side + 1)
+                    .reduce((sum, value) => sum + value, 0) /
+                    max) *
+                    190
                 }
-                y={210 - (values[i][side] / max) * 190}
-                width={Math.max(
-                  0.5,
-                  (x(bucket.upper) - x(bucket.lower)) / 2 - 1,
-                )}
+                width={Math.max(0.5, x(bucket.upper) - x(bucket.lower) - 1)}
                 height={(values[i][side] / max) * 190}
                 fill={side === 0 ? "#111" : "#999"}
               >

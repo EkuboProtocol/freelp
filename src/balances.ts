@@ -5,10 +5,16 @@ import { rpc } from "./rpc";
 import type { Settings } from "./types";
 const cache = new Map<
   string,
-  { expires: number; value: Promise<Map<string, bigint>> }
+  {
+    expires: number;
+    value: Promise<{
+      balances: Map<string, bigint>;
+      allowances: Map<string, bigint>;
+    }>;
+  }
 >();
 // The official interface uses this same sparse balance query. No token API or per-token requests.
-export function tokenBalances(
+export function tokenSnapshot(
   settings: Settings,
   owner: Address,
   tokens: Address[],
@@ -18,6 +24,7 @@ export function tokenBalances(
   const key = JSON.stringify([
     settings.chainId,
     settings.rpcUrl,
+    settings.manager,
     (settings.freeLPDataFetcher ?? DEFAULT_POSITION_DATA_FETCHER).toLowerCase(),
     owner.toLowerCase(),
     tokens.map((address) => address.toLowerCase()),
@@ -39,14 +46,33 @@ async function readBalances(
   owner: Address,
   tokens: Address[],
 ) {
-  const [balances] = (await rpc(settings).readContract({
+  const [balances, allowances] = (await rpc(settings).readContract({
     address: settings.freeLPDataFetcher ?? DEFAULT_POSITION_DATA_FETCHER,
     abi: tokenFetcher.abi,
     functionName: "getNonzeroBalancesAndAllowances",
-    args: [owner, tokens, []],
-  })) as [{ token: Address; amount: bigint }[], unknown[]];
+    args: [owner, tokens, [settings.manager]],
+  })) as [
+    { token: Address; amount: bigint }[],
+    { token: Address; amount: bigint }[],
+  ];
   const result = new Map(tokens.map((address) => [address.toLowerCase(), 0n]));
   for (const balance of balances)
     result.set(balance.token.toLowerCase(), balance.amount);
-  return result;
+  return {
+    balances: result,
+    allowances: new Map(
+      allowances.map((entry) => [entry.token.toLowerCase(), entry.amount]),
+    ),
+  };
+}
+
+export async function tokenBalances(
+  settings: Settings,
+  owner: Address,
+  tokens: Address[],
+  revision: number,
+  refresh: number,
+) {
+  return (await tokenSnapshot(settings, owner, tokens, revision, refresh))
+    .balances;
 }

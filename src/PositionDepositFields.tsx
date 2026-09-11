@@ -9,11 +9,13 @@ export function PositionDepositFields({
   tokens,
   deposit,
   add,
+  batchSupported,
 }: {
   position: Position;
   tokens?: [Token, Token];
   deposit: ReturnType<typeof usePositionDeposit>;
   add: () => Promise<void>;
+  batchSupported: boolean | undefined;
 }) {
   const addresses = [
     position.descriptor.poolKey.token0,
@@ -57,20 +59,22 @@ export function PositionDepositFields({
         pool price.
       </p>
       <ErrorText error={deposit.error ?? ""} />
-      {deposit.pending ? (
-        <p role="status">Calculating matching amount…</p>
-      ) : null}
       <p className="row">
-        {tokens?.map((token, i) => (
-          <ApprovalButton
-            key={token.address}
-            token={token}
-            amount={deposit.amounts[i] || "0"}
-          />
-        ))}
+        {batchSupported === false &&
+          tokens?.map((token, i) => (
+            <ApprovalButton
+              key={token.address}
+              token={token}
+              amount={deposit.amounts[i] || "0"}
+            />
+          ))}
         <Action
           run={add}
-          disabled={!deposit.result || deposit.result.liquidity === 0n}
+          disabled={
+            batchSupported === undefined ||
+            !deposit.result ||
+            deposit.result.liquidity === 0n
+          }
         >
           Add liquidity
         </Action>

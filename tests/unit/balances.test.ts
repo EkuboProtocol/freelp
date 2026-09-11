@@ -17,7 +17,7 @@ test("picker balances use one sparse contract query, share in-flight reads, and 
         data: body.params[0].data,
       });
       expect(decoded.functionName).toBe("getNonzeroBalancesAndAllowances");
-      expect(decoded.args?.[2]).toEqual([]);
+      expect(decoded.args?.[2]).toEqual([zeroAddress]);
       return Response.json({
         jsonrpc: "2.0",
         id: body.id,

@@ -1,7 +1,7 @@
 import { errorMessage } from "./errors";
 import { displayAmount } from "./displayAmount";
 import { useEffect, useState } from "react";
-import { formatUnits, getAddress, isAddress, zeroAddress } from "viem";
+import { formatUnits, getAddress, isAddress } from "viem";
 import { token, type Token } from "./contracts";
 import { networkCurrencies, type Currency } from "./tokens";
 import { useSession } from "./session";
@@ -126,34 +126,28 @@ function BalanceActions({
   value: Pick<Token, "address" | "symbol" | "decimals" | "balance">;
   onAmount: Props["onAmount"];
 }) {
-  const percent = value.address === zeroAddress ? 95 : 100;
   return (
     <div className="balance-actions">
       <small title={formatUnits(value.balance, value.decimals)}>
         Balance: {displayAmount(value.balance, value.decimals)} {value.symbol}
       </small>
       <div className="row">
-        <button
-          type="button"
-          onClick={() =>
-            onAmount(formatUnits(value.balance / 2n, value.decimals))
-          }
-        >
-          Half
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            onAmount(
-              formatUnits(
-                (value.balance * BigInt(percent)) / 100n,
-                value.decimals,
-              ),
-            )
-          }
-        >
-          {percent === 100 ? "Max" : "Use 95%"}
-        </button>
+        {[25, 50, 100].map((percent) => (
+          <button
+            key={percent}
+            type="button"
+            onClick={() =>
+              onAmount(
+                formatUnits(
+                  (value.balance * BigInt(percent)) / 100n,
+                  value.decimals,
+                ),
+              )
+            }
+          >
+            {percent}%
+          </button>
+        ))}
       </div>
     </div>
   );

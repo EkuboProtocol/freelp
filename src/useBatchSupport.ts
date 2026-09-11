@@ -20,10 +20,9 @@ export function useBatchSupport() {
       active = false;
     };
   }, [provider, account, settings]);
-  return (
-    result?.provider === provider &&
+  return result?.provider === provider &&
     result?.account === account &&
-    result?.chain === settings.chainId &&
-    result.supported
-  );
+    result?.chain === settings.chainId
+    ? result.supported
+    : undefined;
 }

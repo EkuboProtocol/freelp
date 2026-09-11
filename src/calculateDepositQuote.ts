@@ -1,14 +1,13 @@
 import { floatSqrtRatioToFixed, toSqrtRatio } from "@ekubo/sdk";
-import fetcherArtifact from "../artifacts/FreeLPDataFetcher.json" with { type: "json" };
-import { quoteFetcher } from "./poolData";
 import { networkCurrencies } from "./tokens";
-import { getAddress, zeroAddress } from "viem";
-import { rpc } from "./rpc";
+import { getAddress } from "viem";
 import { poolConfig, poolRange, type PoolOptions } from "./poolOptions";
 import { parseAmount } from "./amounts";
 import { type RangeInput } from "./prices";
 import { quoteDeposit } from "./depositQuote";
 import type { Address } from "viem";
+import type { Token } from "./contracts";
+import type { Currency } from "./tokens";
 import type { Settings } from "./types";
 type Input = {
   settings: Settings;
@@ -22,57 +21,10 @@ type Input = {
   specified: 0 | 1;
   options: PoolOptions;
   initialized: boolean;
-  revision: number;
+  tokens?: [import("./contracts").Token, import("./contracts").Token];
   state: import("./quoteData").QuoteDataFetcherResult;
 };
-async function loadTokens(input: Input) {
-  const metadata = networkCurrencies(input.settings);
-  const tokens = [input.a, input.b].map((address) => {
-    const currency = metadata.find(
-      (entry) => entry.address.toLowerCase() === address.toLowerCase(),
-    );
-    if (!currency)
-      throw new Error(
-        "Import this token's on-chain metadata before creating a position.",
-      );
-    return currency;
-  });
-  const [balances, allowances] = input.account
-    ? ((await rpc(input.settings).readContract({
-        address: quoteFetcher(input.settings),
-        abi: fetcherArtifact.abi,
-        functionName: "getNonzeroBalancesAndAllowances",
-        args: [
-          input.account,
-          tokens.map((token) => token.address),
-          [input.settings.manager],
-        ],
-      })) as [
-        { token: Address; amount: bigint }[],
-        { token: Address; spender: Address; amount: bigint }[],
-      ])
-    : [[], []];
-  const result = tokens.map((currency) => ({
-    ...currency,
-    balance:
-      balances.find(
-        (entry) => entry.token.toLowerCase() === currency.address.toLowerCase(),
-      )?.amount ?? 0n,
-    allowance:
-      currency.address === zeroAddress
-        ? (1n << 256n) - 1n
-        : (allowances.find(
-            (entry) =>
-              entry.token.toLowerCase() === currency.address.toLowerCase(),
-          )?.amount ?? 0n),
-    metadataMissing: false,
-  }));
-  return [result[0], result[1]] as [
-    import("./contracts").Token,
-    import("./contracts").Token,
-  ];
-}
-export async function loadDepositQuote(input: Input) {
+export function calculateDepositQuote(input: Input) {
   const { settings, range } = input;
   const addresses = [getAddress(input.a), getAddress(input.b)];
   if (BigInt(addresses[0]) >= BigInt(addresses[1]))
@@ -99,7 +51,7 @@ export async function loadDepositQuote(input: Input) {
   );
   if (amounts[input.specified] === 0n)
     throw new Error("Enter an amount greater than zero.");
-  // Reject incomplete amounts, pool keys and ranges before making any RPC request.
+  // Validate the pool key and range before calculating with the SDK.
   poolRange(
     range,
     metadata[0].decimals,
@@ -107,7 +59,10 @@ export async function loadDepositQuote(input: Input) {
     input.initialized,
     input.options,
   );
-  const tokens = await snapshot(input);
+  const tokens = input.tokens ?? [
+    emptyToken(metadata[0]),
+    emptyToken(metadata[1]),
+  ];
   const sqrtRatio =
     input.state.sqrtRatio === 0n
       ? 0n
@@ -141,26 +96,6 @@ export async function loadDepositQuote(input: Input) {
   };
 }
 
-const snapshots = new Map<string, { value: ReturnType<typeof loadTokens> }>();
-function snapshot(input: Input) {
-  const key = JSON.stringify([
-    input.settings,
-    input.account,
-    input.revision,
-    input.a,
-    input.b,
-  ]);
-  const existing = snapshots.get(key);
-  if (existing) return existing.value;
-  const value = loadTokens(input);
-  snapshots.set(key, { value });
-  if (snapshots.size > 16) snapshots.delete(snapshots.keys().next().value!);
-  void value.catch(() => {
-    if (snapshots.get(key)?.value === value) snapshots.delete(key);
-  });
-  return value;
-}
-
 function assertNeededToken(
   side: 0 | 1,
   tick: number,
@@ -171,4 +106,8 @@ function assertNeededToken(
     throw new Error(
       "This token is not needed for the selected range. Enter an amount for the other token.",
     );
+}
+
+function emptyToken(currency: Currency): Token {
+  return { ...currency, balance: 0n, allowance: 0n, metadataMissing: false };
 }

@@ -1,6 +1,5 @@
-import { errorMessage } from "./errors";
 import { useEffect, useState } from "react";
-import { positions } from "./contracts";
+import { loadPortfolio } from "./portfolio";
 import { useSession } from "./session";
 import type { Position, Settings } from "./types";
 type Row = {
@@ -21,14 +20,8 @@ export function usePortfolio(refresh: number) {
     let active = true;
     if (!account) return;
     for (const settings of networks) {
-      void positions(settings, account)
-        .then((items) => ({ settings, items, scope }))
-        .catch((error) => ({
-          settings,
-          items: [],
-          error: errorMessage(error),
-          scope,
-        }))
+      void loadPortfolio(settings, account)
+        .then((result) => ({ settings, ...result, scope }))
         .then((row) => {
           if (active)
             setLoaded((previous) => ({
