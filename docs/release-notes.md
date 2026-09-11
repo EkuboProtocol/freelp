@@ -1,12 +1,9 @@
-FreeLP 0.1.8 simplifies navigation and position management.
+FreeLP 0.1.9 removes the on-chain deposit-quote endpoint and the blanket reentrancy guard.
 
-- Ship every page and transaction flow in one JavaScript bundle, reducing IPFS requests.
-- Rename Settings to Networks and show the full network catalog with consistent spacing and borders.
-- Center wallet connection and position creation in the portfolio empty state; remove position counts and per-network loading messages.
-- Show current pool price beside minimum and maximum prices, with a marker on the range.
-- Use liquidity and fee summaries with separate Add liquidity and Withdraw dialogs.
-- Remove transfer and burn actions. The updated manager automatically burns the NFT and clears its storage when the remaining liquidity is withdrawn.
+Deposit previews and matching token amounts are calculated locally with the Ekubo SDK. Regression tests compare those calculations against simulated deposits rather than a contract quote function. The contract retains the settlement math and limits needed to execute deposits safely.
 
-This release uses new fixed FreeLP and FreeLPDataFetcher addresses, available through the Deploy page. It does not include earlier deployments.
+Withdrawals finalize liquidity, burn empty NFTs and clear storage before Core transfers tokens. Refund callbacks can transfer NFTs or create another position; deposit checks reject extension callbacks that would leave liquidity without an NFT.
+
+The updated FreeLP and FreeLPDataFetcher addresses can be deployed from the Deploy page. Earlier deployments are not included.
 
 Run `bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest`.

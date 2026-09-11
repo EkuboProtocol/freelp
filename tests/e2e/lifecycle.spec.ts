@@ -139,7 +139,7 @@ for (const { missingDecimals, native, batch } of [
         ? (BigInt(value) * 10n ** 18n).toString()
         : value.toString();
     const core = "0x00000000000014aA86C5d3c41765bb24e11bd701";
-    const manager = "0xF45a36e4FFbeaEBdCE8cc574f52039aeC6b468A1";
+    const manager = "0xc5cF4536449Bfb49459369fa627d278997B1dA1D";
     const tokens = [
       native ? zeroAddress : await deploy(tokenArtifact, [account.address]),
       await deploy(tokenArtifact, [account.address]),
@@ -366,7 +366,7 @@ for (const { missingDecimals, native, batch } of [
       page.getByRole("button", { name: "Deploy FreeLP", exact: true }),
     ).toHaveCount(0);
     expect(deploymentAddress("FreeLP", deployedCore as Hex)).toBe(
-      "0xF45a36e4FFbeaEBdCE8cc574f52039aeC6b468A1",
+      "0xc5cF4536449Bfb49459369fa627d278997B1dA1D",
     );
     await expect(
       prepareDeployment(
@@ -384,7 +384,7 @@ for (const { missingDecimals, native, batch } of [
     await expect(
       page.getByRole("button", { name: "Refresh status" }),
     ).toHaveCount(0);
-    await checkSdkParity();
+    await checkSdkParity(tokens);
     const deployedManager = await page.evaluate(
       () => JSON.parse(localStorage.getItem("freelp:settings")!).manager as Hex,
     );
