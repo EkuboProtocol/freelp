@@ -1,6 +1,6 @@
 # FreeLP development
 
-Keep this repository, build artifacts, previews, and IPFS content private until launch readiness. Only the separate EVM contracts PR may be public. Never advertise private content to public IPFS peers or transparency logs.
+Keep the source repository and npm package private until launch readiness. The user authorized public IPFS previews of every successful CI build. Publish only that build’s site CAR; never bring a historical private IPFS blockstore online. The separate EVM contracts PR may be public.
 
 Edit in a dedicated worktree; keep the default checkout clean. New Solidity belongs in EkuboProtocol/evm-contracts. Import pinned compiled artifacts with `scripts/import-contracts.ts` and record their source commit in `artifacts/source.json`.
 
@@ -14,4 +14,4 @@ Run lint, typecheck, unit tests, production build, accessibility checks, and Lig
 
 Never bypass the shared terms/transaction gate. Preserve package integrity through the trusted package registry; do not fetch executable application updates at runtime. Preserve reproducible build inputs and per-commit IPFS deployment records.
 
-Tagged public releases pin on the dedicated DigitalOcean node before the separate IPNS job advances its pointer. Keep FREELP_PUBLIC_RELEASE=false and do not pin private app CARs on that online node before launch.
+Every successful branch/tag build pins on the dedicated DigitalOcean node and attaches its gateway URL to the commit status and Actions summary. Keep FREELP_PUBLIC_RELEASE=false until stable IPNS publication is authorized separately.

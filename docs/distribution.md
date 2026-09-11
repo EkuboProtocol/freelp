@@ -10,7 +10,7 @@ The allocated stable name is `ipns://k51qzi5uqu5dhvrw6m3hzjr4c4hgohescj5ge8krqug
 
 ## Release jobs
 
-`deploy.yml` checks every main commit and version tag, builds the npm package and CAR, runs accessibility/Lighthouse and browser tests, and retains artifacts in GitHub releases. Public IPFS seeding is restricted to tags and requires both a public repository and `FREELP_PUBLIC_RELEASE=true`.
+`deploy.yml` checks every pushed branch commit and version tag, builds the npm package and CAR, runs accessibility/Lighthouse and browser tests, and retains artifacts in private GitHub releases. After verification, it uploads that build’s CAR to the persistent node and confirms its pin. The Actions summary and the commit’s **IPFS preview** status contain a direct subdomain gateway link. Public build previews are explicitly authorized even while the source repository remains private. PRs from forks do not run this publishing workflow.
 
 `ipns.yml` is separate and serialized. It runs after a successful tagged build, manually, or every 12 hours to renew the latest stable record. It checks repository privacy, stable release status, tag/commit correspondence, CID shape, and latest-release selection. It sends the CAR to the persistent node and confirms the pin before signing a seven-day IPNS record with a five-minute cache TTL. Failed pinning leaves the current IPNS record untouched. Timestamp-based sequence numbers prevent resetting the sequence on a fresh runner. The previous record remains valid during a job failure; scheduled publication must continue for long-term IPNS resolution.
 
@@ -31,8 +31,8 @@ The app itself still uses only wallet/RPC connections. The Droplet provides IPFS
 
 ## Recovery and launch
 
-Before launch, keep the repository private and `FREELP_PUBLIC_RELEASE=false`. Do not pin private app CARs onto the online node. Public connectivity was verified with a harmless text fixture: the restricted CI SSH command retained its CAR, and an independent Kubo client retrieved it over the public IPFS network. No private application blocks were uploaded. The service remained active without restarts under its memory cap.
+Before launch, keep the repository private and `FREELP_PUBLIC_RELEASE=false`. Only publish the current authorized build CAR; never expose a historical private blockstore. Public connectivity was verified with a harmless text fixture: the restricted CI SSH command retained its CAR, and an independent Kubo client retrieved it over the public IPFS network. Subsequently, the user authorized public app previews and per-build CI publication. The service remained active without restarts under its memory cap.
 
 Recover the server-admin key from the Agent vault to administer this one Droplet. Reinstall the pinned Kubo binary, dedicated user/service, and restricted receiver from `deploy/`. Reimport authorized public release CARs to restore content. Keep the existing IPNS signing key to preserve the stable address.
 
-Public launch still requires an explicit readiness decision, npm publisher setup/publication, public repository status, and enabling the release switch. The workflows and secrets are provisioned; this revision does not publish the package or private app content.
+Public launch still requires an explicit readiness decision, npm publisher setup/publication, public repository status, and enabling the release switch. The workflows and secrets are provisioned; npm remains unpublished; immutable app previews are public.

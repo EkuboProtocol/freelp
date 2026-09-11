@@ -2,7 +2,7 @@
 
 EVM liquidity position management using only RPC endpoints and an injected wallet. No swaps, TWAMM orders, indexer, hosted metadata, API keys, analytics, or application fee. Position records and NFT metadata are on-chain. Network gas still applies.
 
-**Private development:** do not publish this repository, npm package, or IPFS content before launch readiness. Solidity changes live separately in EkuboProtocol/evm-contracts.
+**Private source:** keep this repository and npm package private until launch readiness. Successful CI builds have user-authorized public IPFS previews. Solidity changes live separately in EkuboProtocol/evm-contracts.
 
 ## Run the packaged app
 
@@ -28,7 +28,9 @@ Use Bun 1.4.0. Run `bun run dev`, `bun run lint`, `bun run check-ts`, `bun run t
 
 CI builds and packages each main commit and version tag. `bun scripts/package-release.ts SOURCE_COMMIT` produces the static site's CAR, manifest, and `deployment.json` with its CID and source commit. CI tests both an isolated IPFS gateway and the npm tarball, then retains artifacts in a private GitHub release. No npm publication occurs.
 
-While private, content is imported only into an isolated offline Kubo node. After public launch, tagged builds seed the site’s CAR on IPFS. A separate IPNS job confirms a durable pin on the allocated DigitalOcean node before updating the stable name, and renews that record every 12 hours. Retain `site.car` on user-operated nodes for continuing availability; a CID verifies content but does not guarantee permanent storage. Restore a public deployment with `ipfs dag import site.car`. Before launch, use only an isolated offline repository and never advertise its content to peers.
+Each successful branch or version-tag build is pinned on the persistent DigitalOcean IPFS node. Find its gateway URL in the commit’s **IPFS preview** status or the Actions job summary. The source repository and npm releases remain private. Never bring a historical private IPFS blockstore online; CI publishes only the current build’s CAR.
+
+Stable IPNS updates remain a separate, launch-gated job. A CID identifies immutable content; IPNS identifies the selected stable release. Restore an authorized public deployment with `ipfs dag import site.car`.
 
 ## Licensing
 

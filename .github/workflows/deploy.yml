@@ -1,7 +1,7 @@
 name: Verify and deploy to IPFS
 on:
   push:
-    branches: [main]
+    branches: ['**']
     tags: ['v*']
 permissions:
   contents: read
@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      statuses: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -59,11 +60,16 @@ jobs:
           fi
           site_cid=$(bun -e 'console.log((await Bun.file("release/deployment.json").json()).siteCid)')
           bun scripts/check-gateway.ts "$site_cid"
-      - name: Seed public IPFS deployment from CI
-        if: "!github.event.repository.private && vars.FREELP_PUBLIC_RELEASE == 'true' && startsWith(github.ref, 'refs/tags/v')"
+      - name: Pin build on the persistent IPFS node
         env:
-          FREELP_PUBLIC_RELEASE: "true"
-        run: bash scripts/seed-release.sh
+          FREELP_PIN_HOST: ${{ vars.FREELP_PIN_HOST }}
+          FREELP_PIN_SSH_KEY: ${{ secrets.FREELP_PIN_SSH_KEY }}
+          FREELP_PIN_HOST_KEY: ${{ secrets.FREELP_PIN_HOST_KEY }}
+        run: bash scripts/retain-release.sh release
+      - name: Link the IPFS preview to this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bun scripts/link-build.ts
       - name: Retain deployment artifacts privately before launch
         env:
           GH_TOKEN: ${{ github.token }}
