@@ -4,7 +4,7 @@
 
 After npm publication, recommend `bunx @ekubo/freelp` or `npx @ekubo/freelp`. Both serve the application bundled in the installed package and open a browser. The launcher requires Node 22+ for either command; npx users do not need Bun. Pin a version with `@ekubo/freelp@0.1.1`. To pass options explicitly with npx: `npx -- @ekubo/freelp --no-browser --port 4173`.
 
-Each stable release includes `deployment.json`, `site.car`, the npm tarball, and audit reports. The immutable alternative is `ipfs://<siteCid>`, or `http://127.0.0.1:8080/ipfs/<siteCid>/` through a local Kubo gateway. A public subdomain gateway URL is `https://<siteCid>.ipfs.dweb.link/`.
+Each stable release includes `deployment.json`, `site.car`, the npm tarball, and audit reports. The immutable alternative is `ipfs://<siteCid>`, or `http://127.0.0.1:8080/ipfs/<siteCid>/` through a local Kubo gateway. The public preview uses `https://ipfs.filebase.io/ipfs/<siteCid>/`, which serves the site directly without a service-worker loading page.
 
 The allocated stable name is `ipns://k51qzi5uqu5dhvrw6m3hzjr4c4hgohescj5ge8krqugbmgr44avgh35s2gachm`. Gateway form: `https://k51qzi5uqu5dhvrw6m3hzjr4c4hgohescj5ge8krqugbmgr44avgh35s2gachm.ipns.dweb.link/`. This name is reserved but does not expose the private app before launch. IPNS is a mutable publisher-controlled pointer; a versioned npm package or immutable CID keeps a chosen release.
 

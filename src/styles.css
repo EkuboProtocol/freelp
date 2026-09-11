@@ -530,24 +530,24 @@ input[type="range"], input[type="checkbox"] { accent-color: #111; }
 .network-errors { margin: 1rem 0; overflow-wrap: anywhere; }
 
 /* Token picker: compact identity rows with a stable balance column. */
-.currency-dialog { width: min(540px, calc(100vw - 24px)); padding: 22px; max-height: 90dvh; }
+.currency-dialog { width: min(540px, calc(100vw - 24px)); padding: 16px; max-height: 90dvh; }
 .currency-dialog h2 { margin: 0; font-size: 22px; }
-.currency-dialog .row.spread { margin-bottom: 14px; }
+.currency-dialog .row.spread { margin-bottom: 10px; }
 .deposit-input .currency-dialog label { padding: 0; margin-top: 12px; }
 .deposit-input .currency-dialog input { font-size: 16px; border: 1px solid #bbb; border-radius: 10px; padding: 12px 14px; }
-.currency-dialog .token-list { display: block; max-height: 48dvh; margin: 8px -10px 0; padding: 0 6px; scrollbar-gutter: stable; }
-.token-list h3 { font-size: 12px; font-weight: 600; color: #555; padding: 12px 10px 4px; margin: 0; }
-.currency-dialog .token-option { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; width: 100%; border-radius: 10px; padding: 10px; gap: 12px; background: white; }
+.currency-dialog .token-list { display: block; max-height: 60dvh; margin: 0 -8px; padding: 0 6px; scrollbar-gutter: stable; }
+.token-list h3 { font-size: 12px; font-weight: 600; color: #555; padding: 6px 8px 2px; margin: 0; }
+.currency-dialog .token-option { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; width: 100%; border-radius: 10px; padding: 6px 8px; gap: 10px; background: white; min-height: 54px; }
 .currency-dialog .token-option:hover, .currency-dialog .token-option:focus-visible { background: #f0f0f0; }
 .token-option .currency-mark { width: 36px; height: 36px; font-size: 13px; font-weight: 600; }
 .token-identity { min-width: 0; }
 .token-identity strong { font-size: 16px; }
 .token-identity small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #555; }
-.token-network { display: inline-block; font-size: 11px; color: #555; margin-top: 3px; }
+.token-network { display: inline-block; font-size: 12px; color: #555; margin-top: 0; display: block; }
 .token-row-balance { min-width: 64px; max-width: 120px; text-align: right; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
 .token-row-balance strong { font-size: 14px; font-weight: 500; }
 .token-row-balance small, .token-address { color: #666; font-size: 11px; }
-.currency-dialog .token-balance-status { margin: 12px 0 0; gap: 8px; }
+.currency-dialog .token-balance-status { margin: 4px 0 0; gap: 8px; justify-content: flex-end; }
 .token-balance-status button { font-size: 12px; padding: 6px 8px; }
 .balance-error, .token-empty { font-size: 13px; color: #555; }
 .tick-spacing-control { margin: 14px 0; padding: 14px 0; border-top: 1px solid #ddd; }
@@ -557,7 +557,10 @@ input[type="range"], input[type="checkbox"] { accent-color: #111; }
 .spacing-presets { margin: 12px 0; }
 .spacing-presets button[aria-pressed="true"] { background: #111; color: white; }
 @media (max-width: 480px) {
-  .currency-dialog { padding: 18px; border-radius: 18px; }
+  .currency-dialog { padding: 14px; border-radius: 18px; }
   .currency-dialog .token-option { gap: 9px; }
   .token-row-balance { max-width: 92px; }
 }
+
+.deposit-input > input { width: calc(100% - 40px); margin: 0 20px 16px; padding: 0; }
+.deposit-input > .balance-actions { margin: 0 20px 16px; }

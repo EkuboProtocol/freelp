@@ -1,5 +1,8 @@
 import { test, expect } from "bun:test";
-import { concentratedConfig } from "../../src/pools";
+import { poolConfig } from "../../src/poolOptions";
+import { defaultCreateForm } from "../../src/createForm";
+const concentratedConfig = (fee: string, spacing: number) =>
+  poolConfig(fee, spacing, defaultCreateForm(1));
 
 test("pool input cannot overflow spacing into fee bits or round fee precision silently", () => {
   const config = BigInt(concentratedConfig("0.3", 100));
@@ -9,6 +12,8 @@ test("pool input cannot overflow spacing into fee bits or round fee precision si
   );
   expect(() => concentratedConfig("0.3", 2 ** 32 + 100)).toThrow("spacing");
   expect(() => concentratedConfig("0.3", 1.5)).toThrow("spacing");
-  expect(() => concentratedConfig("0.3000001", 100)).toThrow("decimal places");
+  expect(() => concentratedConfig("0.3000000000000000000001", 100)).toThrow(
+    "decimal places",
+  );
   expect(() => concentratedConfig("100", 100)).toThrow("below 100%");
 });

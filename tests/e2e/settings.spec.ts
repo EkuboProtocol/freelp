@@ -96,7 +96,7 @@ test("network RPC settings remain independent and bundled currencies follow the 
   await page.getByRole("button", { name: "Select second token" }).click();
   await page
     .getByRole("dialog")
-    .getByRole("button", { name: /ETH Ether/ })
+    .getByRole("button", { name: /ETH.*Base/ })
     .click();
   await expect(page.getByLabel("Token 0 address")).toHaveValue(
     "0x0000000000000000000000000000000000000000",
@@ -177,7 +177,7 @@ test("all supported networks are selectable and custom networks persist without 
     page.getByLabel("Network configuration").locator("option:checked"),
   ).toHaveText("My local network");
   await expect(page.getByLabel("Position manager address")).toHaveValue(
-    "0x775A601a3aF4Ccb4a79FF01FAFB455F0Af8fdaC0",
+    "0x573af249A268ed80c358dA77986D2e637978A611",
   );
 });
 
@@ -187,7 +187,7 @@ test("old testnet presets are retired while custom RPC settings survive", async 
   await page.addInitScript(() => {
     const contracts = {
       core: "0x00000000000014aA86C5d3c41765bb24e11bd701",
-      manager: "0x775A601a3aF4Ccb4a79FF01FAFB455F0Af8fdaC0",
+      manager: "0x573af249A268ed80c358dA77986D2e637978A611",
       quoteDataFetcher: "0x5a3F0F1dA4Ac0c4b937d5685f330704c8e8303f1",
       coreDataFetcher: "0xF68F25CA6C817733b7B15a42191AE72A34d56a2B",
       tokenDataFetcher: "0x305Cf9A34dCb265522780D1D64544d3f7C450407",

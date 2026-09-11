@@ -6,16 +6,18 @@ import { erc20Abi, getAddress, isAddress, zeroAddress } from "viem";
 import { Trans } from "@lingui/react/macro";
 import { useSession, rpc } from "./session";
 import { fetchPools, POOL_PRESETS } from "./poolData";
-import { concentratedConfig } from "./pools";
+import { poolConfig, stableBounds, type PoolOptions } from "./poolOptions";
 import { currencies } from "./tokens";
 import { LiquidityChart } from "./LiquidityChart";
-import { ErrorText } from "./common";
+import { Field, ErrorText } from "./common";
 type PoolStates = Awaited<ReturnType<typeof fetchPools>>;
 type Loaded = { key: string; states: PoolStates; decimals: [number, number] };
 export function PoolPicker({
   token0,
   token1,
   fee,
+  options,
+  onFeeChange,
   spacing,
   onSelect,
   range,
@@ -24,6 +26,8 @@ export function PoolPicker({
   token0: string;
   token1: string;
   fee: string;
+  options: PoolOptions;
+  onFeeChange: (fee: string, exactFee: string) => void;
   spacing: number;
   range: RangeInput;
   onRangeChange: (range: RangeInput) => void;
@@ -41,12 +45,18 @@ export function PoolPicker({
   const [loaded, setLoaded] = useState<Loaded>();
   const [pending, setPending] = useState<string>();
   const [failure, setFailure] = useState<{ key: string; error: string }>();
-  const presets = POOL_PRESETS.some(
-    (preset) => preset.fee === fee && preset.spacing === spacing,
-  )
-    ? POOL_PRESETS
-    : [...POOL_PRESETS, { fee, spacing }];
-  const key = JSON.stringify([settings, token0, token1, presets]);
+  const presets = poolPresets(fee, spacing, options);
+  const key = JSON.stringify([
+    settings,
+    token0,
+    token1,
+    presets,
+    options.kind,
+    options.extension,
+    options.exactFee,
+    options.amplification,
+    options.center,
+  ]);
   const data = loaded?.key === key ? loaded : undefined;
   const busy = pending === key;
   const error = scopedPoolError(failure, key);
@@ -92,7 +102,7 @@ export function PoolPicker({
       const keys = presets.map((preset) => ({
         token0: getAddress(token0),
         token1: getAddress(token1),
-        config: concentratedConfig(preset.fee, preset.spacing),
+        config: poolConfig(preset.fee, preset.spacing, options),
       }));
       const [states, d0, d1] = await Promise.all([
         fetchPools(settings, keys),
@@ -139,33 +149,21 @@ export function PoolPicker({
           {busy ? " …" : ""}
         </button>
       </div>
-      <div className="pool-options">
-        {presets.map((preset, index) => (
-          <button
-            key={`${preset.fee}:${preset.spacing}`}
-            className={selected === index ? "selected" : ""}
-            onClick={() => select(index)}
-          >
-            <strong>{preset.fee}%</strong>
-            <small>
-              {data?.states[index].sqrtRatio ? (
-                <Trans>Existing pool</Trans>
-              ) : (
-                <Trans>Fee tier</Trans>
-              )}
-            </small>
-            <small>
-              <Trans>Tick spacing</Trans>{" "}
-              {decimalDisplay(spacingPercent(preset.spacing), 3)}%
-            </small>
-          </button>
-        ))}
-      </div>
+      <FeeOptions
+        onFeeChange={onFeeChange}
+        presets={presets}
+        options={options}
+        fee={fee}
+        selected={selected}
+        data={data}
+        select={select}
+      />
       {data && selected >= 0 ? (
         <PoolChart
+          options={options}
           data={data}
           selected={selected}
-          spacing={spacing}
+          spacing={options.kind === "stable" ? 1 : spacing}
           range={range}
           onRangeChange={onRangeChange}
         />
@@ -175,6 +173,7 @@ export function PoolPicker({
   );
 }
 function PoolChart({
+  options,
   data,
   selected,
   spacing,
@@ -182,30 +181,48 @@ function PoolChart({
   onRangeChange,
 }: {
   range: RangeInput;
+  options: PoolOptions;
   onRangeChange: (range: RangeInput) => void;
   data: Loaded;
   selected: number;
   spacing: number;
 }) {
-  const state = data.states[selected];
+  const original = data.states[selected];
+  const state = chartState(original, options);
+  const chartSpacing =
+    options.kind === "stable"
+      ? Math.max(
+          1,
+          Math.ceil(
+            (stableBounds(options).upper - stableBounds(options).lower) / 100,
+          ),
+        )
+      : spacing;
   return state.sqrtRatio !== 0n ? (
     <LiquidityChart
       data={state}
       decimals0={data.decimals[0]}
       decimals1={data.decimals[1]}
-      spacing={spacing}
-      selection={chartSelection(range, data.decimals)}
-      onSelectRange={(lower, upper) =>
-        onRangeChange({
-          ...range,
-          raw: false,
-          full: false,
-          prices: [
-            decimalInput(tickPrice(lower, ...data.decimals)),
-            decimalInput(tickPrice(upper, ...data.decimals)),
-            range.prices[2],
-          ],
-        })
+      spacing={chartSpacing}
+      selection={
+        options.kind === "stable"
+          ? stableBounds(options)
+          : chartSelection(range, data.decimals)
+      }
+      onSelectRange={
+        options.kind === "stable"
+          ? undefined
+          : (lower, upper) =>
+              onRangeChange({
+                ...range,
+                raw: false,
+                full: false,
+                prices: [
+                  decimalInput(tickPrice(lower, ...data.decimals)),
+                  decimalInput(tickPrice(upper, ...data.decimals)),
+                  range.prices[2],
+                ],
+              })
       }
     />
   ) : (
@@ -231,4 +248,94 @@ function scopedPoolError(
   key: string,
 ) {
   return failure?.key === key ? failure.error : "";
+}
+
+function poolPresets(fee: string, spacing: number, options: PoolOptions) {
+  if (options.kind === "stable" || options.exactFee !== "")
+    return [{ fee, spacing }];
+  return POOL_PRESETS.some((p) => p.fee === fee && p.spacing === spacing)
+    ? POOL_PRESETS
+    : [...POOL_PRESETS, { fee, spacing }];
+}
+function FeeOptions({
+  onFeeChange,
+  presets,
+  options,
+  fee,
+  selected,
+  data,
+  select,
+}: {
+  onFeeChange: (fee: string, exactFee: string) => void;
+  presets: { fee: string; spacing: number }[];
+  options: PoolOptions;
+  fee: string;
+  selected: number;
+  data?: Loaded;
+  select: (index: number) => void;
+}) {
+  return (
+    <details className="pool-edit">
+      <summary>
+        <Trans>Edit fee</Trans> · {feeDisplay(fee, options)}%
+      </summary>
+      <Field label={<Trans>Pool fee (%)</Trans>}>
+        <input
+          inputMode="decimal"
+          value={fee}
+          disabled={options.exactFee !== ""}
+          onChange={(e) => onFeeChange(e.target.value, "")}
+        />
+      </Field>
+      <Field label={<Trans>Exact fee (uint64, optional)</Trans>}>
+        <input
+          inputMode="numeric"
+          value={options.exactFee}
+          onChange={(e) => onFeeChange(fee, e.target.value)}
+        />
+      </Field>
+      <div className="pool-options">
+        {presets.map((preset, index) => (
+          <button
+            key={`${preset.fee}:${preset.spacing}`}
+            className={selected === index ? "selected" : ""}
+            onClick={() => select(index)}
+          >
+            <strong>{feeDisplay(preset.fee, options)}%</strong>
+            <small>
+              {data?.states[index].sqrtRatio ? (
+                <Trans>Existing pool</Trans>
+              ) : (
+                <Trans>Fee tier</Trans>
+              )}
+            </small>
+            {options.kind === "concentrated" ? (
+              <small>
+                <Trans>Tick spacing</Trans>{" "}
+                {decimalDisplay(spacingPercent(preset.spacing), 3)}%
+              </small>
+            ) : (
+              <small>
+                <Trans>Stableswap</Trans>
+              </small>
+            )}
+          </button>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+function feeDisplay(fee: string, options: PoolOptions) {
+  return options.exactFee === ""
+    ? fee
+    : decimalDisplay((Number(options.exactFee) / 2 ** 64) * 100);
+}
+function chartState(state: PoolStates[number], options: PoolOptions) {
+  if (options.kind !== "stable") return state;
+  const { lower, upper } = stableBounds(options);
+  return {
+    ...state,
+    liquidity: state.tick < lower || state.tick >= upper ? 0n : state.liquidity,
+  };
 }

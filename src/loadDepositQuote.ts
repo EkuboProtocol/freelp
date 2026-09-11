@@ -2,9 +2,9 @@ import { t } from "@lingui/core/macro";
 import { getAddress, zeroAddress } from "viem";
 import { token, read } from "./contracts";
 import { rpc } from "./rpc";
-import { concentratedConfig } from "./pools";
+import { poolConfig, poolRange, type PoolOptions } from "./poolOptions";
 import { parseAmount } from "./amounts";
-import { rangeTicks, type RangeInput } from "./prices";
+import { type RangeInput } from "./prices";
 import { quoteDeposit } from "./depositQuote";
 import type { Address } from "viem";
 import type { Settings } from "./types";
@@ -19,8 +19,8 @@ type Input = {
   fallbackB: string;
   fee: string;
   range: RangeInput;
-  linked: boolean;
   specified: 0 | 1;
+  options: PoolOptions;
 };
 async function loadTokens(input: Input) {
   const owner = input.account ?? zeroAddress;
@@ -48,7 +48,7 @@ export async function loadDepositQuote(input: Input) {
   const poolKey = {
     token0: addresses[0],
     token1: addresses[1],
-    config: concentratedConfig(input.fee, range.spacing),
+    config: poolConfig(input.fee, range.spacing, input.options),
   };
   const client = rpc(settings);
   const [block, code] = await Promise.all([
@@ -65,11 +65,12 @@ export async function loadDepositQuote(input: Input) {
   ]);
   const max0 = parseAmount(input.maxA || "0", tokens[0].decimals);
   const max1 = parseAmount(input.maxB || "0", tokens[1].decimals);
-  const { lower, upper, initial } = rangeTicks(
+  const { lower, upper, initial } = poolRange(
     range,
     tokens[0].decimals,
     tokens[1].decimals,
     sqrtRatio !== 0n,
+    input.options,
   );
   const descriptor = { poolKey, tickLower: lower, tickUpper: upper };
   const currentTick = sqrtRatio === 0n ? initial : tick;
@@ -80,7 +81,7 @@ export async function loadDepositQuote(input: Input) {
     [max0, max1],
     block,
     currentTick,
-    input.linked ? input.specified : undefined,
+    input.specified,
   );
   return {
     descriptor,

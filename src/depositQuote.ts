@@ -9,7 +9,7 @@ export async function quoteDeposit(
   amounts: [bigint, bigint],
   block: bigint,
   currentTick: number,
-  linkedSide?: 0 | 1,
+  specified: 0 | 1,
 ) {
   const quote = (limits: [bigint, bigint]) =>
     read<Amounts>(
@@ -19,16 +19,14 @@ export async function quoteDeposit(
       block,
     );
   let [max0, max1] = amounts;
-  if (linkedSide !== undefined) {
-    if (currentTick <= descriptor.tickLower) max1 = 0n;
-    else if (currentTick >= descriptor.tickUpper) max0 = 0n;
-    else {
-      const [, used0, used1] = await quote(
-        linkedSide === 0 ? [max0, MAX_AMOUNT] : [MAX_AMOUNT, max1],
-      );
-      if (linkedSide === 0) max1 = used1;
-      else max0 = used0;
-    }
+  if (currentTick <= descriptor.tickLower) max1 = 0n;
+  else if (currentTick >= descriptor.tickUpper) max0 = 0n;
+  else {
+    const [, used0, used1] = await quote(
+      specified === 0 ? [max0, MAX_AMOUNT] : [MAX_AMOUNT, max1],
+    );
+    if (specified === 0) max1 = used1;
+    else max0 = used0;
   }
   const [liquidity, used0, used1] = await quote([max0, max1]);
   return { max0, max1, liquidity, used0, used1 };

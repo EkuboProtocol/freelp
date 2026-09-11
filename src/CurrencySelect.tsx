@@ -9,7 +9,7 @@ import { t } from "@lingui/core/macro";
 import { erc20Abi, getAddress, isAddress } from "viem";
 import { currencies, importCurrency, type Currency } from "./tokens";
 import { useSession, rpc } from "./session";
-import { Field, ErrorText } from "./common";
+import { ErrorText } from "./common";
 
 export function CurrencySelect({
   value,
@@ -98,9 +98,7 @@ export function CurrencySelect({
         </span>
         <span>
           {selected?.symbol ?? <Trans>Select token</Trans>}{" "}
-          <small>
-            {selected?.name} {selectedNetworkLabel(selected, settings)}
-          </small>
+          <small>{selectedNetworkLabel(selected, settings)}</small>
         </span>
         <span aria-hidden="true">⌄</span>
       </button>
@@ -122,19 +120,19 @@ export function CurrencySelect({
             ×
           </button>
         </div>
-        <Field label={<Trans>Search tokens or paste an address</Trans>}>
-          <input
-            ref={searchInput}
-            name="token-search"
-            spellCheck={false}
-            autoComplete="off"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setCandidate(undefined);
-            }}
-          />
-        </Field>
+        <input
+          aria-label={t`Search tokens or paste an address`}
+          placeholder={t`Search tokens or paste an address`}
+          ref={searchInput}
+          name="token-search"
+          spellCheck={false}
+          autoComplete="off"
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setCandidate(undefined);
+          }}
+        />
         <PickerBalanceStatus
           connected={!!account}
           balances={balances}

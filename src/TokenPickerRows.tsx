@@ -46,8 +46,7 @@ export function TokenPickerRows({
                     {token.symbol.slice(0, 2)}
                   </span>
                   <span className="token-identity">
-                    <strong>{token.symbol}</strong>
-                    <small>{token.name}</small>
+                    <strong title={token.name}>{token.symbol}</strong>
                     <span className="token-network">
                       {networkName(network.chainId, network.name)}
                     </span>
@@ -103,12 +102,9 @@ function TokenRowBalance({
   return (
     <span
       className="token-row-balance"
-      title={formatUnits(balance, token.decimals)}
+      title={t`Balance: ${formatUnits(balance, token.decimals)}`}
     >
       <strong>{displayAmount(balance, token.decimals)}</strong>
-      <small>
-        <Trans>Balance</Trans>
-      </small>
     </span>
   );
 }
@@ -126,11 +122,12 @@ export function PickerBalanceStatus({
   return (
     <>
       <div className="row spread token-balance-status">
-        <small>
-          <Trans>Wallet balances</Trans>
-        </small>
-        <button type="button" onClick={refresh}>
-          <Trans>Refresh balances</Trans>
+        <button
+          type="button"
+          aria-label={t`Refresh balances`}
+          onClick={refresh}
+        >
+          <Trans>Refresh</Trans>
         </button>
       </div>
       {[...balances.values()].some((state) => state.error) ? (

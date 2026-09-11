@@ -1,3 +1,4 @@
+import { PoolKeyFields } from "./PoolKeyFields";
 import { decimalInput } from "./decimalFormat";
 import { displayAmount } from "./displayAmount";
 import { TokenBalance } from "./TokenBalance";
@@ -13,7 +14,10 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { loadDepositQuote } from "./loadDepositQuote";
 import { Trans } from "@lingui/react/macro";
 import { formatUnits, isAddress, zeroAddress } from "viem";
-import { useSession } from "./session";
+import { useCreateForm, formField } from "./useCreateForm";
+import type { CreateForm } from "./createForm";
+import type { Dispatch, SetStateAction } from "react";
+import { NetworkScope, useSession } from "./session";
 import { managerData, type Token } from "./contracts";
 import { Action, Field, ErrorText } from "./common";
 import type { Descriptor } from "./types";
@@ -31,28 +35,49 @@ type Quote = {
   inactive: boolean[];
 };
 export function CreatePage() {
+  const { settings, networks } = useSession();
+  const [form, setForm] = useCreateForm(settings.chainId);
+  const network = networks.find((n) => n.chainId === form.chain);
+  if (!network)
+    return (
+      <p role="alert">
+        <Trans>
+          Configure this network in Settings before using this link.
+        </Trans>
+      </p>
+    );
+  return (
+    <NetworkScope settings={network}>
+      <CreatePositionForm form={form} setForm={setForm} />
+    </NetworkScope>
+  );
+}
+function CreatePositionForm({
+  form,
+  setForm,
+}: {
+  form: CreateForm;
+  setForm: Dispatch<SetStateAction<CreateForm>>;
+}) {
   const { settings, account, send, revision, selectNetwork } = useSession();
-  const [a, setA] = useState("");
-  const [b, setB] = useState("");
-  const [maxA, setMaxA] = useState("");
-  const [maxB, setMaxB] = useState("");
-  const [linked, setLinked] = useState(true);
-  const [specified, setSpecified] = useState<0 | 1>(0);
+  const [a, setA] = formField(form, setForm, "a");
+  const [b, setB] = formField(form, setForm, "b");
+  const [maxA, setMaxA] = formField(form, setForm, "maxA");
+  const [maxB, setMaxB] = formField(form, setForm, "maxB");
+  const [specified, setSpecified] = formField(form, setForm, "specified");
+  const [fee, setFee] = formField(form, setForm, "fee");
+  const [range, setRange] = formField(form, setForm, "range");
+  const [slippage, setSlippage] = formField(form, setForm, "slippage");
+  const [fallbackA, setFallbackA] = formField(form, setForm, "fallbackA");
+  const [fallbackB, setFallbackB] = formField(form, setForm, "fallbackB");
   const [failure, setFailure] = useState<{ key: string; error: string }>();
   const [pendingKey, setPendingKey] = useState<string>();
   const request = useRef(0);
-  const [fee, setFee] = useState("0.3");
-  const [range, setRange] = useState({
-    ...DEFAULT_RANGE,
-    prices: ["", "", ""] as [string, string, string],
-  });
-  const [slippage, setSlippage] = useState(50);
   const [quote, setQuote] = useState<Quote>();
-  const [fallbackA, setFallbackA] = useState("");
-  const [fallbackB, setFallbackB] = useState("");
   function chooseCurrency(side: 0 | 1, token: Currency, chainId: number) {
     if (chainId !== settings.chainId) {
       selectNetwork(chainId);
+      setForm((previous) => ({ ...previous, chain: chainId }));
       setSpecified(0);
       setA(token.address);
       setB("");
@@ -98,8 +123,12 @@ export function CreatePage() {
     range,
     fallbackA,
     fallbackB,
-    linked,
     specified,
+    form.kind,
+    form.extension,
+    form.exactFee,
+    form.amplification,
+    form.center,
   ]);
   const current = quote?.key === key ? quote : undefined;
   const previewBusy = pendingKey === key;
@@ -126,11 +155,11 @@ export function CreatePage() {
         fallbackB,
         fee,
         range,
-        linked,
         specified,
+        options: form,
       });
       if (id !== request.current) return;
-      if (linked && next.adjusted) {
+      if (next.adjusted) {
         setMaxA(formatUnits(next.max0, next.tokens[0].decimals));
         setMaxB(formatUnits(next.max1, next.tokens[1].decimals));
         return;
@@ -197,19 +226,18 @@ export function CreatePage() {
             allNetworks
             onChange={(token, chainId) => chooseCurrency(0, token, chainId)}
           />
-          <Field label={<Trans>{symbols[0]} amount</Trans>}>
-            <input
-              inputMode="decimal"
-              placeholder="0"
-              disabled={inactiveInput(current, linked, 0)}
-              data-testid="deposit-amount-0"
-              value={maxA}
-              onChange={(e) => {
-                setSpecified(0);
-                setMaxA(e.target.value);
-              }}
-            />
-          </Field>
+          <input
+            aria-label={t`${symbols[0]} amount`}
+            inputMode="decimal"
+            placeholder="0"
+            disabled={!!current?.inactive[0]}
+            data-testid="deposit-amount-0"
+            value={maxA}
+            onChange={(e) => {
+              setSpecified(0);
+              setMaxA(e.target.value);
+            }}
+          />
           <TokenBalance
             address={a}
             fallback={fallbackA}
@@ -225,19 +253,18 @@ export function CreatePage() {
             label={t`Select second token`}
             onChange={(token, chainId) => chooseCurrency(1, token, chainId)}
           />
-          <Field label={<Trans>{symbols[1]} amount</Trans>}>
-            <input
-              inputMode="decimal"
-              placeholder="0"
-              disabled={inactiveInput(current, linked, 1)}
-              data-testid="deposit-amount-1"
-              value={maxB}
-              onChange={(e) => {
-                setSpecified(1);
-                setMaxB(e.target.value);
-              }}
-            />
-          </Field>
+          <input
+            aria-label={t`${symbols[1]} amount`}
+            inputMode="decimal"
+            placeholder="0"
+            disabled={!!current?.inactive[1]}
+            data-testid="deposit-amount-1"
+            value={maxB}
+            onChange={(e) => {
+              setSpecified(1);
+              setMaxB(e.target.value);
+            }}
+          />
           <TokenBalance
             address={b}
             fallback={fallbackB}
@@ -248,14 +275,6 @@ export function CreatePage() {
           />
         </div>
       </div>
-      <label className="row">
-        <input
-          type="checkbox"
-          checked={linked}
-          onChange={(e) => setLinked(e.target.checked)}
-        />
-        <Trans>Calculate the matching token amount</Trans>
-      </label>
       <details className="advanced-settings">
         <summary>
           <Trans>Advanced pool settings</Trans>
@@ -267,9 +286,7 @@ export function CreatePage() {
           <Field label={<Trans>Token 1 address</Trans>}>
             <input value={b} onChange={(e) => setB(e.target.value)} />
           </Field>
-          <Field label={<Trans>Pool fee (%)</Trans>}>
-            <input value={fee} onChange={(e) => setFee(e.target.value)} />
-          </Field>
+          <PoolKeyFields form={form} setForm={setForm} />
           <Field label={<Trans>Slippage (basis points)</Trans>}>
             <input
               type="number"
@@ -288,6 +305,10 @@ export function CreatePage() {
         token0={a}
         token1={b}
         fee={fee}
+        options={form}
+        onFeeChange={(fee, exactFee) =>
+          setForm((previous) => ({ ...previous, fee, exactFee }))
+        }
         spacing={range.spacing}
         onSelect={(selectedFee, spacing, price) => {
           setFee(selectedFee);
@@ -304,7 +325,12 @@ export function CreatePage() {
           });
         }}
       />
-      <RangeFields range={range} setRange={setRange} symbols={symbols} />
+      <RangeFields
+        range={range}
+        setRange={setRange}
+        symbols={symbols}
+        stable={form.kind === "stable"}
+      />
       <details>
         <summary>
           <Trans>Token metadata fallback</Trans>
@@ -421,14 +447,6 @@ export function CreatePage() {
       ) : null}
     </section>
   );
-}
-
-function inactiveInput(
-  quote: Quote | undefined,
-  linked: boolean,
-  side: number,
-) {
-  return linked && !!quote?.inactive[side];
 }
 
 function scopedError(

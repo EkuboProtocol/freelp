@@ -97,7 +97,7 @@ function BuildPage() {
 }
 function Page({ route }: { route: string }) {
   const { account, settings } = useSession();
-  switch (route) {
+  switch (route.split("?")[0]) {
     case "#/settings":
       return <SettingsPage key={settings.chainId} />;
     case "#/terms":
@@ -178,7 +178,10 @@ export function App() {
         </p>
       ) : null}
       <div id="main-content" tabIndex={-1}>
-        <Page key={route.split("/")[1] || "positions"} route={route} />
+        <Page
+          key={route.split("?")[0].split("/")[1] || "positions"}
+          route={route}
+        />
       </div>
       <footer className="row">
         <a href="#/terms">

@@ -11,8 +11,8 @@ if (
   throw new Error(
     "Deployment does not match this workflow's commit and repository.",
   );
-const gateway = `https://${siteCid}.ipfs.dweb.link/`;
-const summary = `## FreeLP build preview\n\n[Open this build](${gateway})\n\n- Commit: \`${commit}\`\n- IPFS CID: \`${siteCid}\`\n- [Alternative gateway](https://ipfs.io/ipfs/${siteCid}/)\n\nPinned on the persistent FreeLP IPFS node. This URL always identifies this build.\n`;
+const gateway = `https://ipfs.filebase.io/ipfs/${siteCid}/`;
+const summary = `## FreeLP build preview\n\n[Open this build](${gateway})\n\n- Commit: \`${commit}\`\n- IPFS CID: \`${siteCid}\`\n- [IPFS URI](ipfs://${siteCid})\n\nPinned on the persistent FreeLP IPFS node. This URL always identifies this build.\n`;
 await appendFile(process.env.GITHUB_STEP_SUMMARY!, summary);
 const status = Bun.spawn(
   [

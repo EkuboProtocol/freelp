@@ -68,6 +68,10 @@ msgstr "All networks. Positions, pool data, and fees are read together from each
 msgid "Already deployed · code verified"
 msgstr "Already deployed · code verified"
 
+#: src/PoolKeyFields.tsx
+msgid "Amplification exponent"
+msgstr "Amplification exponent"
+
 #. placeholder {0}: next.spacing
 #: src/TickSpacingControl.tsx
 msgid "Applies {0} ticks:"
@@ -82,10 +86,6 @@ msgstr "Apply tick spacing"
 msgid "Approve {0}"
 msgstr "Approve {0}"
 
-#: src/TokenPickerRows.tsx
-msgid "Balance"
-msgstr "Balance"
-
 #: src/TokenBalance.tsx
 #: src/TokenPickerRows.tsx
 msgid "Balance unavailable"
@@ -95,6 +95,11 @@ msgstr "Balance unavailable"
 #: src/TokenBalance.tsx
 msgid "Balance:"
 msgstr "Balance:"
+
+#. placeholder {0}: formatUnits(balance, token.decimals)
+#: src/TokenPickerRows.tsx
+msgid "Balance: {0}"
+msgstr "Balance: {0}"
 
 #: src/App.tsx
 msgid "Before any transaction, read and accept the <0>Terms of Service</0>. Use at your own risk."
@@ -108,13 +113,13 @@ msgstr "Build details"
 msgid "Burn empty NFT"
 msgstr "Burn empty NFT"
 
-#: src/CreatePage.tsx
-msgid "Calculate the matching token amount"
-msgstr "Calculate the matching token amount"
-
 #: src/SettingsPage.tsx
 msgid "Canonical deployment"
 msgstr "Canonical deployment"
+
+#: src/PoolKeyFields.tsx
+msgid "Center tick (multiple of 16)"
+msgstr "Center tick (multiple of 16)"
 
 #: src/SettingsPage.tsx
 msgid "Chain ID"
@@ -148,6 +153,10 @@ msgstr "Close token selector"
 msgid "Collect fees"
 msgstr "Collect fees"
 
+#: src/PoolKeyFields.tsx
+msgid "Concentrated liquidity"
+msgstr "Concentrated liquidity"
+
 #: src/SettingsPage.tsx
 msgid "Configuration file"
 msgstr "Configuration file"
@@ -155,6 +164,10 @@ msgstr "Configuration file"
 #: src/SettingsPage.tsx
 msgid "Configuration JSON"
 msgstr "Configuration JSON"
+
+#: src/CreatePage.tsx
+msgid "Configure this network in Settings before using this link."
+msgstr "Configure this network in Settings before using this link."
 
 #. placeholder {0}: receipt.transactionHash
 #: src/session.tsx
@@ -275,6 +288,10 @@ msgstr "Deposit preview"
 msgid "Deterministic deployment details"
 msgstr "Deterministic deployment details"
 
+#: src/PoolPicker.tsx
+msgid "Edit fee"
+msgstr "Edit fee"
+
 #: src/TickSpacingControl.tsx
 msgid "Enter a positive spacing that rounds to 1–698605 integer ticks."
 msgstr "Enter a positive spacing that rounds to 1–698605 integer ticks."
@@ -286,6 +303,10 @@ msgstr "Enter exact ticks"
 #: src/common.tsx
 msgid "Error: {error}"
 msgstr "Error: {error}"
+
+#: src/PoolPicker.tsx
+msgid "Exact fee (uint64, optional)"
+msgstr "Exact fee (uint64, optional)"
 
 #: src/PricePreview.tsx
 msgid "Exact ticks"
@@ -306,6 +327,10 @@ msgstr "Explore liquidity by price"
 #: src/SettingsPage.tsx
 msgid "Export settings"
 msgstr "Export settings"
+
+#: src/PoolKeyFields.tsx
+msgid "Extension address"
+msgstr "Extension address"
 
 #: src/PoolPicker.tsx
 msgid "Fee tier"
@@ -488,7 +513,7 @@ msgstr "per"
 msgid "Pool details"
 msgstr "Pool details"
 
-#: src/CreatePage.tsx
+#: src/PoolPicker.tsx
 msgid "Pool fee (%)"
 msgstr "Pool fee (%)"
 
@@ -499,6 +524,10 @@ msgstr "Pool liquidity by price"
 #: src/PricePreview.tsx
 msgid "Pool state is unavailable."
 msgstr "Pool state is unavailable."
+
+#: src/PoolKeyFields.tsx
+msgid "Pool type"
+msgstr "Pool type"
 
 #. placeholder {0}: p.id.toString()
 #: src/PositionDetail.tsx
@@ -586,6 +615,10 @@ msgstr "Reading {pending} networks…"
 #: src/PositionDetail.tsx
 msgid "Recipient address"
 msgstr "Recipient address"
+
+#: src/TokenPickerRows.tsx
+msgid "Refresh"
+msgstr "Refresh"
 
 #: src/TokenPickerRows.tsx
 msgid "Refresh balances"
@@ -696,6 +729,15 @@ msgstr "Some balances could not be loaded. Refresh or check your RPC settings."
 #: src/TickSpacingControl.tsx
 msgid "Spacing is the price change between adjacent usable ticks. It is independent of the pool fee."
 msgstr "Spacing is the price change between adjacent usable ticks. It is independent of the pool fee."
+
+#: src/PoolKeyFields.tsx
+#: src/PoolPicker.tsx
+msgid "Stableswap"
+msgstr "Stableswap"
+
+#: src/RangeFields.tsx
+msgid "Stableswap positions use the full active range defined by amplification and center tick."
+msgstr "Stableswap positions use the full active range defined by amplification and center tick."
 
 #: src/App.tsx
 msgid "Terms"
@@ -851,10 +893,6 @@ msgstr "Using manually supplied decimals: {0}"
 #: src/SettingsPage.tsx
 msgid "Verify contracts"
 msgstr "Verify contracts"
-
-#: src/TokenPickerRows.tsx
-msgid "Wallet balances"
-msgstr "Wallet balances"
 
 #: src/session.tsx
 msgid "Wallet changed. Connect again to review the active account."

@@ -283,7 +283,7 @@ for (const { missingDecimals, native } of [
       page.getByRole("button", { name: "Deploy FreeLP", exact: true }),
     ).toBeDisabled();
     expect(deploymentAddress("FreeLP", deployedCore as Hex)).toBe(
-      "0x775A601a3aF4Ccb4a79FF01FAFB455F0Af8fdaC0",
+      "0x573af249A268ed80c358dA77986D2e637978A611",
     );
     await expect(
       prepareDeployment(
@@ -325,7 +325,9 @@ for (const { missingDecimals, native } of [
         paired,
       );
     }
-    await page.getByLabel("Calculate the matching token amount").uncheck();
+    await expect(
+      page.getByLabel("Calculate the matching token amount"),
+    ).toHaveCount(0);
     await page.getByTestId("deposit-amount-0").fill(amount(1));
     await page.getByTestId("deposit-amount-1").fill(amount(1));
     await page.getByRole("button", { name: "Preview position" }).click();
@@ -469,6 +471,13 @@ for (const { missingDecimals, native } of [
     await expect(
       page.getByText("No positions found on the available networks."),
     ).toBeVisible();
+    await checkStableCreation(
+      page,
+      deployedManager,
+      tokens,
+      missingDecimals,
+      native,
+    );
     expect(unexpected).toEqual([]);
     expect(await client.getBalance({ address: deployedManager })).toBe(0n);
   });
@@ -510,7 +519,9 @@ async function checkPoolChart(
   await expect(
     page.getByRole("img", { name: "Pool liquidity by price" }),
   ).toBeVisible({ timeout: 30000 });
+  await page.locator(".pool-edit summary").click();
   await expect(page.getByText("Existing pool", { exact: true })).toBeVisible();
+  await page.locator(".pool-edit summary").click();
   const heights = await page
     .locator(".liquidity-chart rect")
     .evaluateAll((nodes) =>
@@ -602,5 +613,79 @@ async function checkCustomSpacing(
   await control.getByRole("button", { name: "0.6%", exact: true }).click();
   await expect(
     page.getByRole("img", { name: "Pool liquidity by price" }),
+  ).toBeVisible();
+}
+
+async function checkStableCreation(
+  page: Page,
+  manager: Hex,
+  tokens: Hex[],
+  missingDecimals: boolean,
+  native: boolean,
+) {
+  if (missingDecimals || native) return;
+  for (const address of tokens) {
+    const hash = await wallet.writeContract({
+      address,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [manager, 2n * 10n ** 18n],
+    });
+    await client.waitForTransactionReceipt({ hash });
+  }
+  await page.getByRole("link", { name: "Create", exact: true }).click();
+  await page.getByText("Advanced pool settings", { exact: true }).click();
+  await page.getByLabel("Token 0 address").fill(tokens[0]);
+  await page.getByLabel("Token 1 address").fill(tokens[1]);
+  await page.getByLabel("Pool type", { exact: true }).selectOption("stable");
+  await page.locator(".pool-edit summary").click();
+  await page.getByLabel("Exact fee (uint64, optional)").fill("123456789");
+  await page.locator(".pool-edit summary").click();
+  await page.getByLabel("Amplification exponent").fill("10");
+  await page.getByLabel("Center tick (multiple of 16)").fill("16");
+  await page.getByLabel("Initial price (new pools only)").fill("1");
+  await page.getByTestId("deposit-amount-0").fill("1");
+  await expect(
+    page.getByRole("button", { name: "Create position", exact: true }),
+  ).toBeEnabled();
+  const stableHash = new URL(page.url()).hash;
+  await page
+    .getByRole("button", { name: "Create position", exact: true })
+    .click();
+  await page.getByRole("button", { name: "#2", exact: true }).click();
+  const descriptor = (await client.readContract({
+    address: manager,
+    abi: managerArtifact.abi as Abi,
+    functionName: "descriptor",
+    args: [2n],
+  })) as { poolKey: { config: Hex }; tickLower: number; tickUpper: number };
+  expect(BigInt(descriptor.poolKey.config)).toBe(
+    (123456789n << 32n) | (10n << 24n) | 1n,
+  );
+  expect(descriptor.tickLower).toBe(-86627);
+  expect(descriptor.tickUpper).toBe(86659);
+  await page.evaluate((hash) => {
+    location.hash = hash;
+  }, stableHash);
+  await expect(
+    page.getByRole("img", { name: "Pool liquidity by price" }),
+  ).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.screenshot({
+    path: test.info().outputPath("stableswap-create.png"),
+    fullPage: true,
+  });
+  await page.getByRole("link", { name: "Positions", exact: true }).click();
+  await page.getByRole("button", { name: "#2", exact: true }).click();
+  await page.getByLabel("Withdraw percentage").fill("100");
+  await page
+    .getByRole("button", { name: "Withdraw liquidity and fees" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Burn empty NFT" }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "Burn empty NFT" }).click();
+  await expect(
+    page.getByText("No positions found on the available networks."),
   ).toBeVisible();
 }
