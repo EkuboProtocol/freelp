@@ -13,6 +13,7 @@ for (const name of [
   "QuoteDataFetcher",
   "CoreDataFetcher",
   "TokenDataFetcher",
+  "FreeLPDataFetcher",
 ]) {
   const input = JSON.parse(
     await readFile(

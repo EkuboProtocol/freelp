@@ -13,8 +13,8 @@ export function retiredDefault(settings: Settings) {
   return (
     RETIRED.get(settings.chainId) === settings.rpcUrl &&
     settings.nativeSymbol === "ETH" &&
-    Object.entries(DEFAULT_CONTRACTS).every(
-      ([key, value]) => settings[key as keyof Settings] === value,
-    )
+    Object.entries(DEFAULT_CONTRACTS)
+      .filter(([key]) => key !== "freeLPDataFetcher")
+      .every(([key, value]) => settings[key as keyof Settings] === value)
   );
 }

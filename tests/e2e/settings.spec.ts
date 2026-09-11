@@ -74,17 +74,21 @@ test("network RPC settings remain independent and bundled currencies follow the 
   await page
     .getByRole("button", { name: "Save settings", exact: true })
     .click();
-  await page.getByLabel("Active network").selectOption("42161");
+  await page.getByLabel("Network configuration").selectOption("42161");
   await expect(page.getByLabel("RPC URL")).toHaveValue(
     "https://arb1.arbitrum.io/rpc",
   );
-  await page.getByLabel("Active network").selectOption("8453");
+  await page.getByLabel("Network configuration").selectOption("8453");
   await page.reload();
   await expect(page.getByLabel("RPC URL")).toHaveValue(
     "http://127.0.0.1:18545/base",
   );
   await page.getByRole("link", { name: "Create", exact: true }).click();
   await page.getByRole("button", { name: "Select first token" }).click();
+  await page
+    .getByRole("dialog")
+    .getByLabel("Search tokens or paste an address")
+    .fill("Base");
   await page.getByRole("dialog").getByRole("button", { name: /USDC/ }).click();
   await expect(page.getByLabel("Token 0 address")).toHaveValue(
     "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
@@ -106,9 +110,11 @@ test("Robinhood defaults include USDG and tokenized assets without wrapping ETH"
   page,
 }) => {
   await page.goto("/#/create");
-  await page.getByLabel("Active network").selectOption("4663");
   await page.getByRole("button", { name: "Select first token" }).click();
   const dialog = page.getByRole("dialog");
+  await dialog
+    .getByLabel("Search tokens or paste an address")
+    .fill("Robinhood");
   await expect(dialog.getByRole("button", { name: /WETH/ })).toHaveCount(0);
   await dialog.getByLabel("Search tokens or paste an address").fill("NVDA");
   await expect(dialog.getByRole("button", { name: /NVDA/ })).toBeVisible();
@@ -135,15 +141,20 @@ test("all supported networks are selectable and custom networks persist without 
   await expect(
     page.getByRole("button", { name: "Set up positions", exact: true }),
   ).toHaveCount(0);
-  await expect(page.getByLabel("Active network").locator("option")).toHaveCount(
-    11,
-  );
-  await expect(page.getByLabel("Active network")).not.toContainText(
+  await expect(page.getByLabel("Active network")).toHaveCount(0);
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await expect(
+    page.getByLabel("Network configuration").locator("option"),
+  ).toHaveCount(11);
+  await expect(page.getByLabel("Network configuration")).not.toContainText(
     /Sepolia|Testnet/,
   );
-  await page.getByLabel("Active network").selectOption("56");
   await page.getByRole("link", { name: "Create", exact: true }).click();
   await page.getByRole("button", { name: "Select first token" }).click();
+  await page
+    .getByRole("dialog")
+    .getByLabel("Search tokens or paste an address")
+    .fill("BNB Smart Chain");
   await expect(
     page.getByRole("dialog").getByRole("button", { name: /BNB BNB/ }),
   ).toBeVisible();
@@ -163,7 +174,7 @@ test("all supported networks are selectable and custom networks persist without 
     .click();
   await page.reload();
   await expect(
-    page.getByLabel("Active network").locator("option:checked"),
+    page.getByLabel("Network configuration").locator("option:checked"),
   ).toHaveText("My local network");
   await expect(page.getByLabel("Position manager address")).toHaveValue(
     "0x775A601a3aF4Ccb4a79FF01FAFB455F0Af8fdaC0",
@@ -198,9 +209,11 @@ test("old testnet presets are retired while custom RPC settings survive", async 
     localStorage.setItem("freelp:settings", JSON.stringify(retired));
   });
   await page.goto("/#/settings");
-  await expect(page.getByLabel("Active network")).toHaveValue("1");
-  await expect(page.getByLabel("Active network")).not.toContainText("Sepolia");
-  await page.getByLabel("Active network").selectOption("31337");
+  await expect(page.getByLabel("Network configuration")).toHaveValue("1");
+  await expect(page.getByLabel("Network configuration")).not.toContainText(
+    "Sepolia",
+  );
+  await page.getByLabel("Network configuration").selectOption("31337");
   await expect(page.getByLabel("RPC URL")).toHaveValue(
     "http://127.0.0.1:18545",
   );

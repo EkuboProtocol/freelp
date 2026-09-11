@@ -518,3 +518,13 @@ input[type="range"], input[type="checkbox"] { accent-color: #111; }
 .balance-actions { margin-top: 0.75rem; }
 .balance-actions small { display: block; overflow-wrap: anywhere; }
 .balance-actions .row { margin-top: 0.5rem; }
+
+.portfolio-positions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.portfolio-position { margin: 0; min-width: 0; }
+.portfolio-position p { overflow-wrap: anywhere; }
+.network-errors { margin: 1rem 0; overflow-wrap: anywhere; }

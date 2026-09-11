@@ -1,7 +1,5 @@
-FreeLP now uses shared CREATE2 deployments with a fixed salt, code detection, and duplicate-deployment protection. All 11 currently supported EVM mainnets have bundled contract addresses; Settings includes an explicit Add network flow. Deploy remains a tab without home-page shortcuts.
+FreeLP now shows positions from all configured mainnets in one portfolio, with one aggregate `eth_call` per chain per refresh. Position snapshots include pool keys, ranges, principal, liquidity, accrued fees, current pool price, and on-chain NFT metadata. The global network selector and duplicate selected-chain query are removed. Token selection identifies the creation network; position actions carry their own network and request a wallet switch when needed. Network configuration remains in Settings and deployment targeting in Deploy.
 
-Position creation adds automatic pool discovery, linked amounts from on-chain quotes, automatic previews, balance shortcuts, range presets and graph controls, readable token labels, and explicit new-pool pricing. The app uses only configured RPCs and injected wallets.
+The stateless FreeLPDataFetcher is included as a fixed-salt deployment in the Deploy tab. It must be deployed once per chain, alongside the existing FreeLP manager. The manager address and bytecode are unchanged. Failed chains do not prevent other positions from loading; large portfolios remain subject to public RPC execution and response limits.
 
-Each verified build is pinned to the persistent IPFS node, with gateway links in the commit status and Actions summary. The source repository and npm package remain private. FreeLP managers require a one-time deployment per network; the Deploy tab shows current code status. Network gas applies.
-
-Replaces the earlier testnet defaults with the official interface’s current mainnet list. Bundled native symbols and curated token defaults cover the newly added chains, with no runtime token-list requests.
+Source and npm publication remain private. Each verified CI build is pinned to the persistent IPFS node and linked from its commit status and Actions summary.

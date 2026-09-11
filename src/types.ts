@@ -9,6 +9,7 @@ export type Settings = {
   quoteDataFetcher?: Address;
   coreDataFetcher?: Address;
   tokenDataFetcher?: Address;
+  freeLPDataFetcher?: Address;
 };
 export type Descriptor = {
   poolKey: { token0: Address; token1: Address; config: Hex };
@@ -27,6 +28,7 @@ export type Position = {
   descriptor: Descriptor;
   amounts: Amounts;
   metadata: string;
+  sqrtRatio: bigint;
 };
 export type Provider = {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>;

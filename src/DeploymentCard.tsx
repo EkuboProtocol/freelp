@@ -18,6 +18,7 @@ const FIELDS = {
   QuoteDataFetcher: "quoteDataFetcher",
   CoreDataFetcher: "coreDataFetcher",
   TokenDataFetcher: "tokenDataFetcher",
+  FreeLPDataFetcher: "freeLPDataFetcher",
 } as const;
 function configured(settings: Settings, kind: ContractKind) {
   const address = deploymentAddress(kind, settings.core);
@@ -29,6 +30,7 @@ function configured(settings: Settings, kind: ContractKind) {
     quoteDataFetcher: deploymentAddress("QuoteDataFetcher", address),
     coreDataFetcher: deploymentAddress("CoreDataFetcher", address),
     tokenDataFetcher: deploymentAddress("TokenDataFetcher", address),
+    freeLPDataFetcher: deploymentAddress("FreeLPDataFetcher", address),
   };
 }
 export function DeploymentCard({ kind }: { kind: ContractKind }) {
@@ -42,7 +44,8 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
   const scope = JSON.stringify([settings, kind, revision, refresh]);
   const address = deploymentAddress(kind, settings.core);
   const current = checked?.scope === scope ? checked : undefined;
-  const usesCore = kind !== "Core" && kind !== "TokenDataFetcher";
+  const usesCore =
+    !["Core", "TokenDataFetcher", "FreeLPDataFetcher"].includes(kind);
   useEffect(() => {
     let active = true;
     deploymentStatus(settings, kind)

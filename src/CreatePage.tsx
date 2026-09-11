@@ -30,7 +30,7 @@ type Quote = {
   inactive: boolean[];
 };
 export function CreatePage() {
-  const { settings, account, send, revision } = useSession();
+  const { settings, account, send, revision, selectNetwork } = useSession();
   const [a, setA] = useState("");
   const [b, setB] = useState("");
   const [maxA, setMaxA] = useState("");
@@ -49,7 +49,20 @@ export function CreatePage() {
   const [quote, setQuote] = useState<Quote>();
   const [fallbackA, setFallbackA] = useState("");
   const [fallbackB, setFallbackB] = useState("");
-  function chooseCurrency(side: 0 | 1, token: Currency) {
+  function chooseCurrency(side: 0 | 1, token: Currency, chainId: number) {
+    if (chainId !== settings.chainId) {
+      selectNetwork(chainId);
+      setSpecified(0);
+      setA(token.address);
+      setB("");
+      setMaxA("");
+      setMaxB("");
+      setQuote(undefined);
+      setFallbackA(String(token.decimals));
+      setFallbackB("");
+      setRange({ ...DEFAULT_RANGE, prices: ["", "", ""] });
+      return;
+    }
     const pair = side === 0 ? [token.address, b] : [a, token.address];
     const fallback =
       side === 0
@@ -180,7 +193,8 @@ export function CreatePage() {
           <CurrencySelect
             value={a}
             label={t`Select first token`}
-            onChange={(token) => chooseCurrency(0, token)}
+            allNetworks
+            onChange={(token, chainId) => chooseCurrency(0, token, chainId)}
           />
           <Field label={<Trans>{symbols[0]} amount</Trans>}>
             <input
@@ -208,7 +222,7 @@ export function CreatePage() {
           <CurrencySelect
             value={b}
             label={t`Select second token`}
-            onChange={(token) => chooseCurrency(1, token)}
+            onChange={(token, chainId) => chooseCurrency(1, token, chainId)}
           />
           <Field label={<Trans>{symbols[1]} amount</Trans>}>
             <input

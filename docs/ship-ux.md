@@ -3,9 +3,9 @@
 ## Requirements and implementation
 
 - Position creation retains the official interface's core interactions within the RPC-only scope: bundled/imported token selection, per-chain pools and fee tiers, current on-chain liquidity charts, editable ranges and graph controls, percentage/full-range choices, balance shortcuts, linked deposit amounts, live deposit previews, approvals, and creation. No historical volume, token prices in USD, or indexer-dependent recommendations are required.
-- The home page has no deployment shortcut. Deploy remains a navigation tab. Network cards select the network's positions page.
+- The home page has no deployment shortcut. Deploy remains a navigation tab. Positions are combined across networks without a global network selector.
 - The 11 EVM mainnets supported by the current official interface are bundled with RPCs and shared contract addresses. Settings has an explicit Add network action with persistent name, chain ID, RPC, native symbol, and contract configuration.
-- Core, FreeLP, and all three fetchers deploy through the standard CREATE2 factory at `0x4e59b44847b379578588920cA78FbF26c0B4956C`, using the protocol salt `0x28f4114b40904ad1cfbb42175a55ad64187c1b299773bd6318baa292375cf0dd`. There is no account-dependent salt or editable deployment salt.
+- Core, FreeLP, and the fetchers deploy through the standard CREATE2 factory at `0x4e59b44847b379578588920cA78FbF26c0B4956C`, using the protocol salt `0x28f4114b40904ad1cfbb42175a55ad64187c1b299773bd6318baa292375cf0dd`. There is no account-dependent salt or editable deployment salt.
 - The canonical Core is `0x00000000000014aA86C5d3c41765bb24e11bd701`. With this Core and the pinned artifact, FreeLP is `0x775A601a3aF4Ccb4a79FF01FAFB455F0Af8fdaC0` for every deploying account and network. Changing constructor Core or bytecode necessarily changes the dependent CREATE2 address; custom-Core deployments show their actual prediction.
 - Deployment cards show the predicted address, code presence and verification state, disable deployment while checking or when code exists, and allow adopting an already verified deployment. The transaction boundary rechecks chain, factory runtime, fixed payload, existing target code, and Core binding before simulation and wallet submission. Terms remain mandatory.
 
@@ -18,3 +18,11 @@ Live RPC checks on 2026-09-11 verified chain IDs and the exact Core, QuoteDataFe
 New pools require an explicit initial price; no 1:1 price is silently assumed. Matching amounts come from the pinned manager's integer quote at a single block. Range display math is approximate, while transaction amounts and slippage limits use integer contract results. An incomplete or stale preview cannot enable creation.
 
 Network list source: EkuboProtocol/interface commit `4ba91a1c3e320b3ffa1cdd1622e2488cc634f95d`, `src/constants/evm/chains.ts`. This supersedes the earlier eight-network snapshot. The current upstream list excludes World Chain and MegaETH because Core requires an opcode those chains have not activated; Starknet remains outside this EVM-only app. Untouched testnet presets saved by older builds are retired; customized network settings are preserved.
+
+## Aggregate portfolio reads
+
+FreeLPDataFetcher at `0xD9DBf75978426765C8761Df55792f430F8141df2` is a new stateless reader, deployed through the same fixed-salt factory. It preserves the manager bytecode/address and returns every position’s descriptor, amounts/fees, current pool price, and on-chain metadata in a single `eth_call`, including the chain ID for RPC configuration validation. The client sorts the returned IDs without pagination or block-number/code/enumeration follow-up requests. Each configured chain loads independently once per portfolio refresh; failed chains remain visible in the availability details.
+
+Selecting a position uses its network configuration without changing global state or repeating the portfolio query. Wallet balances and allowances are read when opening management; transaction simulation, verification, wallet chain switching, and receipt polling remain separate from the portfolio read. Creating a position selects the chain through a token labelled with its network. Settings and Deploy retain their network controls for configuration and deployment targeting.
+
+This new reader is not yet deployed on public networks; Deploy can create it once per chain. A read test with 257 positions asserts exactly one RPC request. The local-chain lifecycle verifies deploying the reader and using its results through creation, transfers, fee collection, withdrawals, and burns. Very large portfolios may exceed a provider’s gas or response limits; the app reports the failure without silently omitting positions.

@@ -1,6 +1,8 @@
+import { DEFAULT_POSITION_DATA_FETCHER } from "./deployments";
 import { assertRuntime } from "./runtime";
 import {
   encodeFunctionData,
+  decodeFunctionResult,
   encodeDeployData,
   erc20Abi,
   zeroAddress,
@@ -8,10 +10,11 @@ import {
   type Address,
   type Hex,
 } from "viem";
+import snapshotArtifact from "../artifacts/FreeLPDataFetcher.json" with { type: "json" };
 import managerArtifact from "../artifacts/FreeLP.json" with { type: "json" };
 import coreArtifact from "../artifacts/Core.json" with { type: "json" };
 import { rpc } from "./rpc";
-import type { Amounts, Descriptor, Position, Settings } from "./types";
+import type { Position, Settings } from "./types";
 import quoteArtifact from "../artifacts/QuoteDataFetcher.json" with { type: "json" };
 import coreDataArtifact from "../artifacts/CoreDataFetcher.json" with { type: "json" };
 import tokenDataArtifact from "../artifacts/TokenDataFetcher.json" with { type: "json" };
@@ -21,6 +24,7 @@ const CONTRACT_ARTIFACTS = {
   QuoteDataFetcher: quoteArtifact,
   CoreDataFetcher: coreDataArtifact,
   TokenDataFetcher: tokenDataArtifact,
+  FreeLPDataFetcher: snapshotArtifact,
 };
 export type ContractKind = keyof typeof CONTRACT_ARTIFACTS;
 export const managerAbi = managerArtifact.abi as Abi;
@@ -33,7 +37,12 @@ export function deployment(kind: ContractKind, core: Address) {
   return encodeDeployData({
     abi: artifact.abi as Abi,
     bytecode: artifact.bytecode as Hex,
-    args: kind === "Core" || kind === "TokenDataFetcher" ? [] : [core],
+    args:
+      kind === "Core" ||
+      kind === "TokenDataFetcher" ||
+      kind === "FreeLPDataFetcher"
+        ? []
+        : [core],
   });
 }
 export async function read<T>(
@@ -54,42 +63,28 @@ export async function positions(
   settings: Settings,
   holder: Address,
 ): Promise<Position[]> {
-  const code = await rpc(settings).getCode({ address: settings.manager });
-  if (!code || code === "0x") return [];
-  const block = await rpc(settings).getBlockNumber();
-  const ids: bigint[] = [];
-  const total = await read<bigint>(settings, "balanceOf", [holder], block);
-  for (let offset = 0n; offset < total; offset += 5n) {
-    const indexes = Array.from(
-      { length: Number(total - offset < 5n ? total - offset : 5n) },
-      (_, i) => offset + BigInt(i),
+  const { data } = await rpc(settings).call({
+    to: settings.freeLPDataFetcher ?? DEFAULT_POSITION_DATA_FETCHER,
+    data: encodeFunctionData({
+      abi: snapshotArtifact.abi,
+      functionName: "ownedPositions",
+      args: [settings.manager, holder],
+    }),
+  });
+  if (!data || data === "0x")
+    throw new Error(
+      "The position data fetcher is not deployed on this network. Deploy it from the Deploy tab.",
     );
-    ids.push(
-      ...(await Promise.all(
-        indexes.map((index) =>
-          read<bigint>(settings, "tokenOfOwnerByIndex", [holder, index], block),
-        ),
-      )),
-    );
-  }
-  ids.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-  const rows: Position[] = [];
-  for (let offset = 0; offset < ids.length; offset += 5) {
-    rows.push(
-      ...(await Promise.all(
-        ids.slice(offset, offset + 5).map(async (id) => {
-          const [descriptor, amounts, metadata] = await Promise.all([
-            read<Descriptor>(settings, "descriptor", [id], block),
-            read<Amounts>(settings, "positionAmounts", [id], block),
-            read<string>(settings, "tokenURI", [id], block),
-          ]);
-          return { id, descriptor, amounts, metadata };
-        }),
-      )),
-    );
-  }
-  return rows;
+  const [chainId, , items] = decodeFunctionResult({
+    abi: snapshotArtifact.abi,
+    functionName: "ownedPositions",
+    data,
+  }) as [bigint, boolean, Position[]];
+  if (chainId !== BigInt(settings.chainId))
+    throw new Error("RPC chain does not match the configured network.");
+  return [...items].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
+
 export type Token = {
   address: Address;
   symbol: string;

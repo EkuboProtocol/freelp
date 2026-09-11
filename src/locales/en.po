@@ -19,6 +19,11 @@ msgstr ""
 msgid "{0} amount"
 msgstr "{0} amount"
 
+#. placeholder {0}: errors.length
+#: src/PositionsPage.tsx
+msgid "{0} networks unavailable"
+msgstr "{0} networks unavailable"
+
 #: src/session.tsx
 msgid "A transaction is already pending."
 msgstr "A transaction is already pending."
@@ -35,19 +40,11 @@ msgstr "Accept terms"
 msgid "Accepted for the connected wallet."
 msgstr "Accepted for the connected wallet."
 
-#: src/NetworkPortfolio.tsx
-msgid "Across all networks"
-msgstr "Across all networks"
-
 #: src/LiquidityChart.tsx
 msgid "Active liquidity"
 msgstr "Active liquidity"
 
-#: src/App.tsx
-msgid "Active network"
-msgstr "Active network"
-
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Add liquidity"
 msgstr "Add liquidity"
 
@@ -62,6 +59,10 @@ msgstr "Advanced pool settings"
 #: src/App.tsx
 msgid "After public launch, the IPNS address follows the latest stable release. Each release also includes its immutable IPFS address and a CAR you can pin yourself."
 msgstr "After public launch, the IPNS address follows the latest stable release. Each release also includes its immutable IPFS address and a CAR you can pin yourself."
+
+#: src/PositionsPage.tsx
+msgid "All networks. Positions, pool data, and fees are read together from each chain."
+msgstr "All networks. Positions, pool data, and fees are read together from each chain."
 
 #: src/DeploymentCard.tsx
 msgid "Already deployed · code verified"
@@ -85,7 +86,7 @@ msgstr "Before any transaction, read and accept the <0>Terms of Service</0>. Use
 msgid "Build details"
 msgstr "Build details"
 
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Burn empty NFT"
 msgstr "Burn empty NFT"
 
@@ -125,7 +126,7 @@ msgstr "Choose your tokens and pool, set a price range, and enter either deposit
 msgid "Close token selector"
 msgstr "Close token selector"
 
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Collect fees"
 msgstr "Collect fees"
 
@@ -220,7 +221,7 @@ msgstr "decimals"
 msgid "Decimals unavailable: amounts are raw integer units."
 msgstr "Decimals unavailable: amounts are raw integer units."
 
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Decimals unavailable: displayed and deposit amounts use raw integer units."
 msgstr "Decimals unavailable: displayed and deposit amounts use raw integer units."
 
@@ -243,6 +244,10 @@ msgstr "Deploy contracts"
 #: src/DeployPage.tsx
 msgid "Deploy missing contracts once for everyone on this network. Addresses depend on the fixed salt and contract code, never on your wallet. Existing contracts are detected before any deployment."
 msgstr "Deploy missing contracts once for everyone on this network. Addresses depend on the fixed salt and contract code, never on your wallet. Existing contracts are detected before any deployment."
+
+#: src/NetworkSettingSelect.tsx
+msgid "Deployment network"
+msgstr "Deployment network"
 
 #: src/CreatePage.tsx
 msgid "Deposit preview"
@@ -333,13 +338,9 @@ msgstr "Initial tick (new pools only)"
 msgid "Insufficient {0} balance"
 msgstr "Insufficient {0} balance"
 
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Invalid slippage."
 msgstr "Invalid slippage."
-
-#: src/PositionsPage.tsx
-msgid "Liquidity"
-msgstr "Liquidity"
 
 #: src/LiquidityChart.tsx
 msgid "Liquidity distribution"
@@ -402,8 +403,8 @@ msgid "No injected wallet detected. Open this page in a browser with a wallet ex
 msgstr "No injected wallet detected. Open this page in a browser with a wallet extension."
 
 #: src/PositionsPage.tsx
-msgid "No positions in this manager."
-msgstr "No positions in this manager."
+msgid "No positions found on the available networks."
+msgstr "No positions found on the available networks."
 
 #: src/DeploymentCard.tsx
 msgid "Not deployed · no code at this address"
@@ -445,14 +446,14 @@ msgstr "Pool liquidity by price"
 msgid "Pool state is unavailable."
 msgstr "Pool state is unavailable."
 
-#: src/PositionsPage.tsx
-msgid "Position"
-msgstr "Position"
-
 #. placeholder {0}: p.id.toString()
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Position #{0}"
 msgstr "Position #{0}"
+
+#: src/SettingsPage.tsx
+msgid "Position data fetcher address"
+msgstr "Position data fetcher address"
 
 #: src/DeploymentCard.tsx
 msgid "Position manager"
@@ -465,10 +466,6 @@ msgstr "Position manager address"
 #: src/PricePreview.tsx
 msgid "Position range:"
 msgstr "Position range:"
-
-#: src/NetworkPortfolio.tsx
-msgid "positions"
-msgstr "positions"
 
 #: src/App.tsx
 msgid "Positions"
@@ -498,7 +495,8 @@ msgstr "Price range"
 msgid "Prices are {0} per {1}. Range prices round outward to valid ticks; review the resulting range in the preview."
 msgstr "Prices are {0} per {1}. Range prices round outward to valid ticks; review the resulting range in the preview."
 
-#: src/PositionsPage.tsx
+#: src/PortfolioPosition.tsx
+#: src/PositionDetail.tsx
 msgid "Principal:"
 msgstr "Principal:"
 
@@ -514,17 +512,26 @@ msgstr "Range lower bound"
 msgid "Range upper bound"
 msgstr "Range upper bound"
 
+#: src/PortfolioPosition.tsx
+msgid "raw units"
+msgstr "raw units"
+
+#. placeholder {0}: networkName(network.chainId, network.name)
 #: src/CurrencySelect.tsx
-msgid "Read token from chain"
-msgstr "Read token from chain"
+msgid "Read token on {0}"
+msgstr "Read token on {0}"
 
 #: src/PositionsPage.tsx
-msgid "Reading positions…"
-msgstr "Reading positions…"
+msgid "Reading {pending} networks…"
+msgstr "Reading {pending} networks…"
 
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Recipient address"
 msgstr "Recipient address"
+
+#: src/PositionsPage.tsx
+msgid "Refresh positions"
+msgstr "Refresh positions"
 
 #: src/DeploymentCard.tsx
 msgid "Refresh status"
@@ -542,10 +549,6 @@ msgstr "Reset {0} approval"
 #: src/SettingsPage.tsx
 msgid "RPC reports chain {chain}."
 msgstr "RPC reports chain {chain}."
-
-#: src/NetworkPortfolio.tsx
-msgid "RPC unavailable. Check this network’s settings."
-msgstr "RPC unavailable. Check this network’s settings."
 
 #: src/SettingsPage.tsx
 msgid "RPC URL"
@@ -595,10 +598,6 @@ msgstr "Select second token"
 msgid "Select token"
 msgstr "Select token"
 
-#: src/PositionsPage.tsx
-msgid "Set up a position manager for this network to start providing liquidity."
-msgstr "Set up a position manager for this network to start providing liquidity."
-
 #: src/App.tsx
 msgid "Settings"
 msgstr "Settings"
@@ -616,17 +615,13 @@ msgid "Skip to content"
 msgstr "Skip to content"
 
 #: src/CreatePage.tsx
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Slippage (basis points)"
 msgstr "Slippage (basis points)"
 
 #: src/CreatePage.tsx
 msgid "Slippage must be between 0 and 1000 basis points."
 msgstr "Slippage must be between 0 and 1000 basis points."
-
-#: src/App.tsx
-msgid "Switch wallet to this network"
-msgstr "Switch wallet to this network"
 
 #: src/App.tsx
 msgid "Terms"
@@ -664,9 +659,9 @@ msgstr "This pool is not initialized. Set its initial price when creating the fi
 msgid "This token is not needed for the selected range."
 msgstr "This token is not needed for the selected range."
 
-#: src/PositionsPage.tsx
-msgid "Tick range"
-msgstr "Tick range"
+#: src/PortfolioPosition.tsx
+msgid "Tick range:"
+msgstr "Tick range:"
 
 #: src/PoolPicker.tsx
 #: src/RangeFields.tsx
@@ -685,7 +680,7 @@ msgstr "Token 0 address"
 msgid "Token 0 fallback decimals"
 msgstr "Token 0 fallback decimals"
 
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Token 0 maximum"
 msgstr "Token 0 maximum"
 
@@ -697,7 +692,7 @@ msgstr "Token 1 address"
 msgid "Token 1 fallback decimals"
 msgstr "Token 1 fallback decimals"
 
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Token 1 maximum"
 msgstr "Token 1 maximum"
 
@@ -705,15 +700,11 @@ msgstr "Token 1 maximum"
 msgid "Token metadata fallback"
 msgstr "Token metadata fallback"
 
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Token metadata unavailable."
 msgstr "Token metadata unavailable."
 
-#: src/PositionsPage.tsx
-msgid "Token pair"
-msgstr "Token pair"
-
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Transfer NFT to recipient"
 msgstr "Transfer NFT to recipient"
 
@@ -721,7 +712,8 @@ msgstr "Transfer NFT to recipient"
 msgid "Unable to verify this address. Deployment is disabled."
 msgstr "Unable to verify this address. Deployment is disabled."
 
-#: src/PositionsPage.tsx
+#: src/PortfolioPosition.tsx
+#: src/PositionDetail.tsx
 msgid "Uncollected fees:"
 msgstr "Uncollected fees:"
 
@@ -748,10 +740,6 @@ msgstr "Use a public RPC or your own node. No API key is required. Settings stay
 #: src/App.tsx
 msgid "Use a version suffix to keep a specific release, for example @ekubo/freelp@0.1.1. The package opens a local web server; your wallet signs transactions in the browser."
 msgstr "Use a version suffix to keep a specific release, for example @ekubo/freelp@0.1.1. The package opens a local web server; your wallet signs transactions in the browser."
-
-#: src/PositionsPage.tsx
-msgid "Use an existing manager"
-msgstr "Use an existing manager"
 
 #: src/RangeFields.tsx
 msgid "Use custom range"
@@ -782,41 +770,29 @@ msgstr "Using manually supplied decimals: {0}"
 msgid "Verify contracts"
 msgstr "Verify contracts"
 
-#: src/NetworkPortfolio.tsx
-msgid "View network"
-msgstr "View network"
-
 #: src/session.tsx
 msgid "Wallet changed. Connect again to review the active account."
 msgstr "Wallet changed. Connect again to review the active account."
 
 #: src/session.tsx
-msgid "Wallet connected to the selected network."
-msgstr "Wallet connected to the selected network."
-
-#: src/session.tsx
 msgid "Wallet has no account."
 msgstr "Wallet has no account."
 
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Withdraw liquidity and fees"
 msgstr "Withdraw liquidity and fees"
 
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Withdraw or collect"
 msgstr "Withdraw or collect"
 
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Withdraw percentage"
 msgstr "Withdraw percentage"
 
-#: src/PositionsPage.tsx
+#: src/PositionDetail.tsx
 msgid "Withdrawal percentage must be 1–100."
 msgstr "Withdrawal percentage must be 1–100."
-
-#: src/NetworkPortfolio.tsx
-msgid "Your liquidity"
-msgstr "Your liquidity"
 
 #: src/PositionsPage.tsx
 msgid "Your positions"

@@ -123,7 +123,8 @@ for (const { missingDecimals, native } of [
     }
     for (const network of NETWORKS)
       await page.route(
-        network.rpcUrl.replace(/\/$/, "") + "/",
+        (url) =>
+          url.href.replace(/\/$/, "") === network.rpcUrl.replace(/\/$/, ""),
         async (route) => {
           const body = route.request().postDataJSON();
           await route.fulfill({
@@ -417,7 +418,9 @@ for (const { missingDecimals, native } of [
     await page
       .getByRole("button", { name: "Transfer NFT to recipient" })
       .click();
-    await expect(page.getByText("No positions in this manager.")).toBeVisible();
+    await expect(
+      page.getByText("No positions found on the available networks."),
+    ).toBeVisible();
     expect(
       await client.readContract({
         address: deployedManager,
@@ -462,7 +465,9 @@ for (const { missingDecimals, native } of [
       page.getByRole("button", { name: "Burn empty NFT" }),
     ).toBeEnabled({ timeout: 30000 });
     await page.getByRole("button", { name: "Burn empty NFT" }).click();
-    await expect(page.getByText("No positions in this manager.")).toBeVisible();
+    await expect(
+      page.getByText("No positions found on the available networks."),
+    ).toBeVisible();
     expect(unexpected).toEqual([]);
     expect(await client.getBalance({ address: deployedManager })).toBe(0n);
   });
@@ -472,6 +477,13 @@ async function deployFetchers(
   missingDecimals: boolean,
   native: boolean,
 ) {
+  await page
+    .getByRole("button", { name: "Deploy FreeLPDataFetcher", exact: true })
+    .click();
+  await expect(page.locator(".status[role=status]")).toContainText(
+    "Using FreeLPDataFetcher at",
+    { timeout: 30000 },
+  );
   if (missingDecimals || native) return;
   for (const kind of [
     "QuoteDataFetcher",
@@ -521,7 +533,9 @@ async function checkTokenImports(
       .click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Search tokens or paste an address").fill(address);
-    await dialog.getByRole("button", { name: "Read token from chain" }).click();
+    await dialog
+      .getByRole("button", { name: "Read token on Chain 31337" })
+      .click();
     await dialog
       .getByRole("button", { name: "Import token", exact: true })
       .click();

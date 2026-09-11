@@ -1,3 +1,4 @@
+import { NetworkSettingSelect } from "./NetworkSettingSelect";
 import { Trans } from "@lingui/react/macro";
 import { DeploymentCard } from "./DeploymentCard";
 import { DEPLOYMENT_SALT, CREATE2_FACTORY } from "./deterministic";
@@ -14,11 +15,13 @@ export function DeployPage() {
           Existing contracts are detected before any deployment.
         </Trans>
       </p>
+      <NetworkSettingSelect />
       <DeploymentCard kind="Core" />
       <DeploymentCard kind="FreeLP" />
       <h2>
         <Trans>Data fetchers</Trans>
       </h2>
+      <DeploymentCard kind="FreeLPDataFetcher" />
       <DeploymentCard kind="QuoteDataFetcher" />
       <DeploymentCard kind="CoreDataFetcher" />
       <DeploymentCard kind="TokenDataFetcher" />

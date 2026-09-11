@@ -72,6 +72,7 @@ export function SettingsPage() {
         quoteDataFetcher: parsed.quoteDataFetcher,
         coreDataFetcher: parsed.coreDataFetcher,
         tokenDataFetcher: parsed.tokenDataFetcher,
+        freeLPDataFetcher: parsed.freeLPDataFetcher,
       });
       setDraft(next);
     } catch (e) {
@@ -159,6 +160,20 @@ export function SettingsPage() {
               setDraft({
                 ...draft,
                 quoteDataFetcher: event.target.value
+                  ? (event.target.value as Settings["core"])
+                  : undefined,
+              })
+            }
+          />
+        </Field>
+        <Field label={<Trans>Position data fetcher address</Trans>}>
+          <input
+            value={draft.freeLPDataFetcher ?? ""}
+            placeholder={t`Canonical deployment`}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                freeLPDataFetcher: event.target.value
                   ? (event.target.value as Settings["core"])
                   : undefined,
               })

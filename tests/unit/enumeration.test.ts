@@ -1,76 +1,77 @@
 import { test, expect } from "bun:test";
 import { decodeFunctionData, encodeFunctionResult, zeroAddress } from "viem";
-import { managerAbi, positions } from "../../src/contracts";
+import snapshotArtifact from "../../artifacts/FreeLPDataFetcher.json";
+import { positions } from "../../src/contracts";
 
-test("standard owner enumeration reads one block and sorts the complete list", async () => {
-  const ids = Array.from({ length: 257 }, (_, index) => BigInt(257 - index));
-  const seen: string[] = [];
-  const blocks: string[] = [];
-  const server = Bun.serve({
-    port: 0,
-    async fetch(request) {
-      const body = await request.json();
-      let result: unknown;
-      if (body.method === "eth_blockNumber") result = "0x123";
-      else if (body.method === "eth_getCode") result = "0x6000";
-      else {
-        expect(body.method).toBe("eth_call");
-        blocks.push(body.params[1]);
+for (const returnedChain of [31337n, 1n])
+  test(`portfolio uses one eth_call and validates chain ${returnedChain}`, async () => {
+    const ids = Array.from({ length: 257 }, (_, i) => BigInt(257 - i));
+    const requests: string[] = [];
+    const items = ids.map((id) => ({
+      id,
+      descriptor: {
+        poolKey: {
+          token0: zeroAddress,
+          token1: zeroAddress,
+          config: "0x" + "00".repeat(32),
+        },
+        tickLower: -100,
+        tickUpper: 100,
+      },
+      amounts: {
+        liquidity: 1n,
+        principal0: 2n,
+        principal1: 3n,
+        fees0: 4n,
+        fees1: 5n,
+      },
+      sqrtRatio: 1n << 128n,
+      metadata: "data:application/json;base64,e30=",
+    }));
+    const server = Bun.serve({
+      port: 0,
+      async fetch(request) {
+        const body = await request.json();
+        requests.push(body.method);
+        expect(body.params[1]).toBe("latest");
         const call = decodeFunctionData({
-          abi: managerAbi,
+          abi: snapshotArtifact.abi,
           data: body.params[0].data,
         });
-        seen.push(call.functionName);
-        const args = call.args as bigint[];
-        const outputs: Record<string, unknown> = {
-          balanceOf: BigInt(ids.length),
-          tokenOfOwnerByIndex: ids[Number(args[1])],
-          descriptor: {
-            poolKey: {
-              token0: zeroAddress,
-              token1: zeroAddress,
-              config: "0x" + "00".repeat(32),
-            },
-            tickLower: -100,
-            tickUpper: 100,
-          },
-          positionAmounts: {
-            liquidity: 1n,
-            principal0: 1n,
-            principal1: 1n,
-            fees0: 0n,
-            fees1: 0n,
-          },
-          tokenURI: "data:application/json;base64,e30=",
-        };
-        result = encodeFunctionResult({
-          abi: managerAbi,
-          functionName: call.functionName,
-          result: outputs[call.functionName],
+        expect(call.functionName).toBe("ownedPositions");
+        return Response.json({
+          jsonrpc: "2.0",
+          id: body.id,
+          result: encodeFunctionResult({
+            abi: snapshotArtifact.abi,
+            functionName: "ownedPositions",
+            result: [returnedChain, true, items],
+          }),
         });
-      }
-      return Response.json({ jsonrpc: "2.0", id: body.id, result });
-    },
-  });
-  try {
-    const rows = await positions(
-      {
-        rpcUrl: server.url.toString(),
-        chainId: 31337,
-        core: zeroAddress,
-        manager: zeroAddress,
-        nativeSymbol: "ETH",
       },
-      zeroAddress,
-    );
-    expect(rows.map((p) => p.id)).toEqual(
-      Array.from({ length: 257 }, (_, index) => BigInt(index + 1)),
-    );
-    expect(seen.filter((name) => name === "tokenOfOwnerByIndex")).toHaveLength(
-      ids.length,
-    );
-    expect(new Set(blocks)).toEqual(new Set(["0x123"]));
-  } finally {
-    server.stop(true);
-  }
-});
+    });
+    try {
+      const result = positions(
+        {
+          rpcUrl: server.url.toString(),
+          chainId: 31337,
+          core: zeroAddress,
+          manager: zeroAddress,
+          nativeSymbol: "ETH",
+        },
+        zeroAddress,
+      );
+      if (returnedChain !== 31337n)
+        await expect(result).rejects.toThrow("RPC chain");
+      else {
+        const rows = await result;
+        expect(rows.map((p) => p.id)).toEqual([...ids].reverse());
+        expect(rows[0].amounts.fees0).toBe(4n);
+        expect(rows[0].descriptor.tickUpper).toBe(100);
+        expect(rows[0].sqrtRatio).toBe(1n << 128n);
+      }
+      expect(requests).toEqual(["eth_call"]);
+    } finally {
+      server.stop(true);
+    }
+  });

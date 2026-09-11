@@ -47,6 +47,7 @@ function validateAddresses(value: Settings) {
     value.core,
     value.manager,
     value.coreDataFetcher ?? "0x0000000000000000000000000000000000000000",
+    value.freeLPDataFetcher ?? "0x0000000000000000000000000000000000000000",
     value.tokenDataFetcher ?? "0x0000000000000000000000000000000000000000",
     value.quoteDataFetcher ?? "0x0000000000000000000000000000000000000000",
   ];

@@ -1,3 +1,4 @@
+import { switchWalletChain } from "./walletNetwork";
 import { CREATE2_FACTORY, verifyDeploymentTransaction } from "./deterministic";
 import { rpc } from "./rpc";
 import { verifyCode } from "./contracts";
@@ -33,6 +34,7 @@ export async function executeTransaction(
   const client = rpc(settings);
   if ((await client.getChainId()) !== settings.chainId)
     throw new Error("RPC chain ID does not match settings.");
+  await ensureWalletChain(provider, settings);
   await assertWallet(provider, account, settings.chainId);
   if (tx.to?.toLowerCase() === CREATE2_FACTORY.toLowerCase()) {
     await verifyDeploymentTransaction(settings, tx);
@@ -65,4 +67,9 @@ export async function executeTransaction(
   if (receipt.status !== "success")
     throw new Error(`Transaction reverted: ${hash}`);
   return receipt;
+}
+
+async function ensureWalletChain(provider: Provider, settings: Settings) {
+  const chain = await provider.request({method: "eth_chainId"});
+  if (typeof chain === "string" && BigInt(chain) !== BigInt(settings.chainId)) await switchWalletChain(provider, settings);
 }

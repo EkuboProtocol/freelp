@@ -1,4 +1,3 @@
-import { switchWalletChain } from "./walletNetwork";
 import { t } from "@lingui/core/macro";
 import {
   createContext,
@@ -51,10 +50,9 @@ function useSessionState() {
       setStatus(t`Wallet changed. Connect again to review the active account.`);
     };
     wallet.provider.on?.("accountsChanged", changed);
-    wallet.provider.on?.("chainChanged", changed);
+
     return () => {
       wallet.provider.removeListener?.("accountsChanged", changed);
-      wallet.provider.removeListener?.("chainChanged", changed);
     };
   }, [wallet]);
   async function connect(selected: Wallet) {
@@ -85,15 +83,7 @@ function useSessionState() {
     const next = networks.find((network) => network.chainId === chainId);
     if (next) configure(next);
   }
-  async function switchWalletNetwork() {
-    if (!wallet) throw new Error(t`Connect a wallet first.`);
-    if (transactionLock.current)
-      throw new Error(t`Finish the pending transaction first.`);
-    await switchWalletChain(wallet.provider, settings);
-    await connect(wallet);
-    setStatus(t`Wallet connected to the selected network.`);
-  }
-  async function send(tx: Transaction) {
+  async function send(tx: Transaction, target = settings) {
     if (!wallet || !account) throw new Error(t`Connect a wallet first.`);
     if (transactionLock.current)
       throw new Error(t`A transaction is already pending.`);
@@ -104,7 +94,7 @@ function useSessionState() {
       const receipt = await executeTransaction(
         wallet.provider,
         account,
-        settings,
+        target,
         tx,
       );
       setStatus(t`Confirmed: ${receipt.transactionHash}`);
@@ -125,7 +115,6 @@ function useSessionState() {
     settings,
     networks,
     selectNetwork,
-    switchWalletNetwork,
     configure,
     wallets,
     account,
@@ -150,4 +139,21 @@ export function useSession() {
   const context = useContext(Context);
   if (!context) throw new Error("Session missing");
   return context;
+}
+
+export function NetworkScope({
+  settings,
+  children,
+}: {
+  settings: Settings;
+  children: ReactNode;
+}) {
+  const session = useSession();
+  return (
+    <Context.Provider
+      value={{ ...session, settings, send: (tx) => session.send(tx, settings) }}
+    >
+      {children}
+    </Context.Provider>
+  );
 }

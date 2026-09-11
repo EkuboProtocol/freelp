@@ -1,3 +1,5 @@
+import { networkName } from "./networks";
+import type { Settings } from "./types";
 import { useId, useRef, useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import { t } from "@lingui/core/macro";
@@ -10,37 +12,49 @@ export function CurrencySelect({
   value,
   label,
   onChange,
+  allNetworks = false,
 }: {
   value: string;
   label: string;
-  onChange: (token: Currency) => void;
+  onChange: (token: Currency, chainId: number) => void;
+  allNetworks?: boolean;
 }) {
   const titleId = useId();
-  const { settings } = useSession();
+  const { settings, networks } = useSession();
   const dialog = useRef<HTMLDialogElement>(null);
   const [search, setSearch] = useState("");
   const tokens = currencies(settings.chainId, settings.nativeSymbol);
+  const [importNetwork, setImportNetwork] = useState(settings);
   const [candidate, setCandidate] = useState<Currency>();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const selected = tokens.find(
     (token) => token.address.toLowerCase() === value.toLowerCase(),
   );
-  const visible = tokens.filter((token) =>
-    `${token.symbol} ${token.name} ${token.address}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
-  function choose(token: Currency) {
-    onChange(token);
+  const choices = allNetworks ? networks : [settings];
+  const visible = choices
+    .flatMap((network) =>
+      currencies(network.chainId, network.nativeSymbol).map((token) => ({
+        token,
+        network,
+      })),
+    )
+    .filter(({ token, network }) =>
+      `${token.symbol} ${token.name} ${token.address} ${networkName(network.chainId, network.name)}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+    );
+  function choose(token: Currency, chainId = settings.chainId) {
+    onChange(token, chainId);
     dialog.current?.close();
   }
-  async function inspect() {
+  async function inspect(network: Settings) {
     setBusy(true);
+    setImportNetwork(network);
     setError("");
     try {
       const address = getAddress(search);
-      const client = rpc(settings);
+      const client = rpc(network);
       const [symbol, name, decimals] = await Promise.all([
         client.readContract({ address, abi: erc20Abi, functionName: "symbol" }),
         client.readContract({ address, abi: erc20Abi, functionName: "name" }),
@@ -74,7 +88,10 @@ export function CurrencySelect({
         </span>
         <span>
           {selected?.symbol ?? <Trans>Select token</Trans>}{" "}
-          <small>{selected?.name}</small>
+          <small>
+            {selected?.name}{" "}
+            {selectedNetworkLabel(selected, settings)}
+          </small>
         </span>
         <span aria-hidden="true">⌄</span>
       </button>
@@ -107,25 +124,36 @@ export function CurrencySelect({
           />
         </Field>
         <div className="token-list">
-          {visible.map((token) => (
+          {visible.map(({ token, network }) => (
             <button
               className="token-option"
-              key={token.address}
-              onClick={() => choose(token)}
+              key={`${network.chainId}:${token.address}`}
+              onClick={() => choose(token, network.chainId)}
             >
               <span className="currency-mark">{token.symbol.slice(0, 1)}</span>
               <span>
                 <strong>{token.symbol}</strong>
                 <small>{token.name}</small>
+                <small>{networkName(network.chainId, network.name)}</small>
                 <small className="mono">{token.address}</small>
               </span>
             </button>
           ))}
         </div>
-        {isAddress(search) && !visible.length ? (
-          <button disabled={busy} onClick={() => void inspect()}>
-            <Trans>Read token from chain</Trans>
-          </button>
+        {isAddress(search) ? (
+          <div className="row">
+            {choices.map((network) => (
+              <button
+                key={network.chainId}
+                disabled={busy}
+                onClick={() => void inspect(network)}
+              >
+                <Trans>
+                  Read token on {networkName(network.chainId, network.name)}
+                </Trans>
+              </button>
+            ))}
+          </div>
         ) : null}
         {candidate ? (
           <div className="panel">
@@ -136,8 +164,11 @@ export function CurrencySelect({
             <p className="mono">{candidate.address}</p>
             <button
               onClick={() => {
-                const imported = importCurrency(settings.chainId, candidate);
-                choose(imported);
+                const imported = importCurrency(
+                  importNetwork.chainId,
+                  candidate,
+                );
+                choose(imported, importNetwork.chainId);
               }}
             >
               <Trans>Import token</Trans>
@@ -148,4 +179,8 @@ export function CurrencySelect({
       </dialog>
     </>
   );
+}
+
+function selectedNetworkLabel(selected: Currency | undefined, settings: Settings) {
+  return selected ? networkName(settings.chainId, settings.name) : "";
 }

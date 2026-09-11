@@ -39,3 +39,5 @@ New interface and CLI code are MIT. The repository started with one squashed red
 See [distribution and infrastructure](docs/distribution.md) for the bunx/npx commands, immutable IPFS and stable IPNS URLs, allocated node, privacy gates, and recovery instructions.
 
 See [position UX and deterministic deployment validation](docs/ship-ux.md) for the shared addresses, deployment status, and tested behavior.
+
+The positions page combines all configured networks. A stateless FreeLPDataFetcher returns each owner’s complete position snapshot in one `eth_call` per chain; deploy it once from the Deploy tab. The manager’s fixed address is unchanged. Token selection identifies the chain for creation, while management actions use the selected position’s chain and request wallet switching as needed. Settings and Deploy retain network controls for their specific tasks.

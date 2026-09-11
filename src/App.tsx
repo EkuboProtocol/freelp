@@ -2,7 +2,6 @@ import { IPNS_NAME } from "./distribution";
 import { t } from "@lingui/core/macro";
 import { useEffect, useState } from "react";
 import { Trans } from "@lingui/react/macro";
-import { networkName } from "./networks";
 import { useSession } from "./session";
 import { SettingsPage } from "./SettingsPage";
 import { TermsPage } from "./TermsPage";
@@ -97,10 +96,10 @@ function BuildPage() {
   );
 }
 function Page({ route }: { route: string }) {
-  const { account } = useSession();
+  const { account, settings } = useSession();
   switch (route) {
     case "#/settings":
-      return <SettingsPage />;
+      return <SettingsPage key={settings.chainId} />;
     case "#/terms":
       return <TermsPage key={account ?? "disconnected"} />;
     case "#/deploy":
@@ -163,35 +162,7 @@ export function App() {
               </Trans>
             </span>
           ) : null}
-          <span>
-            <select
-              aria-label={t`Active network`}
-              value={session.settings.chainId}
-              disabled={session.busy}
-              onChange={(event) =>
-                session.selectNetwork(Number(event.target.value))
-              }
-            >
-              {session.networks.map((network) => (
-                <option key={network.chainId} value={network.chainId}>
-                  {networkName(network.chainId, network.name)}
-                </option>
-              ))}
-            </select>
-          </span>
         </div>
-        {session.account ? (
-          <button
-            disabled={session.busy}
-            onClick={() =>
-              void session
-                .switchWalletNetwork()
-                .catch((error) => session.setStatus(String(error)))
-            }
-          >
-            <Trans>Switch wallet to this network</Trans>
-          </button>
-        ) : null}
         {!session.consent ? (
           <p>
             <Trans>
@@ -207,7 +178,7 @@ export function App() {
         </p>
       ) : null}
       <div id="main-content" tabIndex={-1}>
-        <Page key={`${session.settings.chainId}:${route}`} route={route} />
+        <Page key={route.split("/")[1] || "positions"} route={route} />
       </div>
       <footer className="row">
         <a href="#/terms">
