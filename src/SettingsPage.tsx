@@ -36,6 +36,17 @@ export function SettingsPage() {
     dialog.current?.showModal();
     input.current?.focus();
   }
+  function useDefaultRpc() {
+    if (!editing) return;
+    try {
+      configure({ ...editing, rpcUrl: "" });
+      setRpcUrl("");
+      setError("");
+      dialog.current?.close();
+    } catch (error) {
+      setError(errorMessage(error));
+    }
+  }
   async function save() {
     if (!editing) return;
     setBusy(true);
@@ -161,13 +172,15 @@ export function SettingsPage() {
             />
           </label>
           <p>Leave blank to use this network's default RPC.</p>
-          <button type="button" disabled={busy} onClick={() => setRpcUrl("")}>
-            Use default RPC
-          </button>
           {error ? <p role="alert">{error}</p> : null}
-          <button type="submit" disabled={busy}>
-            {busy ? "Checking RPC…" : "Save RPC"}
-          </button>
+          <div className="rpc-dialog-actions">
+            <button type="button" disabled={busy} onClick={useDefaultRpc}>
+              Use default RPC
+            </button>
+            <button type="submit" disabled={busy}>
+              {busy ? "Checking RPC…" : "Save RPC"}
+            </button>
+          </div>
         </form>
       </dialog>
     </section>

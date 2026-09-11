@@ -98,7 +98,7 @@ export function App() {
       </header>
       {session.status ? (
         <div className="notification-toast" aria-label="Notification">
-          <p role="status" className="status">
+          <p role="status" className="status" tabIndex={0}>
             {session.status}
           </p>
           <button

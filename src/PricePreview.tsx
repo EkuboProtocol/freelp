@@ -38,12 +38,6 @@ export function PricePreview({
         —{" "}
         {displayPrice(tickPrice(descriptor.tickUpper, a.decimals, b.decimals))}
       </p>
-      <details>
-        <summary>Exact ticks</summary>
-        <p>
-          {descriptor.tickLower} — {descriptor.tickUpper}
-        </p>
-      </details>
     </div>
   );
 }

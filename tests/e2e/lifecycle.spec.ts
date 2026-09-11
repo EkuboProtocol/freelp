@@ -354,7 +354,7 @@ for (const { missingDecimals, native, batch } of [
     expect(deployedCore).toBe("0x00000000000014aA86C5d3c41765bb24e11bd701");
     await expect(
       page.getByRole("button", { name: "Deploy Core", exact: true }),
-    ).toBeDisabled();
+    ).toHaveCount(0);
     await page
       .getByRole("button", { name: "Deploy FreeLP", exact: true })
       .click();
@@ -364,7 +364,7 @@ for (const { missingDecimals, native, batch } of [
     );
     await expect(
       page.getByRole("button", { name: "Deploy FreeLP", exact: true }),
-    ).toBeDisabled();
+    ).toHaveCount(0);
     expect(deploymentAddress("FreeLP", deployedCore as Hex)).toBe(
       "0x573af249A268ed80c358dA77986D2e637978A611",
     );
@@ -381,10 +381,17 @@ for (const { missingDecimals, native, batch } of [
       ),
     ).rejects.toThrow("already deployed");
     await deployFetchers(page);
+    await expect(
+      page.getByRole("button", { name: "Refresh status" }),
+    ).toHaveCount(0);
     await checkSdkParity();
     const deployedManager = await page.evaluate(
       () => JSON.parse(localStorage.getItem("freelp:settings")!).manager as Hex,
     );
+    await expect(page.getByText("Pool details", { exact: true })).toHaveCount(
+      0,
+    );
+    await expect(page.getByText(/Tick range:/)).toHaveCount(0);
     await page.getByRole("link", { name: "Positions", exact: true }).click();
     await page
       .getByRole("link", { name: "Create position", exact: true })
@@ -519,30 +526,9 @@ for (const { missingDecimals, native, batch } of [
         { timeout: 30000 },
       )
       .toBeGreaterThan(before.liquidity);
-    const recipient = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
-    await page.getByLabel("Recipient address").fill(recipient);
-    await page
-      .getByRole("button", { name: "Transfer NFT to recipient" })
-      .click();
     await expect(
-      page.getByText("No positions found on the available networks."),
-    ).toBeVisible();
-    expect(
-      await client.readContract({
-        address: deployedManager,
-        abi: managerArtifact.abi as Abi,
-        functionName: "ownerOf",
-        args: [1n],
-      }),
-    ).toBe(recipient);
-    const returned = await wallet.writeContract({
-      account: recipient,
-      address: deployedManager,
-      abi: managerArtifact.abi as Abi,
-      functionName: "transferFrom",
-      args: [recipient, account.address, 1n],
-    });
-    await client.waitForTransactionReceipt({ hash: returned });
+      page.getByRole("button", { name: "Transfer NFT to recipient" }),
+    ).toHaveCount(0);
     await page.reload();
     await page.getByRole("button", { name: "Connect Local wallet" }).click();
     await page.getByRole("link", { name: "Positions", exact: true }).click();

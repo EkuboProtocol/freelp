@@ -8,7 +8,7 @@ import { PositionDepositFields } from "./PositionDepositFields";
 import { PositionRange, PositionStatus } from "./PositionRange";
 import { PricePreview } from "./PricePreview";
 import { useEffect, useState } from "react";
-import { encodeFunctionData, erc721Abi, getAddress, zeroAddress } from "viem";
+import { getAddress, zeroAddress } from "viem";
 import { useSession } from "./session";
 import { token, managerData, type Token } from "./contracts";
 import { Action, Field } from "./common";
@@ -229,20 +229,6 @@ export function PositionDetail({ position: p }: { position: Position }) {
         add={add}
       />
       <p className="row">
-        <Action
-          run={() =>
-            send({
-              to: settings.manager,
-              data: encodeFunctionData({
-                abi: erc721Abi,
-                functionName: "safeTransferFrom",
-                args: [account!, getAddress(recipient), p.id],
-              }),
-            })
-          }
-        >
-          Transfer NFT to recipient
-        </Action>
         <Action
           disabled={
             p.amounts.liquidity !== 0n ||

@@ -54,12 +54,16 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
         <DeploymentMessage current={current} />
       </p>
       <ErrorText error={current?.error ?? ""} />
-      <div className="row">
-        <Action run={deploy} disabled={deploymentDisabled(current)}>
-          Deploy {kind}
-        </Action>
-        <button onClick={() => setRefresh((n) => n + 1)}>Refresh status</button>
-      </div>
+      {!current?.exists ? (
+        <div className="row">
+          <Action run={deploy} disabled={deploymentDisabled(current)}>
+            Deploy {kind}
+          </Action>
+          <button onClick={() => setRefresh((n) => n + 1)}>
+            Refresh status
+          </button>
+        </div>
+      ) : null}
     </article>
   );
 }

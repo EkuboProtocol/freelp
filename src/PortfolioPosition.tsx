@@ -49,13 +49,9 @@ export function PortfolioPosition({
           decimals={[tokens[0].decimals, tokens[1].decimals]}
         />
       ) : null}
-      <details>
-        <summary>Pool details</summary>
-        <p>
-          Tick range: {p.descriptor.tickLower} — {p.descriptor.tickUpper}
-        </p>
-      </details>
-      <button onClick={onSelect}>Manage position #{p.id.toString()}</button>
+      <button aria-label={`Manage position #${p.id}`} onClick={onSelect}>
+        Manage position
+      </button>
     </article>
   );
 }

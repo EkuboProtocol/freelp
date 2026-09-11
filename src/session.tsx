@@ -74,6 +74,13 @@ function useSessionState() {
     setAccount(address);
     setStatus("");
   }
+  function disconnect() {
+    if (transactionLock.current) return;
+    setWallet(undefined);
+    setAccount(undefined);
+    setStatus("");
+    setRevision((value) => value + 1);
+  }
   const configure = useCallback((next: Settings) => {
     if (transactionLock.current)
       throw new Error(
@@ -156,6 +163,7 @@ function useSessionState() {
     provider: wallet?.provider,
     account,
     connect,
+    disconnect,
     busy,
     status,
     setStatus,

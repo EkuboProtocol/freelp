@@ -106,7 +106,6 @@ test("RPC overrides start empty, verify the catalog chain ID, and reset to viem 
   await dialog
     .getByRole("button", { name: "Use default RPC", exact: true })
     .click();
-  await dialog.getByRole("button", { name: "Save RPC", exact: true }).click();
   await expect(dialog).not.toBeVisible();
   expect(requests).toBe(2);
   expect(

@@ -55,6 +55,13 @@ export function AccountControl() {
           <button onClick={() => void copy()}>
             {copied ? "Copied" : "Copy address"}
           </button>
+          <button
+            type="button"
+            disabled={session.busy}
+            onClick={session.disconnect}
+          >
+            Disconnect wallet
+          </button>
         </div>
       </details>
     );

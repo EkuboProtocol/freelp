@@ -66,4 +66,54 @@ test("wallet errors render messages and the connected account has a local header
       path: test.info().outputPath(`account-${width}.png`),
     });
   }
+  await account.getByRole("button", { name: "Disconnect wallet" }).click();
+  await expect(
+    page.getByRole("button", { name: "Connect Test wallet" }),
+  ).toBeVisible();
+  await expect(page.locator("header .account-control")).toHaveCount(0);
+  await page.getByRole("button", { name: "Connect Test wallet" }).click();
+  await expect(page.locator("header .account-control")).toBeVisible();
+});
+
+test("long notifications scroll within the viewport and remain dismissible", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 600 });
+  await page.addInitScript(() => {
+    window.addEventListener("eip6963:requestProvider", () => {
+      window.dispatchEvent(
+        new CustomEvent("eip6963:announceProvider", {
+          detail: {
+            info: { uuid: "long-error", name: "Test wallet" },
+            provider: {
+              request: async () => {
+                throw new Error("Wallet request failed. ".repeat(500));
+              },
+            },
+          },
+        }),
+      );
+    });
+  });
+  await page.goto("/#/build");
+  await page.getByRole("button", { name: "Connect Test wallet" }).click();
+  const toast = page.locator(".notification-toast");
+  await expect(toast).toBeVisible();
+  const bounds = await toast.boundingBox();
+  expect(bounds!.y).toBeGreaterThanOrEqual(0);
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(600);
+  const status = toast.getByRole("status");
+  expect(
+    await status.evaluate((node) => node.scrollHeight > node.clientHeight),
+  ).toBe(true);
+  await status.focus();
+  await page.keyboard.press("End");
+  await expect
+    .poll(() => status.evaluate((node) => node.scrollTop))
+    .toBeGreaterThan(0);
+  await page.screenshot({
+    path: test.info().outputPath("long-toast-mobile.png"),
+  });
+  await page.getByRole("button", { name: "Dismiss notification" }).click();
+  await expect(toast).toHaveCount(0);
 });
