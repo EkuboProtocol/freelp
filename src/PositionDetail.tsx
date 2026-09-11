@@ -1,247 +1,245 @@
-import { useBatchSupport } from "./useBatchSupport";
-import { depositCalls } from "./walletCalls";
+import { useRef, useState } from "react";
 import { PoolIdentity } from "./PoolIdentity";
-import { displayAmount } from "./displayAmount";
-import { errorMessage } from "./errors";
-import { usePositionDeposit } from "./usePositionDeposit";
+import { formatUnits } from "viem";
 import { PositionDepositFields } from "./PositionDepositFields";
 import { PositionRange, PositionStatus } from "./PositionRange";
-import { PricePreview } from "./PricePreview";
-import { useEffect, useState } from "react";
-import { getAddress, zeroAddress } from "viem";
 import { useSession } from "./session";
-import { token, managerData, type Token } from "./contracts";
+import { networkName } from "./networks";
 import { Action, Field } from "./common";
+import { usePositionActions } from "./usePositionActions";
 import type { Position } from "./types";
-function metadataImage(uri: string) {
-  if (!uri.startsWith("data:application/json;base64,")) return undefined;
-  try {
-    const data = JSON.parse(atob(uri.slice(29)));
-    return typeof data.image === "string" &&
-      data.image.startsWith("data:image/svg+xml;base64,")
-      ? data.image
-      : undefined;
-  } catch {
-    return undefined;
-  }
-}
+import type { Token } from "./contracts";
+
 export function PositionDetail({ position: p }: { position: Position }) {
-  const { settings, account, setStatus, send } = useSession();
-  const [tokens, setTokens] = useState<[Token, Token]>();
-  const batchSupported = useBatchSupport();
-  const sqrtRatio = p.sqrtRatio;
-  const [recipient, setRecipient] = useState(account ?? "");
-  const [portion, setPortion] = useState(100);
-  const [slippage, setSlippage] = useState(50);
-  const deposit = usePositionDeposit(p, tokens);
-  useEffect(() => {
-    let active = true;
-    if (!account) return;
-    Promise.all([
-      token(settings, p.descriptor.poolKey.token0, account),
-      token(settings, p.descriptor.poolKey.token1, account),
-    ])
-      .then(([a, b]) => {
-        if (active) {
-          setTokens([a, b]);
-        }
-      })
-      .catch((e) => {
-        if (active) setStatus(errorMessage(e));
-      });
-    return () => {
-      active = false;
-    };
-  }, [account, settings, p.descriptor, setStatus]);
-  function deadline() {
-    return BigInt(Math.floor(Date.now() / 1000) + 1200);
-  }
-  function factor() {
-    if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
-      throw new Error("Invalid slippage.");
-    return BigInt(10000 - slippage);
-  }
-  async function withdraw(feesOnly: boolean) {
-    if (!Number.isInteger(portion) || portion < 1 || portion > 100)
-      throw new Error("Withdrawal percentage must be 1–100.");
-    const liquidity = feesOnly
-      ? 0n
-      : (p.amounts.liquidity * BigInt(portion)) / 100n;
-    const fraction = feesOnly ? 0n : BigInt(portion);
-    const min0 =
-      (((p.amounts.principal0 * fraction) / 100n + p.amounts.fees0) *
-        factor()) /
-      10000n;
-    const min1 =
-      (((p.amounts.principal1 * fraction) / 100n + p.amounts.fees1) *
-        factor()) /
-      10000n;
-    await send({
-      to: settings.manager,
-      data: managerData("multicall", [
-        [
-          managerData("withdraw", [
-            p.id,
-            liquidity,
-            getAddress(recipient),
-            min0,
-            min1,
-            deadline(),
-          ]),
-        ],
-      ]),
-    });
+  const { settings, busy } = useSession();
+  const actions = usePositionActions(p);
+  const { tokens } = actions;
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [mode, setMode] = useState<"add" | "withdraw">("add");
+  function open(next: typeof mode) {
+    setMode(next);
+    dialog.current?.showModal();
   }
   async function add() {
-    if (!tokens) throw new Error("Token metadata unavailable.");
-    if (!deposit.result)
-      throw new Error("Wait for the matching deposit amount.");
-    const { max0, max1, liquidity } = deposit.result;
-    const transaction = {
-      to: settings.manager,
-      data: managerData("addLiquidity", [
-        p.id,
-        {
-          maxAmount0: max0,
-          maxAmount1: max1,
-          minLiquidity: (liquidity * factor()) / 10000n,
-          deadline: deadline(),
-        },
-      ]),
-      value: p.descriptor.poolKey.token0 === zeroAddress ? max0 : 0n,
-    };
-    await send(
-      batchSupported
-        ? depositCalls(tokens, [max0, max1], settings.manager, transaction)
-        : transaction,
-    );
+    await actions.add();
+    dialog.current?.close();
   }
-  const image = metadataImage(p.metadata);
+  async function withdraw() {
+    await actions.withdraw(false);
+    dialog.current?.close();
+  }
   return (
     <div className="position-detail">
-      <h2>Position #{p.id.toString()}</h2>
-      <PositionStatus position={p} />
-      <PoolIdentity descriptor={p.descriptor} />
-      {image ? (
-        <details className="nft-metadata">
-          <summary>Position NFT</summary>
-          <img className="nft" src={image} alt={"On-chain position metadata"} />
-        </details>
-      ) : null}
-      {tokens ? (
-        <PricePreview
-          descriptor={p.descriptor}
-          sqrtRatio={sqrtRatio}
-          tokens={tokens}
-        />
-      ) : null}
-      {tokens ? (
-        <div className="grid">
-          {tokens.map((t, i) => (
-            <p key={t.address}>
-              <strong>{t.symbol}</strong>
-              {t.metadataMissing ? (
-                <small>
-                  Decimals unavailable: displayed and deposit amounts use raw
-                  integer units.
-                </small>
-              ) : null}
-              <br />
-              Principal:{" "}
-              {displayAmount(
-                i === 0 ? p.amounts.principal0 : p.amounts.principal1,
-                t.decimals,
-              )}
-              <br />
-              Uncollected fees:{" "}
-              {displayAmount(
-                i === 0 ? p.amounts.fees0 : p.amounts.fees1,
-                t.decimals,
-              )}
-            </p>
-          ))}
+      <div className="position-heading row spread">
+        <div>
+          <h2>
+            {tokens
+              ? `${tokens[0].symbol} / ${tokens[1].symbol}`
+              : "Manage position"}
+          </h2>
+          <p className="muted">
+            {networkName(settings.chainId, settings.name)} · Position #
+            {p.id.toString()}
+          </p>
+          <div className="row">
+            <PositionStatus position={p} />
+            <PoolIdentity descriptor={p.descriptor} />
+          </div>
         </div>
-      ) : null}
-      {tokens ? (
-        <PositionRange
-          position={p}
-          decimals={[tokens[0].decimals, tokens[1].decimals]}
-        />
-      ) : null}
-      <div className="grid">
-        <Field label={"Recipient address"}>
-          <input
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-          />
-        </Field>
-        <Field label={"Slippage (basis points)"}>
-          <input
-            type="number"
-            value={slippage}
-            onChange={(e) => setSlippage(Number(e.target.value))}
-          />
-        </Field>
+        <div className="row position-actions">
+          <button
+            onClick={() => open("add")}
+            aria-label="Add liquidity to position"
+          >
+            Add liquidity
+          </button>
+          <button onClick={() => open("withdraw")}>Withdraw</button>
+        </div>
       </div>
-      <fieldset>
-        <legend>Withdraw or collect</legend>
-        <Field label={"Withdraw percentage"}>
+      <div className="position-summary-grid">
+        <section className="position-summary">
+          <h3>Liquidity</h3>
+          <PositionAmounts position={p} tokens={tokens} fees={false} />
+        </section>
+        <section className="position-summary">
+          <div className="row spread">
+            <h3>Uncollected fees</h3>
+            <Action
+              run={() => actions.withdraw(true)}
+              disabled={p.amounts.fees0 === 0n && p.amounts.fees1 === 0n}
+            >
+              Collect fees
+            </Action>
+          </div>
+          <PositionAmounts position={p} tokens={tokens} fees />
+        </section>
+      </div>
+      <section className="position-summary">
+        <h3>Price range</h3>
+        {tokens ? (
+          <PositionRange
+            position={p}
+            decimals={[tokens[0].decimals, tokens[1].decimals]}
+            symbols={[tokens[0].symbol, tokens[1].symbol]}
+          />
+        ) : null}
+      </section>
+      <dialog
+        ref={dialog}
+        className="position-dialog"
+        aria-labelledby="position-dialog-title"
+        onCancel={(event) => {
+          if (busy) event.preventDefault();
+        }}
+      >
+        <div className="row spread">
+          <h2 id="position-dialog-title">
+            {mode === "add" ? "Add liquidity" : "Withdraw liquidity"}
+          </h2>
+          <button
+            aria-label="Close position dialog"
+            disabled={busy}
+            onClick={() => dialog.current?.close()}
+          >
+            ×
+          </button>
+        </div>
+        {mode === "add" ? (
+          <PositionDepositFields
+            batchSupported={actions.batchSupported}
+            position={p}
+            tokens={tokens}
+            deposit={actions.deposit}
+            add={add}
+          />
+        ) : (
+          <WithdrawalFields
+            position={p}
+            actions={actions}
+            withdraw={withdraw}
+          />
+        )}
+        <details className="transaction-settings">
+          <summary>Advanced</summary>
+          {mode === "withdraw" ? (
+            <Field label="Recipient address">
+              <input
+                value={actions.recipient}
+                onChange={(e) => actions.setRecipient(e.target.value)}
+              />
+            </Field>
+          ) : null}
+          <Field label="Slippage (basis points)">
+            <input
+              type="number"
+              min={0}
+              max={1000}
+              value={actions.slippage}
+              onChange={(e) => actions.setSlippage(Number(e.target.value))}
+            />
+          </Field>
+        </details>
+      </dialog>
+    </div>
+  );
+}
+
+function PositionAmounts({
+  position: p,
+  tokens,
+  fees,
+}: {
+  position: Position;
+  tokens?: [Token, Token];
+  fees: boolean;
+}) {
+  if (!tokens) return null;
+  const values = fees
+    ? [p.amounts.fees0, p.amounts.fees1]
+    : [p.amounts.principal0, p.amounts.principal1];
+  return (
+    <dl className="position-amounts">
+      {tokens.map((t, i) => (
+        <div key={t.address}>
+          <dt>
+            {t.symbol}
+            {t.metadataMissing ? (
+              <small>Raw units · decimals unavailable</small>
+            ) : null}
+          </dt>
+          <dd title={formatUnits(values[i], t.decimals)}>
+            {Number(formatUnits(values[i], t.decimals)).toLocaleString(
+              "en-US",
+              { maximumSignificantDigits: 6 },
+            )}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function WithdrawalFields({
+  position: p,
+  actions,
+  withdraw,
+}: {
+  position: Position;
+  actions: ReturnType<typeof usePositionActions>;
+  withdraw: () => Promise<void>;
+}) {
+  const fraction = BigInt(
+    Math.max(0, Math.min(100, Math.trunc(actions.portion || 0))),
+  );
+  return (
+    <div className="withdrawal-fields">
+      <Field label="Withdraw percentage">
+        <div className="withdraw-percentage">
           <input
             type="number"
             min={1}
             max={100}
-            value={portion}
-            onChange={(e) => setPortion(Number(e.target.value))}
+            value={actions.portion}
+            onChange={(e) => actions.setPortion(Number(e.target.value))}
           />
-        </Field>
-        <input
-          type="range"
-          aria-label={"Withdrawal portion"}
-          min={1}
-          max={100}
-          value={portion}
-          onChange={(event) => setPortion(Number(event.target.value))}
-        />
-        <div className="row">
-          {[25, 50, 75, 100].map((value) => (
-            <button
-              type="button"
-              key={value}
-              aria-pressed={portion === value}
-              onClick={() => setPortion(value)}
-            >
-              {value}%
-            </button>
-          ))}
+          <span>%</span>
         </div>
-        <p className="row">
-          <Action run={() => withdraw(false)}>
-            Withdraw liquidity and fees
-          </Action>
-          <Action run={() => withdraw(true)}>Collect fees</Action>
-        </p>
-      </fieldset>
-      <PositionDepositFields
-        batchSupported={batchSupported}
-        position={p}
-        tokens={tokens}
-        deposit={deposit}
-        add={add}
+      </Field>
+      <input
+        type="range"
+        aria-label="Withdrawal portion"
+        min={1}
+        max={100}
+        value={actions.portion}
+        onChange={(e) => actions.setPortion(Number(e.target.value))}
       />
-      <p className="row">
-        <Action
-          disabled={
-            p.amounts.liquidity !== 0n ||
-            p.amounts.fees0 !== 0n ||
-            p.amounts.fees1 !== 0n
-          }
-          run={() =>
-            send({ to: settings.manager, data: managerData("burn", [p.id]) })
-          }
-        >
-          Burn empty NFT
-        </Action>
-      </p>
+      <div className="withdraw-presets">
+        {[25, 50, 75, 100].map((value) => (
+          <button
+            key={value}
+            aria-pressed={actions.portion === value}
+            onClick={() => actions.setPortion(value)}
+          >
+            {value}%
+          </button>
+        ))}
+      </div>
+      <p className="muted">Includes all uncollected fees.</p>
+      <PositionAmounts
+        position={{
+          ...p,
+          amounts: {
+            ...p.amounts,
+            principal0:
+              (p.amounts.principal0 * fraction) / 100n + p.amounts.fees0,
+            principal1:
+              (p.amounts.principal1 * fraction) / 100n + p.amounts.fees1,
+          },
+        }}
+        tokens={actions.tokens}
+        fees={false}
+      />
+      <Action run={withdraw}>Withdraw liquidity and fees</Action>
     </div>
   );
 }

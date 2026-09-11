@@ -7,8 +7,8 @@ export function DeployPage() {
   if (!networks.length)
     return (
       <p>
-        Enable a network in Settings to deploy contracts.{" "}
-        <a href="#/settings">Settings</a>
+        Enable a network in Networks to deploy contracts.{" "}
+        <a href="#/networks">Networks</a>
       </p>
     );
   return (

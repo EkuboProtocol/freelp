@@ -30,7 +30,7 @@ export async function checkSdkParity() {
         side,
       );
       const expected = await client.readContract({
-        address: "0x573af249A268ed80c358dA77986D2e637978A611",
+        address: "0xF45a36e4FFbeaEBdCE8cc574f52039aeC6b468A1",
         abi: managerAbi,
         functionName: "quoteDeposit",
         args: [descriptor, tick, local.max0, local.max1],

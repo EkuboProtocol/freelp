@@ -32,7 +32,7 @@ export function CreatePage() {
   if (!network)
     return (
       <p role="alert">
-        Enable this network in Settings before using this link.
+        Enable this network in Networks before using this link.
       </p>
     );
   return (

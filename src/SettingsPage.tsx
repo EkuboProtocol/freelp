@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { MAINNET_CHAINS, chainDefinition, rpcEndpoint } from "./chains";
+import { MAINNET_CHAINS, rpcEndpoint } from "./chains";
 import { configuredNetwork } from "./networks";
 import { validateSettings } from "./config";
 import { rpc, useSession } from "./session";
@@ -13,8 +13,6 @@ export function SettingsPage() {
     busy: transactionBusy,
   } = useSession();
   const [search, setSearch] = useState("");
-  const [showAll, setShowAll] = useState(false);
-  const [limit, setLimit] = useState(40);
   const [editing, setEditing] = useState<Settings>();
   const [rpcUrl, setRpcUrl] = useState("");
   const [error, setError] = useState("");
@@ -22,8 +20,7 @@ export function SettingsPage() {
   const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const enabled = new Set(networks.map((network) => network.chainId));
-  const choices = availableChoices(showAll, search, networks);
-  const matches = choices.filter((chain) =>
+  const matches = MAINNET_CHAINS.filter((chain) =>
     `${chain.name} ${chain.id}`
       .toLowerCase()
       .includes(search.trim().toLowerCase()),
@@ -69,23 +66,20 @@ export function SettingsPage() {
     }
   }
   return (
-    <section>
+    <section className="networks-page">
       <h2>Networks</h2>
-      <p>
-        Enable the networks you use. Their names, native tokens and default RPCs
-        come from viem.
-      </p>
+      <p>Choose the networks you use and customize their RPC connections.</p>
       <input
+        className="network-search"
         aria-label={"Search networks"}
         placeholder={"Search networks"}
         value={search}
         onChange={(event) => {
           setSearch(event.target.value);
-          setLimit(40);
         }}
       />
       <div className="network-list">
-        {matches.slice(0, limit).map((chain) => (
+        {matches.map((chain) => (
           <div className="network-row" key={chain.id}>
             <label className="row">
               <input
@@ -115,21 +109,6 @@ export function SettingsPage() {
         ))}
       </div>
       {!matches.length ? <p>No matching networks.</p> : null}
-      {!search ? (
-        <button
-          onClick={() => {
-            setShowAll(!showAll);
-            setLimit(40);
-          }}
-        >
-          {showAll ? "Show enabled networks" : "Show all networks"}
-        </button>
-      ) : null}
-      {matches.length > limit ? (
-        <button onClick={() => setLimit((value) => value + 40)}>
-          Show more
-        </button>
-      ) : null}
       <dialog
         ref={dialog}
         className="network-dialog"
@@ -185,14 +164,4 @@ export function SettingsPage() {
       </dialog>
     </section>
   );
-}
-
-function availableChoices(
-  showAll: boolean,
-  search: string,
-  networks: Settings[],
-) {
-  return showAll || search
-    ? MAINNET_CHAINS
-    : networks.map((network) => chainDefinition(network.chainId));
 }

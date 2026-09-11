@@ -24,9 +24,11 @@ export function PositionStatus({ position }: { position: Position }) {
 export function PositionRange({
   position,
   decimals = [0, 0],
+  symbols,
 }: {
   position: Position;
   decimals?: [number, number];
+  symbols?: [string, string];
 }) {
   const lower = tickPrice(position.descriptor.tickLower, ...decimals);
   const upper = tickPrice(position.descriptor.tickUpper, ...decimals);
@@ -36,16 +38,31 @@ export function PositionRange({
   const marker = Math.max(0, Math.min(100, ratio * 100));
   return (
     <div className="position-range">
+      <div className="range-prices">
+        <div>
+          <span>Min price</span>
+          <strong>{displayPrice(lower)}</strong>
+        </div>
+        <div className="current-price">
+          <span>Current price</span>
+          <strong>{displayPrice(current)}</strong>
+        </div>
+        <div>
+          <span>Max price</span>
+          <strong>{displayPrice(upper)}</strong>
+        </div>
+      </div>
+      {symbols ? (
+        <p className="price-unit">
+          {symbols[1]} per {symbols[0]}
+        </p>
+      ) : null}
       <div
         className="position-range-track"
         role="img"
         aria-label={`Current price ${displayPrice(current)}; range ${displayPrice(lower)} to ${displayPrice(upper)}`}
       >
         <span style={{ left: `${Number.isFinite(marker) ? marker : 0}%` }} />
-      </div>
-      <div className="row spread">
-        <span>{displayPrice(lower)}</span>
-        <span>{displayPrice(upper)}</span>
       </div>
     </div>
   );

@@ -1,13 +1,9 @@
-import { positionState } from "./PositionRange";
-import { useState, lazy, Suspense } from "react";
+import { useState } from "react";
 import { useSession, NetworkScope } from "./session";
 import { usePortfolio } from "./usePortfolio";
 import { networkName } from "./networks";
-const PositionDetail = lazy(() =>
-  import("./PositionDetail").then((module) => ({
-    default: module.PositionDetail,
-  })),
-);
+import { PositionDetail } from "./PositionDetail";
+import { WalletConnectButton } from "./WalletConnectButton";
 import { PortfolioPosition } from "./PortfolioPosition";
 
 export function PositionsPage() {
@@ -15,7 +11,6 @@ export function PositionsPage() {
   const [refresh, setRefresh] = useState(0);
   const { rows, pending } = usePortfolio(refresh);
   const selected = location.hash.split("/").slice(2).join(":");
-  const [showClosed, setShowClosed] = useState(false);
   const positions = rows.flatMap((row) =>
     row.items.map((position) => ({
       settings: row.settings,
@@ -27,27 +22,22 @@ export function PositionsPage() {
     ({ settings, position }) =>
       `${settings.chainId}:${position.id}` === selected,
   );
-  const visible = positions.filter(
-    ({ position }) => showClosed || positionState(position) !== "closed",
-  );
   const errors = rows.filter((row) => row.error);
   return (
     <section>
       <div hidden={!!current}>
         <div className="row spread">
-          <h2>
-            Your positions <span className="muted">{positions.length}</span>
-          </h2>
-          <a className="primary-link" href="#/create">
-            Create position
-          </a>
+          <h2>Your positions</h2>
+          {account && positions.length ? (
+            <a className="primary-link" href="#/create">
+              Create position
+            </a>
+          ) : null}
         </div>
-        <p>
-          All networks. Positions, pool data, and fees are read together from
-          each chain.
-        </p>
         {!account ? (
-          <p>Connect a wallet to load positions directly from the chain.</p>
+          <div className="positions-empty">
+            <WalletConnectButton />
+          </div>
         ) : (
           <>
             <button
@@ -56,21 +46,8 @@ export function PositionsPage() {
             >
               Refresh positions
             </button>
-            {pending > 0 ? (
-              <p role="status">Reading {pending} networks…</p>
-            ) : null}
-            <div className="row portfolio-filters">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={showClosed}
-                  onChange={(e) => setShowClosed(e.target.checked)}
-                />
-                Show closed
-              </label>
-            </div>
             <div className="portfolio-positions">
-              {visible.map(({ settings, position }) => (
+              {positions.map(({ settings, position }) => (
                 <PortfolioPosition
                   key={`${settings.chainId}:${position.id}`}
                   settings={settings}
@@ -81,8 +58,15 @@ export function PositionsPage() {
                 />
               ))}
             </div>
-            {!pending && !visible.length ? (
-              <EmptyPositions total={positions.length} />
+            {!positions.length ? (
+              <div className="positions-empty" aria-busy={pending > 0}>
+                {!pending ? (
+                  <p>No positions found on the available networks.</p>
+                ) : null}
+                <a className="primary-link" href="#/create">
+                  Create position
+                </a>
+              </div>
             ) : null}
             {errors.length ? (
               <details className="network-errors">
@@ -108,30 +92,15 @@ export function PositionsPage() {
           <NetworkScope settings={current.settings}>
             <fieldset
               className="position-management"
+              aria-label="Manage position"
               disabled={busy || !current.fresh}
               aria-busy={!current.fresh}
             >
-              <legend>
-                Manage position ·{" "}
-                {networkName(current.settings.chainId, current.settings.name)}
-              </legend>
-              <Suspense fallback={<p role="status">Loading…</p>}>
-                <PositionDetail key={selected} position={current.position} />
-              </Suspense>
+              <PositionDetail key={selected} position={current.position} />
             </fieldset>
           </NetworkScope>
         </>
       ) : null}
     </section>
-  );
-}
-
-function EmptyPositions({ total }: { total: number }) {
-  return (
-    <p>
-      {total
-        ? "No open positions. Enable Show closed to view closed positions."
-        : "No positions found on the available networks."}
-    </p>
   );
 }

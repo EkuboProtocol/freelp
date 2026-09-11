@@ -31,7 +31,7 @@ export async function executeBatch(
     .simulateCalls({ account, calls: batch })
     .catch(() => {
       throw new Error(
-        "Unable to simulate this batch. Change this network’s RPC URL in Settings and retry.",
+        "Unable to simulate this batch. Change this network’s RPC URL in Networks and retry.",
       );
     });
   if (simulation.results.some((result) => result.status !== "success"))

@@ -1,3 +1,5 @@
+import { executeBatch } from "./walletBatch";
+import { executeTransaction } from "./transactions";
 import { errorMessage } from "./errors";
 import { ensureNativeCurrency } from "./tokens";
 import {
@@ -130,18 +132,8 @@ function useSessionState() {
     setStatus("Simulating and requesting wallet confirmation…");
     try {
       const receipt = await (Array.isArray(tx)
-        ? (await import("./walletBatch")).executeBatch(
-            wallet.provider,
-            account,
-            target,
-            tx,
-          )
-        : (await import("./transactions")).executeTransaction(
-            wallet.provider,
-            account,
-            target,
-            tx,
-          ));
+        ? executeBatch(wallet.provider, account, target, tx)
+        : executeTransaction(wallet.provider, account, target, tx));
       setStatus(`Confirmed: ${receipt.transactionHash}`);
       return receipt;
     } catch (error) {

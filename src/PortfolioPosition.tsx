@@ -1,7 +1,5 @@
 import { PoolIdentity } from "./PoolIdentity";
 import { PositionStatus, PositionRange } from "./PositionRange";
-import type { Currency } from "./tokens";
-import { displayPrice, tickPrice } from "./prices";
 import { networkCurrencies } from "./tokens";
 import { networkName } from "./networks";
 import { displayAmount } from "./displayAmount";
@@ -42,36 +40,16 @@ export function PortfolioPosition({
         Uncollected fees: {amount(p.amounts.fees0, 0)} /{" "}
         {amount(p.amounts.fees1, 1)}
       </p>
-      <PositionRangePrice tokens={tokens} position={p} />
       {tokens[0] && tokens[1] ? (
         <PositionRange
           position={p}
           decimals={[tokens[0].decimals, tokens[1].decimals]}
+          symbols={[tokens[0].symbol, tokens[1].symbol]}
         />
       ) : null}
       <button aria-label={`Manage position #${p.id}`} onClick={onSelect}>
         Manage position
       </button>
     </article>
-  );
-}
-
-function PositionRangePrice({
-  tokens,
-  position: p,
-}: {
-  tokens: (Currency | undefined)[];
-  position: Position;
-}) {
-  const [a, b] = tokens;
-  if (!a || !b) return null;
-  return (
-    <p>
-      Price range:{" "}
-      {displayPrice(tickPrice(p.descriptor.tickLower, a.decimals, b.decimals))}{" "}
-      —{" "}
-      {displayPrice(tickPrice(p.descriptor.tickUpper, a.decimals, b.decimals))}{" "}
-      {b.symbol} per {a.symbol}
-    </p>
   );
 }

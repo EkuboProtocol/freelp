@@ -60,7 +60,7 @@ test("create links restore all pool parameters and amounts on reload and history
     ...form,
     amplification: "26",
   });
-  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await page.getByRole("link", { name: "Networks", exact: true }).click();
   await page.goBack();
   await expect(page.getByTestId("deposit-amount-0")).toHaveValue("1.25");
   expect(page.url()).toBe(saved);

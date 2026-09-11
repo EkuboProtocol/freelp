@@ -22,8 +22,7 @@ export function PositionDepositFields({
     position.descriptor.poolKey.token1,
   ];
   return (
-    <fieldset className="position-deposit">
-      <legend>Add liquidity</legend>
+    <fieldset className="position-deposit" aria-label="Deposit amounts">
       <div className="grid deposit-inputs">
         {addresses.map((address, i) => (
           <div key={address} className="deposit-input">

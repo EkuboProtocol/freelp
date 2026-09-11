@@ -1,19 +1,11 @@
 import { useCopied } from "./useCopied";
 import { AccountControl } from "./AccountControl";
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "./session";
-const SettingsPage = lazy(() =>
-  import("./SettingsPage").then((module) => ({ default: module.SettingsPage })),
-);
-const TermsPage = lazy(() =>
-  import("./TermsPage").then((module) => ({ default: module.TermsPage })),
-);
-const DeployPage = lazy(() =>
-  import("./DeployPage").then((module) => ({ default: module.DeployPage })),
-);
-const CreatePage = lazy(() =>
-  import("./CreatePage").then((module) => ({ default: module.CreatePage })),
-);
+import { SettingsPage } from "./SettingsPage";
+import { TermsPage } from "./TermsPage";
+import { DeployPage } from "./DeployPage";
+import { CreatePage } from "./CreatePage";
 import { PositionsPage } from "./PositionsPage";
 function BuildPage() {
   return (
@@ -58,6 +50,7 @@ function BuildPage() {
 function Page({ route }: { route: string }) {
   switch (route.split("?")[0]) {
     case "#/settings":
+    case "#/networks":
       return <SettingsPage />;
     case "#/terms":
       return <TermsPage />;
@@ -111,12 +104,10 @@ export function App() {
         </div>
       ) : null}
       <div id="main-content" tabIndex={-1}>
-        <Suspense fallback={<p role="status">Loading…</p>}>
-          <Page
-            key={route.split("?")[0].split("/")[1] || "positions"}
-            route={route}
-          />
-        </Suspense>
+        <Page
+          key={route.split("?")[0].split("/")[1] || "positions"}
+          route={route}
+        />
       </div>
       <footer className="row">
         <a href="#/terms">Terms</a>
@@ -141,10 +132,14 @@ function MainNavigation({ route }: { route: string }) {
         Positions
       </a>
       <a
-        href="#/settings"
-        aria-current={route.startsWith("#/settings") ? "page" : undefined}
+        href="#/networks"
+        aria-current={
+          route.startsWith("#/networks") || route.startsWith("#/settings")
+            ? "page"
+            : undefined
+        }
       >
-        Settings
+        Networks
       </a>
       <a
         href="#/deploy"

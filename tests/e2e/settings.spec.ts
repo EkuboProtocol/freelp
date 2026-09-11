@@ -1,6 +1,10 @@
 import { mockDeployments } from "../support/deploymentRpc";
 import { readCreateForm } from "../../src/createForm";
-import { chainDefinition, DEFAULT_CHAIN_IDS } from "../../src/chains";
+import {
+  chainDefinition,
+  DEFAULT_CHAIN_IDS,
+  MAINNET_CHAINS,
+} from "../../src/chains";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
@@ -8,7 +12,7 @@ test("viem mainnet catalog enables only the chosen 11 by default and persists to
   page,
 }) => {
   await page.goto("/#/settings");
-  await expect(page.locator(".network-row")).toHaveCount(11);
+  await expect(page.locator(".network-row")).toHaveCount(MAINNET_CHAINS.length);
   await expect(
     page.getByRole("button", { name: "Add network", exact: true }),
   ).toHaveCount(0);
@@ -46,10 +50,10 @@ test("viem mainnet catalog enables only the chosen 11 by default and persists to
     .getByRole("checkbox", { name: "Enable Ethereum", exact: true })
     .uncheck();
   await page.reload();
-  await expect(page.locator(".network-row")).toHaveCount(11);
+  await expect(page.locator(".network-row")).toHaveCount(MAINNET_CHAINS.length);
   await expect(
     page.getByRole("checkbox", { name: "Enable Ethereum", exact: true }),
-  ).toHaveCount(0);
+  ).not.toBeChecked();
   preferences = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("freelp:chainPreferences")!),
   );
@@ -129,14 +133,14 @@ test("all chains may be disabled without deployment RPC requests or silent re-en
   for (let i = 0; i < 11; i++)
     await page.getByRole("checkbox", { checked: true }).first().click();
   await page.reload();
-  await expect(page.locator(".network-row")).toHaveCount(0);
+  await expect(page.getByRole("checkbox", { checked: true })).toHaveCount(0);
   await page.goto("/#/deploy");
   await expect(
-    page.getByText("Enable a network in Settings to deploy contracts."),
+    page.getByText("Enable a network in Networks to deploy contracts."),
   ).toBeVisible();
   await page.goto("/#/create");
   await expect(
-    page.getByText("Enable this network in Settings before using this link."),
+    page.getByText("Enable this network in Networks before using this link."),
   ).toBeVisible();
   expect(requests).toEqual([]);
 });
@@ -149,9 +153,8 @@ test("positions expose creation while header and app omit removed controls and I
   await expect(
     page.locator("header").getByRole("link", { name: "Create", exact: true }),
   ).toHaveCount(0);
-  await page
-    .getByRole("link", { name: "Create position", exact: true })
-    .click();
+  await expect(page.getByRole("button", { name: "Connect wallet", exact: true })).toBeVisible();
+  await page.goto("/#/create");
   await expect(
     page.getByRole("button", { name: "Select first token" }),
   ).toBeVisible();

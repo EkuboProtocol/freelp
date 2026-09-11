@@ -139,7 +139,7 @@ for (const { missingDecimals, native, batch } of [
         ? (BigInt(value) * 10n ** 18n).toString()
         : value.toString();
     const core = "0x00000000000014aA86C5d3c41765bb24e11bd701";
-    const manager = "0x573af249A268ed80c358dA77986D2e637978A611";
+    const manager = "0xF45a36e4FFbeaEBdCE8cc574f52039aeC6b468A1";
     const tokens = [
       native ? zeroAddress : await deploy(tokenArtifact, [account.address]),
       await deploy(tokenArtifact, [account.address]),
@@ -366,7 +366,7 @@ for (const { missingDecimals, native, batch } of [
       page.getByRole("button", { name: "Deploy FreeLP", exact: true }),
     ).toHaveCount(0);
     expect(deploymentAddress("FreeLP", deployedCore as Hex)).toBe(
-      "0x573af249A268ed80c358dA77986D2e637978A611",
+      "0xF45a36e4FFbeaEBdCE8cc574f52039aeC6b468A1",
     );
     await expect(
       prepareDeployment(
@@ -477,6 +477,10 @@ for (const { missingDecimals, native, batch } of [
     await page.goBack();
     await expect(page.locator(".portfolio-positions")).toBeVisible();
     await page.goForward();
+    await capturePosition(page);
+    await page
+      .getByRole("button", { name: "Add liquidity to position", exact: true })
+      .click();
     await expect(page.getByTestId("position-amount-1")).toBeVisible();
     await page.screenshot({
       path: test.info().outputPath("manage-position.png"),
@@ -535,16 +539,14 @@ for (const { missingDecimals, native, batch } of [
     await page
       .getByRole("button", { name: "Manage position #1", exact: true })
       .click();
-    await page
-      .getByRole("button", { name: "Collect fees", exact: true })
-      .click();
-    await expect(page.locator(".status[role=status]")).toContainText(
-      "Confirmed:",
-    );
+    await expect(
+      page.getByRole("button", { name: "Collect fees", exact: true }),
+    ).toBeDisabled();
     const accessibility = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
       .analyze();
     expect(accessibility.violations).toEqual([]);
+    await page.getByRole("button", { name: "Withdraw", exact: true }).click();
     await page.getByLabel("Withdraw percentage").fill("50");
     await page
       .getByRole("button", { name: "Withdraw liquidity and fees" })
@@ -552,14 +554,11 @@ for (const { missingDecimals, native, batch } of [
     await expect(page.locator(".status[role=status]")).toContainText(
       "Confirmed:",
     );
+    await page.getByRole("button", { name: "Withdraw", exact: true }).click();
     await page.getByLabel("Withdraw percentage").fill("100");
     await page
       .getByRole("button", { name: "Withdraw liquidity and fees" })
       .click();
-    await expect(
-      page.getByRole("button", { name: "Burn empty NFT" }),
-    ).toBeEnabled({ timeout: 30000 });
-    await page.getByRole("button", { name: "Burn empty NFT" }).click();
     await expect(
       page.getByText("No positions found on the available networks."),
     ).toBeVisible();
@@ -754,14 +753,11 @@ async function checkStableCreation(
   await page
     .getByRole("button", { name: "Manage position #2", exact: true })
     .click();
+  await page.getByRole("button", { name: "Withdraw", exact: true }).click();
   await page.getByLabel("Withdraw percentage").fill("100");
   await page
     .getByRole("button", { name: "Withdraw liquidity and fees" })
     .click();
-  await expect(
-    page.getByRole("button", { name: "Burn empty NFT" }),
-  ).toBeEnabled();
-  await page.getByRole("button", { name: "Burn empty NFT" }).click();
   await expect(
     page.getByText("No positions found on the available networks."),
   ).toBeVisible();
@@ -769,4 +765,25 @@ async function checkStableCreation(
 
 function approvalCount(batch: boolean, native: boolean) {
   return batch ? 0 : native ? 1 : 2;
+}
+
+async function capturePosition(page: Page) {
+  await expect(page.locator(".current-price strong").last()).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Burn|Transfer NFT/ }),
+  ).toHaveCount(0);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+    ).toBe(false);
+    await page.screenshot({
+      path: test.info().outputPath(`position-summary-${width}.png`),
+      fullPage: true,
+    });
+  }
+  await page.setViewportSize({ width: 1280, height: 720 });
 }
