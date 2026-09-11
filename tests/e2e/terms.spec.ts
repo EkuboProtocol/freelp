@@ -1,3 +1,4 @@
+import { chainDefinition } from "../../src/chains";
 import { test, expect } from "@playwright/test";
 
 for (const storageAvailable of [true, false]) {
@@ -56,16 +57,19 @@ for (const storageAvailable of [true, false]) {
       },
       { storageAvailable },
     );
-    await page.route("https://ethereum-rpc.publicnode.com/", async (route) => {
-      const body = route.request().postDataJSON();
-      await route.fulfill({
-        json: {
-          jsonrpc: "2.0",
-          id: body.id,
-          result: body.method === "eth_chainId" ? "0x1" : "0x",
-        },
-      });
-    });
+    await page.route(
+      chainDefinition(1).rpcUrls.default.http[0],
+      async (route) => {
+        const body = route.request().postDataJSON();
+        await route.fulfill({
+          json: {
+            jsonrpc: "2.0",
+            id: body.id,
+            result: body.method === "eth_chainId" ? "0x1" : "0x",
+          },
+        });
+      },
+    );
     await page.goto("/#/terms");
     await expect(
       page.getByRole("heading", { name: "No warranties or guarantees" }),

@@ -1,9 +1,9 @@
+import { floatSqrtRatioToFixed, toSqrtRatio } from "@ekubo/sdk";
 import fetcherArtifact from "../artifacts/FreeLPDataFetcher.json" with { type: "json" };
 import { quoteFetcher } from "./poolData";
 import { networkCurrencies } from "./tokens";
 import { t } from "@lingui/core/macro";
 import { getAddress, zeroAddress } from "viem";
-import { read } from "./contracts";
 import { rpc } from "./rpc";
 import { poolConfig, poolRange, type PoolOptions } from "./poolOptions";
 import { parseAmount } from "./amounts";
@@ -24,8 +24,9 @@ type Input = {
   options: PoolOptions;
   initialized: boolean;
   revision: number;
+  state: import("./quoteData").QuoteDataFetcherResult;
 };
-async function loadTokens(input: Input, blockNumber: bigint) {
+async function loadTokens(input: Input) {
   const metadata = networkCurrencies(input.settings);
   const tokens = [input.a, input.b].map((address) => {
     const currency = metadata.find(
@@ -47,7 +48,6 @@ async function loadTokens(input: Input, blockNumber: bigint) {
           tokens.map((token) => token.address),
           [input.settings.manager],
         ],
-        blockNumber,
       })) as [
         { token: Address; amount: bigint }[],
         { token: Address; spender: Address; amount: bigint }[],
@@ -108,11 +108,12 @@ export async function loadDepositQuote(input: Input) {
     input.initialized,
     input.options,
   );
-  const {
-    block,
-    tokens,
-    state: [sqrtRatio, tick],
-  } = await snapshot(input, poolKey);
+  const tokens = await snapshot(input);
+  const sqrtRatio =
+    input.state.sqrtRatio === 0n
+      ? 0n
+      : floatSqrtRatioToFixed(input.state.sqrtRatio);
+  const tick = input.state.tick;
   const [max0, max1] = amounts;
   const { lower, upper, initial } = poolRange(
     range,
@@ -123,20 +124,11 @@ export async function loadDepositQuote(input: Input) {
   );
   const descriptor = { poolKey, tickLower: lower, tickUpper: upper };
   const currentTick = sqrtRatio === 0n ? initial : tick;
-  if (
-    (input.specified === 0 && currentTick >= upper) ||
-    (input.specified === 1 && currentTick <= lower)
-  )
-    throw new Error(
-      t`This token is not needed for the selected range. Enter an amount for the other token.`,
-    );
-  const result = await quoteDeposit(
-    settings,
+  assertNeededToken(input.specified, currentTick, lower, upper);
+  const result = quoteDeposit(
     descriptor,
-    initial,
+    sqrtRatio || toSqrtRatio(initial, "evm"),
     [max0, max1],
-    block,
-    currentTick,
     input.specified,
   );
   return {
@@ -150,40 +142,34 @@ export async function loadDepositQuote(input: Input) {
   };
 }
 
-const snapshots = new Map<
-  string,
-  { expires: number; value: ReturnType<typeof readSnapshot> }
->();
-function snapshot(input: Input, poolKey: Parameters<typeof readSnapshot>[1]) {
+const snapshots = new Map<string, { value: ReturnType<typeof loadTokens> }>();
+function snapshot(input: Input) {
   const key = JSON.stringify([
     input.settings,
     input.account,
     input.revision,
-    poolKey,
+    input.a,
+    input.b,
   ]);
   const existing = snapshots.get(key);
-  if (existing && existing.expires > Date.now()) return existing.value;
-  const value = readSnapshot(input, poolKey);
-  snapshots.set(key, { value, expires: Date.now() + 15000 });
+  if (existing) return existing.value;
+  const value = loadTokens(input);
+  snapshots.set(key, { value });
   if (snapshots.size > 16) snapshots.delete(snapshots.keys().next().value!);
   void value.catch(() => {
     if (snapshots.get(key)?.value === value) snapshots.delete(key);
   });
   return value;
 }
-async function readSnapshot(
-  input: Input,
-  poolKey: import("./types").Descriptor["poolKey"],
+
+function assertNeededToken(
+  side: 0 | 1,
+  tick: number,
+  lower: number,
+  upper: number,
 ) {
-  const block = await rpc(input.settings).getBlockNumber();
-  const [tokens, state] = await Promise.all([
-    loadTokens(input, block),
-    read<[bigint, number, bigint]>(
-      input.settings,
-      "poolState",
-      [poolKey],
-      block,
-    ),
-  ]);
-  return { block, tokens, state };
+  if ((side === 0 && tick >= upper) || (side === 1 && tick <= lower))
+    throw new Error(
+      t`This token is not needed for the selected range. Enter an amount for the other token.`,
+    );
 }

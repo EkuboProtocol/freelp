@@ -1,104 +1,75 @@
 import { mockDeployments } from "../support/deploymentRpc";
 import { readCreateForm } from "../../src/createForm";
+import { chainDefinition, DEFAULT_CHAIN_IDS } from "../../src/chains";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { DEFAULT_CONTRACTS } from "../../src/deployments";
 
-test("RPC-only add dialog detects networks, rejects failures and persists fixed contracts", async ({
+test("viem mainnet catalog enables only the chosen 11 by default and persists toggles", async ({
   page,
 }) => {
-  await page.addInitScript(() =>
-    localStorage.setItem(
-      "freelp:settings",
-      JSON.stringify({ chainId: {}, nativeSymbol: {} }),
-    ),
-  );
-  let available = false;
-  const url = "http://127.0.0.1:18545/settings-test";
-  await page.route(url, async (route) => {
-    const body = route.request().postDataJSON();
-    expect(body.method).toBe("eth_chainId");
-    await route.fulfill({
-      json: {
-        jsonrpc: "2.0",
-        id: body.id,
-        ...(available
-          ? { result: "0x7a69" }
-          : { error: { code: -32000, message: "RPC unavailable" } }),
-      },
-    });
-  });
   await page.goto("/#/settings");
   await expect(page.locator(".network-row")).toHaveCount(11);
   await expect(
-    page.getByRole("button", {
-      name: /Import settings|Export settings|Verify contracts/,
-    }),
+    page.getByRole("button", { name: "Add network", exact: true }),
   ).toHaveCount(0);
-  await page.getByRole("button", { name: "Add network", exact: true }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByLabel("RPC URL")).toBeFocused();
-  await expect(dialog.locator("input")).toHaveCount(5);
-  await expect(
-    dialog.getByLabel("Network name", { exact: true }),
-  ).toHaveAttribute("placeholder", "Ethereum");
-  await dialog.getByLabel("RPC URL").fill(url);
-  await dialog
-    .getByLabel("Network name", { exact: true })
-    .fill("My custom chain");
-  await dialog.getByLabel("Native token symbol").fill("TST");
-  await dialog.getByLabel("Native token name").fill("Test Coin");
-  await dialog.getByLabel("Native token decimals").fill("6");
-  await dialog.getByRole("button", { name: "Save network" }).click();
-  await expect(dialog.getByRole("alert")).toContainText(
-    "Could not load data from this network",
-  );
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  available = true;
-  await dialog.getByRole("button", { name: "Save network" }).click();
-  await expect(dialog).not.toBeVisible();
-  await expect(
-    page.locator(".network-row").filter({ hasText: "My custom chain" }),
-  ).toContainText(url);
-  const saved = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("freelp:settings")!),
-  );
-  expect(saved).toMatchObject({
-    ...DEFAULT_CONTRACTS,
-    chainId: 31337,
-    rpcUrl: url,
-    name: "My custom chain",
-    nativeSymbol: "TST",
-    nativeName: "Test Coin",
-    nativeDecimals: 6,
+  await expect(page.getByLabel("Native token symbol")).toHaveCount(0);
+  await expect(page.getByRole("checkbox", { checked: true })).toHaveCount(11);
+  expect(
+    await page.evaluate(() => localStorage.getItem("freelp:chainPreferences")),
+  ).toBeNull();
+  await page.getByLabel("Search networks").fill("43114");
+  const avalanche = page.getByRole("checkbox", {
+    name: `Enable ${chainDefinition(43114).name}`,
+    exact: true,
   });
-  const nativeTokens = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("freelp:tokens:31337")!).filter(
+  await expect(avalanche).not.toBeChecked();
+  await avalanche.check();
+  let preferences = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("freelp:chainPreferences")!),
+  );
+  expect(preferences.enabledChainIds).toEqual([...DEFAULT_CHAIN_IDS, 43114]);
+  expect(preferences.rpcOverrides).toEqual({});
+  const native = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("freelp:tokens:43114")!).filter(
       (token: { address: string }) =>
         token.address === "0x0000000000000000000000000000000000000000",
     ),
   );
-  expect(nativeTokens).toEqual([
+  expect(native).toEqual([
     {
       address: "0x0000000000000000000000000000000000000000",
-      symbol: "TST",
-      name: "Test Coin",
-      decimals: 6,
+      ...chainDefinition(43114).nativeCurrency,
     },
   ]);
+  await page.getByLabel("Search networks").fill("Ethereum");
+  await page
+    .getByRole("checkbox", { name: "Enable Ethereum", exact: true })
+    .uncheck();
   await page.reload();
+  await expect(page.locator(".network-row")).toHaveCount(11);
   await expect(
-    page.locator(".network-row").filter({ hasText: "My custom chain" }),
-  ).toContainText(url);
+    page.getByRole("checkbox", { name: "Enable Ethereum", exact: true }),
+  ).toHaveCount(0);
+  preferences = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("freelp:chainPreferences")!),
+  );
+  expect(preferences.enabledChainIds).not.toContain(1);
+  expect(preferences.rpcOverrides).toEqual({});
+  await page.getByLabel("Search networks").fill("Sepolia");
+  await expect(page.locator(".network-row")).toHaveCount(0);
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
-test("editing an RPC checks chain identity and preserves other networks", async ({
+test("RPC overrides start empty, verify the catalog chain ID, and reset to viem defaults", async ({
   page,
 }) => {
   const url = "http://127.0.0.1:18545/base";
-  let chain = "0x1";
+  let chain = "0x1",
+    requests = 0;
   await page.route(url, async (route) => {
     const body = route.request().postDataJSON();
+    requests++;
+    expect(body.method).toBe("eth_chainId");
     await route.fulfill({
       json: { jsonrpc: "2.0", id: body.id, result: chain },
     });
@@ -107,22 +78,68 @@ test("editing an RPC checks chain identity and preserves other networks", async 
   await page
     .getByRole("button", { name: "Edit Base RPC", exact: true })
     .click();
-  const dialog = page.getByRole("dialog");
-  await dialog.getByLabel("RPC URL").fill(url);
-  await dialog.getByRole("button", { name: "Save network" }).click();
+  const dialog = page.getByRole("dialog"),
+    input = dialog.getByLabel("RPC URL override");
+  await expect(input).toHaveValue("");
+  await expect(input).toHaveAttribute(
+    "placeholder",
+    chainDefinition(8453).rpcUrls.default.http[0],
+  );
+  await input.fill(url);
+  await dialog.getByRole("button", { name: "Save RPC", exact: true }).click();
   await expect(dialog.getByRole("alert")).toContainText("Expected chain 8453");
   chain = "0x2105";
-  await dialog.getByRole("button", { name: "Save network" }).click();
+  await dialog.getByRole("button", { name: "Save RPC", exact: true }).click();
   await expect(dialog).not.toBeVisible();
+  expect(
+    await page.evaluate(
+      () =>
+        JSON.parse(localStorage.getItem("freelp:chainPreferences")!)
+          .rpcOverrides,
+    ),
+  ).toEqual({ "8453": url });
   await page.reload();
+  await page
+    .getByRole("button", { name: "Edit Base RPC", exact: true })
+    .click();
+  await expect(input).toHaveValue(url);
+  await dialog
+    .getByRole("button", { name: "Use default RPC", exact: true })
+    .click();
+  await dialog.getByRole("button", { name: "Save RPC", exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  expect(requests).toBe(2);
+  expect(
+    await page.evaluate(
+      () =>
+        JSON.parse(localStorage.getItem("freelp:chainPreferences")!)
+          .rpcOverrides,
+    ),
+  ).toEqual({});
+});
+
+test("all chains may be disabled without deployment RPC requests or silent re-enabling", async ({
+  page,
+}) => {
+  const requests: string[] = [];
+  await page.route("https://**", (route) => {
+    requests.push(route.request().url());
+    return route.abort();
+  });
+  await page.goto("/#/settings");
+  for (let i = 0; i < 11; i++)
+    await page.getByRole("checkbox", { checked: true }).first().click();
+  await page.reload();
+  await expect(page.locator(".network-row")).toHaveCount(0);
+  await page.goto("/#/deploy");
   await expect(
-    page.locator(".network-row").filter({
-      has: page.getByRole("button", { name: "Edit Base RPC", exact: true }),
-    }),
-  ).toContainText(url);
+    page.getByText("Enable a network in Settings to deploy contracts."),
+  ).toBeVisible();
+  await page.goto("/#/create");
   await expect(
-    page.locator(".network-row").filter({ hasText: "Arbitrum" }),
-  ).toContainText("https://arb1.arbitrum.io/rpc");
+    page.getByText("Enable this network in Settings before using this link."),
+  ).toBeVisible();
+  expect(requests).toEqual([]);
 });
 
 test("positions expose creation while header and app omit removed controls and IPFS", async ({

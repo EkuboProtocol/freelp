@@ -29,13 +29,14 @@ test("create links restore all pool parameters and amounts on reload and history
     slippage: 77,
   };
   await page.goto("/" + createFormHash(form));
-  await page.getByText("Advanced pool settings", { exact: true }).click();
+  await page.getByRole("switch", { name: "Advanced", exact: true }).click();
   await expect(page.getByLabel("Pool type", { exact: true })).toHaveValue(
     "stable",
   );
   await expect(page.getByLabel("Extension address")).toHaveValue(
     form.extension,
   );
+  await page.getByLabel("Enter exact amount").check();
   await expect(page.getByLabel("Exact fee (uint64)")).toHaveValue(
     form.exactFee,
   );
@@ -46,14 +47,14 @@ test("create links restore all pool parameters and amounts on reload and history
   await expect(
     page.getByLabel("Calculate the matching token amount"),
   ).toHaveCount(0);
-  await expect(page.locator(".pool-options")).toBeVisible();
+  await expect(page.locator(".pool-options")).toBeHidden();
   await page.getByLabel("Amplification exponent").fill("26");
   await expect
     .poll(() => readCreateForm(new URL(page.url()).hash, 1).amplification)
     .toBe("26");
   const saved = page.url();
   await page.reload();
-  await page.getByText("Advanced pool settings", { exact: true }).click();
+  await page.getByRole("switch", { name: "Advanced", exact: true }).click();
   await expect(page.getByLabel("Amplification exponent")).toHaveValue("26");
   expect(readCreateForm(new URL(page.url()).hash, 1)).toEqual({
     ...form,
@@ -74,7 +75,7 @@ test("pool fee editors stay synchronized and deposit amounts follow pool configu
   await page.goto(
     "/#/create?chain=8453&a=0x0000000000000000000000000000000000000000&b=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   );
-  await page.getByText("Advanced pool settings", { exact: true }).click();
+  await page.getByRole("switch", { name: "Advanced", exact: true }).click();
   await expect(page.getByLabel("Slippage (basis points)")).toBeVisible();
   await expect(page.getByLabel("Token 0 address", { exact: true })).toHaveCount(
     0,
@@ -85,13 +86,16 @@ test("pool fee editors stay synchronized and deposit amounts follow pool configu
   const percent = page.getByLabel("Pool fee (%)", { exact: true });
   const exact = page.getByLabel("Exact fee (uint64)");
   await percent.fill("0.3");
+  await page.getByLabel("Enter exact amount").check();
   await expect(exact).toHaveValue("55340232221128654");
   await exact.fill("9223372036854775808");
+  await page.getByLabel("Enter exact amount").uncheck();
   await expect(percent).toHaveValue("50");
   await percent.fill("0.05");
+  await page.getByLabel("Enter exact amount").check();
   await expect(exact).toHaveValue("9223372036854775");
   const amount = page.getByTestId("deposit-amount-0");
-  const range = page.getByRole("group", { name: "Price range", exact: true });
+  const range = page.locator(".range-section");
   expect(
     await range.evaluate((element) => {
       const amount = document.querySelector(

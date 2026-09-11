@@ -1,7 +1,8 @@
 import { decimalDisplay } from "./decimalFormat";
 import { checkSpacing } from "./pools";
 
-export const MAX_TICK = 88722835;
+export { EVM_MAX_TICK as MAX_TICK } from "@ekubo/sdk";
+import { EVM_MAX_TICK as MAX_TICK } from "@ekubo/sdk";
 const LOG_STEP = Math.log1p(0.000001);
 export type RangeInput = {
   raw: boolean;
@@ -76,7 +77,7 @@ function bounds(input: RangeInput, decimals0: number, decimals1: number) {
     priceToTick(input.prices[1], decimals0, decimals1, input.spacing, "round"),
   ];
 }
-/** Display only; deposits and slippage limits use the contract's integer quote. */
+/** Display only; deposits and slippage limits use SDK integer math. */
 export function tickPrice(tick: number, decimals0: number, decimals1: number) {
   return Math.exp(tick * LOG_STEP + (decimals0 - decimals1) * Math.LN10);
 }

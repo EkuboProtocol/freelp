@@ -1,118 +1,77 @@
-import { retiredDefault } from "./retiredNetworks";
-import { DEFAULT_CONTRACTS } from "./deployments";
+import { chainDefinition, chainSettings, DEFAULT_CHAIN_IDS } from "./chains";
+import { legacyNetworkPreferences } from "./legacyNetworkPreferences";
 import { load, save } from "./storage";
 import { validateSettings } from "./config";
 import type { Settings } from "./types";
-
-export const NETWORKS = [
-  {
-    chainId: 4663,
-    name: "Robinhood Chain",
-    nativeSymbol: "ETH",
-    rpcUrl: "https://rpc.mainnet.chain.robinhood.com",
-  },
-  {
-    chainId: 8453,
-    name: "Base",
-    nativeSymbol: "ETH",
-    rpcUrl: "https://mainnet.base.org",
-  },
-  {
-    chainId: 42161,
-    name: "Arbitrum",
-    nativeSymbol: "ETH",
-    rpcUrl: "https://arb1.arbitrum.io/rpc",
-  },
-  {
-    chainId: 1,
-    name: "Ethereum",
-    nativeSymbol: "ETH",
-    rpcUrl: "https://ethereum-rpc.publicnode.com",
-  },
-  {
-    chainId: 10,
-    name: "Optimism",
-    rpcUrl: "https://mainnet.optimism.io",
-    nativeSymbol: "ETH",
-  },
-  {
-    chainId: 56,
-    name: "BNB Smart Chain",
-    rpcUrl: "https://bsc-rpc.publicnode.com",
-    nativeSymbol: "BNB",
-  },
-  {
-    chainId: 100,
-    name: "Gnosis",
-    rpcUrl: "https://rpc.gnosischain.com",
-    nativeSymbol: "XDAI",
-  },
-  {
-    chainId: 130,
-    name: "Unichain",
-    rpcUrl: "https://mainnet.unichain.org",
-    nativeSymbol: "ETH",
-  },
-  {
-    chainId: 137,
-    name: "Polygon",
-    rpcUrl: "https://polygon-bor-rpc.publicnode.com",
-    nativeSymbol: "POL",
-  },
-  {
-    chainId: 143,
-    name: "Monad",
-    rpcUrl: "https://rpc.monad.xyz",
-    nativeSymbol: "MON",
-  },
-  {
-    chainId: 57073,
-    name: "Ink",
-    rpcUrl: "https://rpc-gel.inkonchain.com",
-    nativeSymbol: "ETH",
-  },
-] as const;
+export const NETWORKS = DEFAULT_CHAIN_IDS.map((id) => chainSettings(id));
+export type NetworkPreferences = {
+  enabledChainIds: number[];
+  rpcOverrides: Record<number, string>;
+};
+const key = "freelp:chainPreferences";
 export function networkName(chainId: number, name?: string) {
-  return (
-    name ||
-    NETWORKS.find((network) => network.chainId === chainId)?.name ||
-    `Chain ${chainId}`
-  );
+  try {
+    return chainDefinition(chainId).name;
+  } catch {
+    return name || `Chain ${chainId}`;
+  }
+}
+export function loadNetworkPreferences(): NetworkPreferences {
+  const saved = load<NetworkPreferences | null>(key, null);
+  const source =
+    saved && Array.isArray(saved.enabledChainIds)
+      ? saved
+      : legacyNetworkPreferences();
+  const enabledChainIds = [...new Set(source.enabledChainIds)].filter((id) => {
+    try {
+      chainDefinition(id);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+  const rpcOverrides: Record<number, string> = {};
+  for (const [id, rpcUrl] of Object.entries(source.rpcOverrides ?? {})) {
+    try {
+      const next = validateSettings(chainSettings(Number(id), rpcUrl));
+      if (next.rpcUrl) rpcOverrides[next.chainId] = next.rpcUrl;
+    } catch {
+      /* Ignore invalid overrides. */
+    }
+  }
+  return { enabledChainIds, rpcOverrides };
 }
 export function loadNetworks(): Settings[] {
-  const defaults: Settings[] = NETWORKS.map((network) => ({
-    ...network,
-    ...DEFAULT_CONTRACTS,
-  }));
-  const saved = load<Settings[]>("freelp:networks", []);
-  for (const candidate of Array.isArray(saved) ? saved : []) {
-    try {
-      putNetwork(defaults, validateSettings(candidate));
-    } catch {
-      /* Keep usable defaults. */
-    }
-  }
-  const legacy = load<Settings | null>("freelp:settings", null);
-  if (legacy) {
-    try {
-      putNetwork(defaults, validateSettings(legacy));
-    } catch {
-      /* Ignore invalid legacy settings. */
-    }
-  }
-  return defaults;
-}
-function putNetwork(networks: Settings[], next: Settings) {
-  if (retiredDefault(next)) return;
-  const index = networks.findIndex(
-    (network) => network.chainId === next.chainId,
+  const preferences = loadNetworkPreferences();
+  return preferences.enabledChainIds.map((id) =>
+    chainSettings(id, preferences.rpcOverrides[id]),
   );
-  if (index < 0) networks.push(next);
-  else networks[index] = next;
 }
-export function updateNetworks(networks: Settings[], next: Settings) {
-  const result = [...networks];
-  putNetwork(result, validateSettings(next));
-  save("freelp:networks", result);
-  return result;
+export function configuredNetwork(id: number) {
+  return chainSettings(id, loadNetworkPreferences().rpcOverrides[id]);
+}
+export function updateNetworks(networks: Settings[], value: Settings) {
+  const next = validateSettings(value);
+  const preferences = loadNetworkPreferences();
+  if (next.rpcUrl) preferences.rpcOverrides[next.chainId] = next.rpcUrl;
+  else delete preferences.rpcOverrides[next.chainId];
+  preferences.enabledChainIds = networks.map((network) => network.chainId);
+  save(key, preferences);
+  return networks.map((network) =>
+    network.chainId === next.chainId ? next : network,
+  );
+}
+export function setNetworkEnabled(
+  networks: Settings[],
+  id: number,
+  enabled: boolean,
+) {
+  chainDefinition(id);
+  const preferences = loadNetworkPreferences();
+  const ids = new Set(networks.map((network) => network.chainId));
+  if (enabled) ids.add(id);
+  else ids.delete(id);
+  preferences.enabledChainIds = [...ids];
+  save(key, preferences);
+  return loadNetworks();
 }

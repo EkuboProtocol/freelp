@@ -1,5 +1,6 @@
+import { deployment } from "./contractDeployment";
 import { concatHex, getCreate2Address, type Address } from "viem";
-import { deployment, verifyCode, type ContractKind } from "./contracts";
+import { verifyCode, type ContractKind } from "./contracts";
 import { rpc } from "./rpc";
 import type { Settings, Transaction } from "./types";
 

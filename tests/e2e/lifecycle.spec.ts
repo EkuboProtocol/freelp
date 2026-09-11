@@ -1,3 +1,6 @@
+import { checkSdkParity } from "../support/sdkParity";
+import { chainDefinition } from "../../src/chains";
+import { rpcEndpoint } from "../../src/chains";
 import { NETWORKS } from "../../src/networks";
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
@@ -111,11 +114,12 @@ async function approveDeposits(
   }
   throw new Error("Approvals did not converge");
 }
-for (const { missingDecimals, native } of [
-  { missingDecimals: false, native: false },
-  { missingDecimals: false, native: true },
+for (const { missingDecimals, native, batch } of [
+  { missingDecimals: false, native: false, batch: false },
+  { missingDecimals: false, native: false, batch: true },
+  { missingDecimals: false, native: true, batch: false },
 ])
-  test(`RPC-only LP lifecycle without terms acceptance (missing decimals: ${missingDecimals}, native: ${native})`, async ({
+  test(`RPC-only LP lifecycle without terms acceptance (missing decimals: ${missingDecimals}, native: ${native}, batch: ${batch})`, async ({
     page,
   }) => {
     await testClient.request({ method: "anvil_reset", params: [] });
@@ -147,7 +151,8 @@ for (const { missingDecimals, native } of [
     for (const network of NETWORKS)
       await page.route(
         (url) =>
-          url.href.replace(/\/$/, "") === network.rpcUrl.replace(/\/$/, ""),
+          url.href.replace(/\/$/, "") ===
+          rpcEndpoint(network).replace(/\/$/, ""),
         async (route) => {
           const body = route.request().postDataJSON();
           await route.fulfill({
@@ -161,7 +166,7 @@ for (const { missingDecimals, native } of [
         !url.startsWith("http://127.0.0.1:14173") &&
         !url.startsWith(rpcUrl) &&
         !url.startsWith("data:") &&
-        !NETWORKS.some((network) => url.startsWith(network.rpcUrl))
+        !NETWORKS.some((network) => url.startsWith(rpcEndpoint(network)))
       )
         unexpected.push(url);
     });
@@ -201,7 +206,7 @@ for (const { missingDecimals, native } of [
       await route.continue();
     });
     await page.addInitScript(
-      ({ rpcUrl, account, core, manager }) => {
+      ({ rpcUrl, account, core, manager, batch }) => {
         if (!localStorage.getItem("freelp:settings"))
           localStorage.setItem(
             "freelp:settings",
@@ -213,6 +218,61 @@ for (const { missingDecimals, native } of [
               nativeSymbol: "ETH",
             }),
           );
+        const receipts: Record<string, unknown>[] = [];
+        let batchCount = 0;
+        const requestRpc = async (method: string, params: unknown[]) => {
+          const response = await fetch(rpcUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+          });
+          const data = await response.json();
+          if (data.error) throw new Error(data.error.message);
+          return data.result;
+        };
+        async function receiptFor(hash: string) {
+          for (let i = 0; i < 200; i++) {
+            const receipt = await requestRpc("eth_getTransactionReceipt", [
+              hash,
+            ]);
+            if (receipt) return receipt;
+            await new Promise((resolve) => setTimeout(resolve, 25));
+          }
+          throw new Error("Test wallet receipt timed out");
+        }
+        async function requestBatch(method: string, params?: unknown[]) {
+          if (method === "wallet_getCapabilities")
+            return { "0x7a69": { atomic: { status: "unsupported" } } };
+          if (method === "wallet_switchEthereumChain") return null;
+          if (method === "wallet_sendCalls") {
+            const args = params![0] as {
+              calls: Record<string, unknown>[];
+              atomicRequired?: boolean;
+            };
+            if (args.atomicRequired)
+              throw new Error("Atomic execution must not be required");
+            receipts.length = 0;
+            for (const call of args.calls) {
+              const hash = await requestRpc("eth_sendTransaction", [
+                { ...call, from: account, gas: "0x989680" },
+              ]);
+              receipts.push(await receiptFor(hash));
+            }
+            batchCount++;
+            sessionStorage.setItem("test:batchCount", String(batchCount));
+            return { id: "0x1234" };
+          }
+          if (method === "wallet_getCallsStatus")
+            return {
+              id: "0x1234",
+              version: "2.0.0",
+              chainId: "0x7a69",
+              atomic: false,
+              status: 200,
+              receipts,
+            };
+          throw new Error("Unexpected wallet batch method");
+        }
         const provider = {
           request: async ({
             method,
@@ -223,6 +283,8 @@ for (const { missingDecimals, native } of [
           }) => {
             if (method === "eth_requestAccounts" || method === "eth_accounts")
               return [account];
+            if (batch && method.startsWith("wallet_"))
+              return requestBatch(method, params);
             const response = await fetch(rpcUrl, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -249,7 +311,7 @@ for (const { missingDecimals, native } of [
           ),
         );
       },
-      { rpcUrl, account: account.address, core, manager },
+      { rpcUrl, account: account.address, core, manager, batch },
     );
     await page.goto("/");
     await page.getByRole("button", { name: "Connect Local wallet" }).click();
@@ -312,6 +374,7 @@ for (const { missingDecimals, native } of [
       ),
     ).rejects.toThrow("already deployed");
     await deployFetchers(page);
+    await checkSdkParity();
     const deployedManager = await page.evaluate(
       () => JSON.parse(localStorage.getItem("freelp:settings")!).manager as Hex,
     );
@@ -320,9 +383,7 @@ for (const { missingDecimals, native } of [
       .getByRole("link", { name: "Create position", exact: true })
       .click();
     await checkTokenImports(page, tokens, missingDecimals, native);
-    await page.getByLabel("Initial price (new pools only)").fill("1");
-    await page.getByLabel("Lower price", { exact: true }).fill("0.99");
-    await page.getByLabel("Upper price", { exact: true }).fill("1.01");
+    await page.getByLabel("Initial price").fill("1");
     if (!missingDecimals && !native) {
       await page.getByTestId("deposit-amount-0").fill("1");
       await expect(
@@ -344,11 +405,10 @@ for (const { missingDecimals, native } of [
     ).toHaveCount(0);
     await page.getByTestId("deposit-amount-0").fill(amount(1));
     await page.getByTestId("deposit-amount-1").fill(amount(1));
-    await page.getByRole("button", { name: "Preview position" }).click();
     await expect(
       page.getByRole("heading", { name: "Deposit preview" }),
     ).toBeVisible();
-    for (let i = 0; i < (native ? 1 : 2); i++) {
+    for (let i = 0; i < approvalCount(batch, native); i++) {
       await page
         .getByRole("button", { name: "Approve TT", exact: true })
         .first()
@@ -359,7 +419,6 @@ for (const { missingDecimals, native } of [
           timeout: 30000,
         },
       );
-      await page.getByRole("button", { name: "Preview position" }).click();
       await expect(
         page.getByRole("heading", { name: "Deposit preview" }),
       ).toBeVisible();
@@ -375,17 +434,18 @@ for (const { missingDecimals, native } of [
       .getByRole("link", { name: "Create position", exact: true })
       .click();
     await checkTokenImports(page, tokens, missingDecimals, native);
+    if (batch)
+      expect(
+        await page.evaluate(() =>
+          Number(sessionStorage.getItem("test:batchCount")),
+        ),
+      ).toBe(1);
     await checkPoolChart(page, missingDecimals, native);
     await captureChart(page, missingDecimals, native);
     await checkCustomSpacing(page, missingDecimals, native);
-    await page.getByLabel("Lower price", { exact: true }).fill("0.99");
-    await page.getByLabel("Upper price", { exact: true }).fill("1.01");
     await page.getByTestId("deposit-amount-0").fill(amount(1));
     await page.getByTestId("deposit-amount-1").fill(amount(1));
-    await expect(page.getByLabel("Initial price (new pools only)")).toHaveCount(
-      0,
-    );
-    await page.getByRole("button", { name: "Preview position" }).click();
+    await expect(page.getByLabel("Initial price")).toHaveCount(0);
     await expect(
       page.getByText("Existing pool: the initial-price input is ignored."),
     ).toBeVisible();
@@ -537,7 +597,7 @@ async function checkPoolChart(
 ) {
   if (missingDecimals || native) return;
   await expect(
-    page.getByRole("img", { name: "Pool liquidity by price" }),
+    page.getByRole("img", { name: "Pool token amounts by price" }),
   ).toBeVisible({ timeout: 30000 });
   const heights = await page
     .locator(".liquidity-chart rect")
@@ -564,13 +624,15 @@ async function checkTokenImports(
     if (address === zeroAddress) {
       await dialog
         .locator(".token-option")
-        .filter({ hasText: "Chain 31337" })
+        .filter({ hasText: chainDefinition(31337).name })
         .first()
         .click();
       continue;
     }
     await dialog
-      .getByRole("button", { name: "Read token on Chain 31337" })
+      .getByRole("button", {
+        name: `Read token on ${chainDefinition(31337).name}`,
+      })
       .click();
     await dialog
       .getByRole("button", { name: "Import token", exact: true })
@@ -613,30 +675,20 @@ async function checkCustomSpacing(
   native: boolean,
 ) {
   if (missingDecimals || native) return;
-  await page.getByText("Advanced pool settings", { exact: true }).click();
+  await page.getByRole("switch", { name: "Advanced", exact: true }).click();
   const control = page.locator(".tick-spacing-control");
   await control.locator("summary").click();
   await control.getByLabel("Enter exact ticks").check();
   await control.getByLabel("Tick spacing (ticks)").fill("777");
   await control.getByRole("button", { name: "Apply tick spacing" }).click();
   await expect(control.locator("summary")).toContainText("0.0777%");
-  await page.getByLabel("Lower price", { exact: true }).fill("0.98");
-  await page.getByLabel("Upper price", { exact: true }).fill("1.02");
-  await expect(page.getByLabel("Initial price (new pools only)")).toBeVisible();
-  await expect(page.locator(".pool-options .selected")).toContainText(
-    "0.0777%",
-  );
-  expect(
-    Number(await page.getByLabel("Lower price", { exact: true }).inputValue()),
-  ).toBeCloseTo(0.98, 3);
-  expect(
-    Number(await page.getByLabel("Upper price", { exact: true }).inputValue()),
-  ).toBeCloseTo(1.02, 3);
+  await expect(page.getByLabel("Initial price")).toBeVisible();
+  await expect(page.locator(".pool-options")).toBeHidden();
   await control.locator("summary").click();
   await control.getByRole("button", { name: "0.6%", exact: true }).click();
-  await page.getByText("Advanced pool settings", { exact: true }).click();
+  await page.getByRole("switch", { name: "Advanced", exact: true }).click();
   await expect(
-    page.getByRole("img", { name: "Pool liquidity by price" }),
+    page.getByRole("img", { name: "Pool token amounts by price" }),
   ).toBeVisible();
 }
 
@@ -662,12 +714,13 @@ async function checkStableCreation(
     .getByRole("link", { name: "Create position", exact: true })
     .click();
   await checkTokenImports(page, tokens, false, false);
-  await page.getByText("Advanced pool settings", { exact: true }).click();
+  await page.getByRole("switch", { name: "Advanced", exact: true }).click();
   await page.getByLabel("Pool type", { exact: true }).selectOption("stable");
+  await page.getByLabel("Enter exact amount").check();
   await page.getByLabel("Exact fee (uint64)").fill("123456789");
   await page.getByLabel("Amplification exponent").fill("10");
   await page.getByLabel("Center tick (multiple of 16)").fill("16");
-  await page.getByLabel("Initial price (new pools only)").fill("1");
+  await page.getByLabel("Initial price").fill("1");
   await page.getByTestId("deposit-amount-0").fill("1");
   await expect(
     page.getByRole("button", { name: "Create position", exact: true }),
@@ -694,7 +747,7 @@ async function checkStableCreation(
     location.hash = hash;
   }, stableHash);
   await expect(
-    page.getByRole("img", { name: "Pool liquidity by price" }),
+    page.getByRole("img", { name: "Pool token amounts by price" }),
   ).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.screenshot({
@@ -716,4 +769,8 @@ async function checkStableCreation(
   await expect(
     page.getByText("No positions found on the available networks."),
   ).toBeVisible();
+}
+
+function approvalCount(batch: boolean, native: boolean) {
+  return batch ? 0 : native ? 1 : 2;
 }

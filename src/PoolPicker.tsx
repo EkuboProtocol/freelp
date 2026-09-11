@@ -20,6 +20,7 @@ export function PoolPicker({
   sourceForm: CreateForm;
   setForm: Dispatch<SetStateAction<CreateForm>>;
 }) {
+  const [rawFee, setRawFee] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const { fee, range } = form;
   const presets = poolPresets(fee, range.spacing, form);
@@ -32,15 +33,18 @@ export function PoolPicker({
         <h3>
           <Trans>Choose a pool</Trans>
         </h3>
-        <button
-          aria-expanded={advanced}
-          aria-controls="advanced-pool"
-          onClick={() => setAdvanced(!advanced)}
-        >
-          <Trans>Advanced pool settings</Trans>
-        </button>
+        <label className="row advanced-toggle">
+          <Trans>Advanced</Trans>
+          <input
+            type="checkbox"
+            role="switch"
+            checked={advanced}
+            aria-controls="advanced-pool"
+            onChange={(e) => setAdvanced(e.target.checked)}
+          />
+        </label>
       </div>
-      <div className="pool-options">
+      <div className="pool-options" hidden={advanced}>
         {presets.map((preset) => (
           <button
             key={`${preset.exactFee}:${preset.spacing}`}
@@ -79,30 +83,46 @@ export function PoolPicker({
       </div>
       <div id="advanced-pool" hidden={!advanced} className="advanced-settings">
         <div className="grid">
-          <Field label={<Trans>Pool fee (%)</Trans>}>
-            <SnappedInput
-              aria-label={t`Pool fee (%)`}
-              inputMode="decimal"
-              snapped={form.exactFee ? percentFromExactFee(form.exactFee) : fee}
-              value={
-                sourceForm.exactFee
-                  ? percentFromExactFee(sourceForm.exactFee)
-                  : sourceForm.fee
+          <div>
+            <Field
+              label={
+                rawFee ? (
+                  <Trans>Exact fee (uint64)</Trans>
+                ) : (
+                  <Trans>Pool fee (%)</Trans>
+                )
               }
-              onChange={(e) => onFeeChange(e.target.value, "")}
-            />
-          </Field>
-          <Field label={<Trans>Exact fee (uint64)</Trans>}>
-            <SnappedInput
-              aria-label={t`Exact fee (uint64)`}
-              inputMode="numeric"
-              snapped={exact}
-              value={sourceForm.exactFee || exactFeeFromPercent(sourceForm.fee)}
-              onChange={(e) =>
-                onFeeChange(percentFromExactFee(e.target.value), e.target.value)
-              }
-            />
-          </Field>
+            >
+              <SnappedInput
+                aria-label={rawFee ? t`Exact fee (uint64)` : t`Pool fee (%)`}
+                inputMode={rawFee ? "numeric" : "decimal"}
+                snapped={rawFee ? exact : displayedFee(form)}
+                value={
+                  rawFee
+                    ? sourceForm.exactFee || exactFeeFromPercent(sourceForm.fee)
+                    : sourceForm.exactFee
+                      ? percentFromExactFee(sourceForm.exactFee)
+                      : sourceForm.fee
+                }
+                onChange={(e) =>
+                  rawFee
+                    ? onFeeChange(
+                        percentFromExactFee(e.target.value),
+                        e.target.value,
+                      )
+                    : onFeeChange(e.target.value, "")
+                }
+              />
+            </Field>
+            <label className="row">
+              <input
+                type="checkbox"
+                checked={rawFee}
+                onChange={(e) => setRawFee(e.target.checked)}
+              />
+              <Trans>Enter exact amount</Trans>
+            </label>
+          </div>
           <PoolKeyFields
             form={form}
             sourceForm={sourceForm}
@@ -139,4 +159,8 @@ function poolPresets(fee: string, spacing: number, options: PoolOptions) {
   )
     ? presets
     : [...presets, { fee, spacing, exactFee, custom: true }];
+}
+
+function displayedFee(form: CreateForm) {
+  return form.exactFee ? percentFromExactFee(form.exactFee) : form.fee;
 }

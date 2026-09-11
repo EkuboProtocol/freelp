@@ -1,3 +1,4 @@
+import { rpcEndpoint } from "../../src/chains";
 import { test, expect } from "@playwright/test";
 import { decodeFunctionData, encodeFunctionResult, zeroAddress } from "viem";
 import { NETWORKS } from "../../src/networks";
@@ -10,7 +11,7 @@ test("all networks load independently with exactly one portfolio RPC each", asyn
   for (const network of NETWORKS)
     await page.route(
       (url) =>
-        url.href.replace(/\/$/, "") === network.rpcUrl.replace(/\/$/, ""),
+        url.href.replace(/\/$/, "") === rpcEndpoint(network).replace(/\/$/, ""),
       async (route) => {
         const body = route.request().postDataJSON();
         calls.set(network.chainId, [

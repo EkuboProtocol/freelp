@@ -1,3 +1,4 @@
+import { rpcEndpoint } from "../../src/chains";
 import { mockPoolData } from "../support/poolRpc";
 import { mockDeployments } from "../support/deploymentRpc";
 import { test, expect } from "@playwright/test";
@@ -13,9 +14,15 @@ test("picker batches balances only on the selected network, caches reads, and su
   for (const network of NETWORKS)
     await page.route(
       (url) =>
-        url.href.replace(/\/$/, "") === network.rpcUrl.replace(/\/$/, ""),
+        url.href.replace(/\/$/, "") === rpcEndpoint(network).replace(/\/$/, ""),
       async (route) => {
         const body = route.request().postDataJSON();
+        if (
+          body.method !== "eth_call" ||
+          decodeFunctionData({ abi: fetcher.abi, data: body.params[0].data })
+            .functionName !== "getNonzeroBalancesAndAllowances"
+        )
+          return route.fallback();
         expect(body.method).toBe("eth_call");
         expect(
           decodeFunctionData({ abi: fetcher.abi, data: body.params[0].data })

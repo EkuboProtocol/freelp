@@ -1,13 +1,21 @@
 import { useCopied } from "./useCopied";
 import { AccountControl } from "./AccountControl";
 import { t } from "@lingui/core/macro";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { Trans } from "@lingui/react/macro";
 import { useSession } from "./session";
-import { SettingsPage } from "./SettingsPage";
-import { TermsPage } from "./TermsPage";
-import { DeployPage } from "./DeployPage";
-import { CreatePage } from "./CreatePage";
+const SettingsPage = lazy(() =>
+  import("./SettingsPage").then((module) => ({ default: module.SettingsPage })),
+);
+const TermsPage = lazy(() =>
+  import("./TermsPage").then((module) => ({ default: module.TermsPage })),
+);
+const DeployPage = lazy(() =>
+  import("./DeployPage").then((module) => ({ default: module.DeployPage })),
+);
+const CreatePage = lazy(() =>
+  import("./CreatePage").then((module) => ({ default: module.CreatePage })),
+);
 import { PositionsPage } from "./PositionsPage";
 function BuildPage() {
   return (
@@ -27,8 +35,8 @@ function BuildPage() {
       </p>
       <p>
         <Trans>Run the installed app locally with</Trans>{" "}
-        <code>bunx @ekubo/freelp</code> <Trans>or</Trans>{" "}
-        <code>npx @ekubo/freelp</code>.
+        <code>bunx @ekubo/freelp@latest</code> <Trans>or</Trans>{" "}
+        <code>npx @ekubo/freelp@latest</code>.
       </p>
       <p>
         <Trans>
@@ -40,8 +48,8 @@ function BuildPage() {
       <h3>
         <Trans>Run locally</Trans>
       </h3>
-      <Command command="bunx @ekubo/freelp" />
-      <Command command="npx @ekubo/freelp" />
+      <Command command="bunx @ekubo/freelp@latest" />
+      <Command command="npx @ekubo/freelp@latest" />
       <p>
         <Trans>
           Use a version suffix to keep a specific release, for example
@@ -64,10 +72,9 @@ function BuildPage() {
   );
 }
 function Page({ route }: { route: string }) {
-  const { settings } = useSession();
   switch (route.split("?")[0]) {
     case "#/settings":
-      return <SettingsPage key={settings.chainId} />;
+      return <SettingsPage />;
     case "#/terms":
       return <TermsPage />;
     case "#/deploy":
@@ -111,10 +118,18 @@ export function App() {
         </p>
       ) : null}
       <div id="main-content" tabIndex={-1}>
-        <Page
-          key={route.split("?")[0].split("/")[1] || "positions"}
-          route={route}
-        />
+        <Suspense
+          fallback={
+            <p role="status">
+              <Trans>Loading…</Trans>
+            </p>
+          }
+        >
+          <Page
+            key={route.split("?")[0].split("/")[1] || "positions"}
+            route={route}
+          />
+        </Suspense>
       </div>
       <footer className="row">
         <a href="#/terms">

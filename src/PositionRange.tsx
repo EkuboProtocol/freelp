@@ -1,12 +1,13 @@
+import { toSqrtRatio } from "@ekubo/sdk";
 import { Trans } from "@lingui/react/macro";
 import { t } from "@lingui/core/macro";
 import { sqrtPrice, tickPrice, displayPrice } from "./prices";
 import type { Position } from "./types";
 export function positionState(position: Position) {
   if (position.amounts.liquidity === 0n) return "closed";
-  const price = sqrtPrice(position.sqrtRatio, 0, 0);
-  return price >= tickPrice(position.descriptor.tickLower, 0, 0) &&
-    price < tickPrice(position.descriptor.tickUpper, 0, 0)
+  return position.sqrtRatio >=
+    toSqrtRatio(position.descriptor.tickLower, "evm") &&
+    position.sqrtRatio < toSqrtRatio(position.descriptor.tickUpper, "evm")
     ? "active"
     : "inactive";
 }

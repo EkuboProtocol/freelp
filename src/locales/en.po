@@ -32,30 +32,23 @@ msgstr "A transaction is already pending."
 msgid "About FreeLP"
 msgstr "About FreeLP"
 
-#: src/LiquidityChart.tsx
-msgid "Active liquidity"
-msgstr "Active liquidity"
-
 #: src/PositionDepositFields.tsx
 msgid "Add liquidity"
 msgstr "Add liquidity"
-
-#: src/SettingsPage.tsx
-msgid "Add network"
-msgstr "Add network"
 
 #: src/PositionDepositFields.tsx
 msgid "Add token {i} amount"
 msgstr "Add token {i} amount"
 
+#: src/RangeFields.tsx
 #: src/SnappedInput.tsx
 #: src/TickSpacingControl.tsx
 msgid "Adjusted to nearest valid value"
 msgstr "Adjusted to nearest valid value"
 
 #: src/PoolPicker.tsx
-msgid "Advanced pool settings"
-msgstr "Advanced pool settings"
+msgid "Advanced"
+msgstr "Advanced"
 
 #: src/PositionsPage.tsx
 msgid "All networks. Positions, pool data, and fees are read together from each chain."
@@ -102,6 +95,10 @@ msgstr "Balance:"
 msgid "Balance: {0}"
 msgstr "Balance: {0}"
 
+#: src/walletBatch.ts
+msgid "Batch calls require a destination."
+msgstr "Batch calls require a destination."
+
 #: src/App.tsx
 msgid "Build details"
 msgstr "Build details"
@@ -118,10 +115,6 @@ msgstr "Calculating matching amount…"
 msgid "Center tick (multiple of 16)"
 msgstr "Center tick (multiple of 16)"
 
-#: src/SettingsPage.tsx
-msgid "Chain {chainId}"
-msgstr "Chain {chainId}"
-
 #: src/CreateDeploymentGate.tsx
 msgid "Check again"
 msgstr "Check again"
@@ -133,6 +126,10 @@ msgstr "Checking code on this network…"
 #: src/CreateDeploymentGate.tsx
 msgid "Checking required contracts…"
 msgstr "Checking required contracts…"
+
+#: src/SettingsPage.tsx
+msgid "Checking RPC…"
+msgstr "Checking RPC…"
 
 #: src/PoolPicker.tsx
 msgid "Choose a pool"
@@ -166,10 +163,6 @@ msgstr "Collect fees"
 msgid "Concentrated liquidity"
 msgstr "Concentrated liquidity"
 
-#: src/CreatePage.tsx
-msgid "Configure this network in Settings before using this link."
-msgstr "Configure this network in Settings before using this link."
-
 #. placeholder {0}: receipt.transactionHash
 #: src/session.tsx
 msgid "Confirmed: {0}"
@@ -192,10 +185,6 @@ msgstr "Connect a wallet to load positions directly from the chain."
 #: src/AccountControl.tsx
 msgid "Connected wallet: {0}"
 msgstr "Connected wallet: {0}"
-
-#: src/SettingsPage.tsx
-msgid "Connecting…"
-msgstr "Connecting…"
 
 #: src/App.tsx
 msgid "Contract license"
@@ -235,10 +224,6 @@ msgstr "Create position"
 #: src/DeployPage.tsx
 msgid "CREATE2 factory:"
 msgstr "CREATE2 factory:"
-
-#: src/LiquidityChart.tsx
-msgid "Current pool liquidity, read directly from chain"
-msgstr "Current pool liquidity, read directly from chain"
 
 #. placeholder {0}: displayPrice(current)
 #. placeholder {1}: displayPrice(lower)
@@ -299,18 +284,31 @@ msgstr "Deposit preview"
 msgid "Deterministic deployment details"
 msgstr "Deterministic deployment details"
 
-#: src/SettingsPage.tsx
-msgid "Edit"
-msgstr "Edit"
-
-#. placeholder {0}: networkName(network.chainId, network.name)
+#. placeholder {0}: chain.name
 #: src/SettingsPage.tsx
 msgid "Edit {0} RPC"
 msgstr "Edit {0} RPC"
 
+#. placeholder {0}: chain.name
 #: src/SettingsPage.tsx
-msgid "Edit RPC"
-msgstr "Edit RPC"
+msgid "Enable {0}"
+msgstr "Enable {0}"
+
+#: src/DeployPage.tsx
+msgid "Enable a network in Settings to deploy contracts."
+msgstr "Enable a network in Settings to deploy contracts."
+
+#: src/SettingsPage.tsx
+msgid "Enable the networks you use. Their names, native tokens and default RPCs come from viem."
+msgstr "Enable the networks you use. Their names, native tokens and default RPCs come from viem."
+
+#: src/CreatePage.tsx
+msgid "Enable this network in Settings before using this link."
+msgstr "Enable this network in Settings before using this link."
+
+#: src/CreatePage.tsx
+msgid "Enter a deposit amount."
+msgstr "Enter a deposit amount."
 
 #: src/TickSpacingControl.tsx
 msgid "Enter a positive spacing that rounds to 1–698605 integer ticks."
@@ -319,6 +317,10 @@ msgstr "Enter a positive spacing that rounds to 1–698605 integer ticks."
 #: src/loadDepositQuote.ts
 msgid "Enter an amount greater than zero."
 msgstr "Enter an amount greater than zero."
+
+#: src/PoolPicker.tsx
+msgid "Enter exact amount"
+msgstr "Enter exact amount"
 
 #: src/TickSpacingControl.tsx
 msgid "Enter exact ticks"
@@ -344,14 +346,10 @@ msgstr "Exact ticks"
 msgid "Existing pool: the initial-price input is ignored."
 msgstr "Existing pool: the initial-price input is ignored."
 
-#. placeholder {0}: editing.chainId
+#. placeholder {0}: next.chainId
 #: src/SettingsPage.tsx
-msgid "Expected chain {0}, but this RPC reports {chainId}."
-msgstr "Expected chain {0}, but this RPC reports {chainId}."
-
-#: src/LiquidityChart.tsx
-msgid "Explore liquidity by price"
-msgstr "Explore liquidity by price"
+msgid "Expected chain {0}, but this RPC reports {id}."
+msgstr "Expected chain {0}, but this RPC reports {id}."
 
 #: src/PoolKeyFields.tsx
 msgid "Extension address"
@@ -389,10 +387,6 @@ msgstr "FreeLP is independently runnable, noncustodial software. Its position ma
 msgid "FreeLP software is licensed under the MIT license. These notices do not narrow the permissions granted by that license, waive copyright, or replace the licenses of included components. The MIT warranty disclaimer and limitation of liability continue to apply. Preserve required copyright and license notices when copying or distributing the software."
 msgstr "FreeLP software is licensed under the MIT license. These notices do not narrow the permissions granted by that license, waive copyright, or replace the licenses of included components. The MIT warranty disclaimer and limitation of liability continue to apply. Preserve required copyright and license notices when copying or distributing the software."
 
-#: src/RangeFields.tsx
-msgid "Full range selected."
-msgstr "Full range selected."
-
 #: src/CreateDeploymentGate.tsx
 msgid "Go to Deploy"
 msgstr "Go to Deploy"
@@ -400,6 +394,10 @@ msgstr "Go to Deploy"
 #: src/TokenBalance.tsx
 msgid "Half"
 msgstr "Half"
+
+#: src/LiquidityChart.tsx
+msgid "Hover for token amounts. Drag across the chart to select a range."
+msgstr "Hover for token amounts. Drag across the chart to select a range."
 
 #: src/loadDepositQuote.ts
 msgid "Import this token's on-chain metadata before creating a position."
@@ -414,12 +412,8 @@ msgid "In range"
 msgstr "In range"
 
 #: src/RangeFields.tsx
-msgid "Initial price (new pools only)"
-msgstr "Initial price (new pools only)"
-
-#: src/RangeFields.tsx
-msgid "Initial tick (new pools only)"
-msgstr "Initial tick (new pools only)"
+msgid "Initial price"
+msgstr "Initial price"
 
 #. placeholder {0}: t.symbol
 #: src/CreatePage.tsx
@@ -430,13 +424,13 @@ msgstr "Insufficient {0} balance"
 msgid "Invalid slippage."
 msgstr "Invalid slippage."
 
+#: src/SettingsPage.tsx
+msgid "Leave blank to use this network's default RPC."
+msgstr "Leave blank to use this network's default RPC."
+
 #: src/TermsPage.tsx
 msgid "Limitation of liability"
 msgstr "Limitation of liability"
-
-#: src/LiquidityChart.tsx
-msgid "Liquidity distribution"
-msgstr "Liquidity distribution"
 
 #: src/CreatePage.tsx
 msgid "Liquidity:"
@@ -454,13 +448,10 @@ msgstr "Loading balance…"
 msgid "Loading pool…"
 msgstr "Loading pool…"
 
-#: src/RangeFields.tsx
-msgid "Lower price"
-msgstr "Lower price"
-
-#: src/RangeFields.tsx
-msgid "Lower tick"
-msgstr "Lower tick"
+#: src/App.tsx
+#: src/PositionsPage.tsx
+msgid "Loading…"
+msgstr "Loading…"
 
 #: src/App.tsx
 msgid "Main navigation"
@@ -484,25 +475,9 @@ msgstr "Max"
 msgid "MIT license"
 msgstr "MIT license"
 
-#: src/NetworkDetailsFields.tsx
-msgid "Native token decimals"
-msgstr "Native token decimals"
-
-#: src/NetworkDetailsFields.tsx
-msgid "Native token name"
-msgstr "Native token name"
-
-#: src/NetworkDetailsFields.tsx
-msgid "Native token symbol"
-msgstr "Native token symbol"
-
 #: src/CreatePage.tsx
 msgid "Network"
 msgstr "Network"
-
-#: src/NetworkDetailsFields.tsx
-msgid "Network name"
-msgstr "Network name"
 
 #: src/SettingsPage.tsx
 msgid "Networks"
@@ -519,6 +494,10 @@ msgstr "No central operator or protection"
 #: src/App.tsx
 msgid "No fees, completely free to use, forever"
 msgstr "No fees, completely free to use, forever"
+
+#: src/SettingsPage.tsx
+msgid "No matching networks."
+msgstr "No matching networks."
 
 #: src/PositionsPage.tsx
 msgid "No matching positions. Try another search or show closed positions."
@@ -557,8 +536,8 @@ msgid "On-chain position metadata"
 msgstr "On-chain position metadata"
 
 #: src/LiquidityChart.tsx
-msgid "Only the on-chain tick range fetched is shown. Empty space outside that range is not assumed to have zero liquidity."
-msgstr "Only the on-chain tick range fetched is shown. Empty space outside that range is not assumed to have zero liquidity."
+msgid "Only the range read from chain is shown."
+msgstr "Only the range read from chain is shown."
 
 #: src/App.tsx
 msgid "or"
@@ -580,13 +559,13 @@ msgstr "Pool details"
 msgid "Pool fee (%)"
 msgstr "Pool fee (%)"
 
-#: src/LiquidityChart.tsx
-msgid "Pool liquidity by price"
-msgstr "Pool liquidity by price"
-
 #: src/PricePreview.tsx
 msgid "Pool state is unavailable."
 msgstr "Pool state is unavailable."
+
+#: src/LiquidityChart.tsx
+msgid "Pool token amounts by price"
+msgstr "Pool token amounts by price"
 
 #: src/PoolKeyFields.tsx
 msgid "Pool type"
@@ -613,23 +592,15 @@ msgstr "Position range:"
 msgid "Positions"
 msgstr "Positions"
 
-#: src/CreatePage.tsx
-msgid "Preview position"
-msgstr "Preview position"
-
-#: src/LiquidityChart.tsx
-msgid "Price"
-msgstr "Price"
-
 #. placeholder {0}: b.symbol
 #. placeholder {1}: a.symbol
 #: src/PricePreview.tsx
 msgid "Price ({0} per {1}):"
 msgstr "Price ({0} per {1}):"
 
-#: src/RangeFields.tsx
-msgid "Price range"
-msgstr "Price range"
+#: src/CreatePage.tsx
+msgid "Price range and liquidity"
+msgstr "Price range and liquidity"
 
 #: src/PortfolioPosition.tsx
 msgid "Price range:"
@@ -638,21 +609,13 @@ msgstr "Price range:"
 #. placeholder {0}: symbols[1]
 #. placeholder {1}: symbols[0]
 #: src/RangeFields.tsx
-msgid "Prices are {0} per {1}. Prices snap to the nearest usable tick; review the resulting range in the preview."
-msgstr "Prices are {0} per {1}. Prices snap to the nearest usable tick; review the resulting range in the preview."
+msgid "Prices in {0} per {1}."
+msgstr "Prices in {0} per {1}."
 
 #: src/PortfolioPosition.tsx
 #: src/PositionDetail.tsx
 msgid "Principal:"
 msgstr "Principal:"
-
-#: src/LiquidityChart.tsx
-msgid "Range lower bound"
-msgstr "Range lower bound"
-
-#: src/LiquidityChart.tsx
-msgid "Range upper bound"
-msgstr "Range upper bound"
 
 #: src/PortfolioPosition.tsx
 msgid "raw units"
@@ -691,10 +654,6 @@ msgstr "Refresh positions"
 msgid "Refresh status"
 msgstr "Refresh status"
 
-#: src/CreatePage.tsx
-msgid "Refresh the preview."
-msgstr "Refresh the preview."
-
 #. placeholder {0}: token.symbol
 #: src/ApprovalButton.tsx
 msgid "Reset {0} approval"
@@ -708,13 +667,17 @@ msgstr "Retry balance"
 msgid "Retry pool data"
 msgstr "Retry pool data"
 
-#: src/SettingsPage.tsx
-msgid "RPC must use HTTP or HTTPS."
-msgstr "RPC must use HTTP or HTTPS."
+#: src/walletBatch.ts
+msgid "RPC chain ID does not match settings."
+msgstr "RPC chain ID does not match settings."
 
 #: src/SettingsPage.tsx
-msgid "RPC URL"
-msgstr "RPC URL"
+msgid "RPC settings"
+msgstr "RPC settings"
+
+#: src/SettingsPage.tsx
+msgid "RPC URL override"
+msgstr "RPC URL override"
 
 #: src/App.tsx
 msgid "Run locally"
@@ -725,12 +688,16 @@ msgid "Run the installed app locally with"
 msgstr "Run the installed app locally with"
 
 #: src/SettingsPage.tsx
-msgid "Save network"
-msgstr "Save network"
+msgid "Save RPC"
+msgstr "Save RPC"
 
 #: src/PositionsPage.tsx
 msgid "Search by token, network, address or ID"
 msgstr "Search by token, network, address or ID"
+
+#: src/SettingsPage.tsx
+msgid "Search networks"
+msgstr "Search networks"
 
 #: src/PositionsPage.tsx
 msgid "Search positions"
@@ -764,13 +731,30 @@ msgstr "Select second token"
 msgid "Select token"
 msgstr "Select token"
 
+#: src/LiquidityChart.tsx
+msgid "Selected range"
+msgstr "Selected range"
+
 #: src/App.tsx
+#: src/DeployPage.tsx
 msgid "Settings"
 msgstr "Settings"
+
+#: src/SettingsPage.tsx
+msgid "Show all networks"
+msgstr "Show all networks"
 
 #: src/PositionsPage.tsx
 msgid "Show closed"
 msgstr "Show closed"
+
+#: src/SettingsPage.tsx
+msgid "Show enabled networks"
+msgstr "Show enabled networks"
+
+#: src/SettingsPage.tsx
+msgid "Show more"
+msgstr "Show more"
 
 #: src/session.tsx
 msgid "Simulating and requesting wallet confirmation…"
@@ -803,10 +787,6 @@ msgstr "Spacing is the price change between adjacent usable ticks. It is indepen
 msgid "Stableswap"
 msgstr "Stableswap"
 
-#: src/RangeFields.tsx
-msgid "Stableswap positions use the full active range defined by amplification and center tick."
-msgstr "Stableswap positions use the full active range defined by amplification and center tick."
-
 #: src/App.tsx
 msgid "Terms"
 msgstr "Terms"
@@ -815,18 +795,22 @@ msgstr "Terms"
 msgid "Terms of Service"
 msgstr "Terms of Service"
 
+#: src/walletBatch.ts
+msgid "The batch simulation failed. Review the deposit amounts and approvals."
+msgstr "The batch simulation failed. Review the deposit amounts and approvals."
+
 #. js-lingui-explicit-id
 #: src/errors.ts
 msgid "contractRejected"
 msgstr "The contract rejected this request. Check the pool settings and amounts, then retry."
 
+#: src/walletBatch.ts
+msgid "The deposit reverted. Refresh balances before retrying."
+msgstr "The deposit reverted. Refresh balances before retrying."
+
 #: src/PositionDepositFields.tsx
 msgid "The matching amount is calculated from this position’s range and current pool price."
 msgstr "The matching amount is calculated from this position’s range and current pool price."
-
-#: src/SettingsPage.tsx
-msgid "The network is detected from your RPC URL."
-msgstr "The network is detected from your RPC URL."
 
 #: src/App.tsx
 msgid "The package contains the complete application. Your package manager handles package integrity; the launcher serves local files without fetching a separate build or contacting GitHub."
@@ -837,17 +821,17 @@ msgstr "The package contains the complete application. Your package manager hand
 msgid "requestFailed"
 msgstr "The request failed. Please try again."
 
-#: src/SettingsPage.tsx
-msgid "The RPC returned an invalid chain ID."
-msgstr "The RPC returned an invalid chain ID."
+#: src/walletBatch.ts
+msgid "The wallet has not returned a transaction receipt. Check the wallet before retrying."
+msgstr "The wallet has not returned a transaction receipt. Check the wallet before retrying."
 
 #: src/TermsPage.tsx
 msgid "There is no guarantee that any contract is correct, audited, secure, economically sound, or free from defects, exploits, malicious behavior, or administrative intervention. No one promises returns, liquidity, price accuracy, execution quality, asset value, withdrawal availability, recovery, refunds, insurance, compensation, continued hosting, updates, maintenance, or support. Simulation results, displayed balances, prices, and fee estimates may be incomplete, stale, or wrong."
 msgstr "There is no guarantee that any contract is correct, audited, secure, economically sound, or free from defects, exploits, malicious behavior, or administrative intervention. No one promises returns, liquidity, price accuracy, execution quality, asset value, withdrawal availability, recovery, refunds, insurance, compensation, continued hosting, updates, maintenance, or support. Simulation results, displayed balances, prices, and fee estimates may be incomplete, stale, or wrong."
 
 #: src/DeployPage.tsx
-msgid "This build uses fixed contract addresses on every network. Custom networks must provide the standard CREATE2 factory."
-msgstr "This build uses fixed contract addresses on every network. Custom networks must provide the standard CREATE2 factory."
+msgid "This build uses fixed contract addresses on every network. Networks must provide the standard CREATE2 factory."
+msgstr "This build uses fixed contract addresses on every network. Networks must provide the standard CREATE2 factory."
 
 #: src/TermsPage.tsx
 msgid "This does not mean every token, extension, network, RPC endpoint, gateway, or other contract is ownerless. Those systems may have independent owners, administrators, upgrade powers, or restrictions. Their inclusion or availability through FreeLP is not an endorsement or a promise of safety. Software copyright and applicable license notices remain in effect."
@@ -915,6 +899,10 @@ msgstr "Transfer NFT to recipient"
 msgid "Unable to read this address. Deployment is disabled."
 msgstr "Unable to read this address. Deployment is disabled."
 
+#: src/walletBatch.ts
+msgid "Unable to simulate this batch. Approve the tokens separately, then deposit."
+msgstr "Unable to simulate this batch. Approve the tokens separately, then deposit."
+
 #: src/PortfolioPosition.tsx
 #: src/PositionDetail.tsx
 msgid "Uncollected fees:"
@@ -924,14 +912,6 @@ msgstr "Uncollected fees:"
 msgid "Updating deposit preview…"
 msgstr "Updating deposit preview…"
 
-#: src/RangeFields.tsx
-msgid "Upper price"
-msgstr "Upper price"
-
-#: src/RangeFields.tsx
-msgid "Upper tick"
-msgstr "Upper tick"
-
 #: src/TokenBalance.tsx
 msgid "Use 95%"
 msgstr "Use 95%"
@@ -940,21 +920,9 @@ msgstr "Use 95%"
 msgid "Use a version suffix to keep a specific release, for example @ekubo/freelp@0.1.1. The package opens a local web server; your wallet signs transactions in the browser."
 msgstr "Use a version suffix to keep a specific release, for example @ekubo/freelp@0.1.1. The package opens a local web server; your wallet signs transactions in the browser."
 
-#: src/RangeFields.tsx
-msgid "Use custom range"
-msgstr "Use custom range"
-
-#: src/RangeFields.tsx
-msgid "Use full range"
-msgstr "Use full range"
-
 #: src/SettingsPage.tsx
-msgid "Use public RPC URLs or your own nodes. Settings stay in this browser."
-msgstr "Use public RPC URLs or your own nodes. Settings stay in this browser."
-
-#: src/RangeFields.tsx
-msgid "Use raw ticks"
-msgstr "Use raw ticks"
+msgid "Use default RPC"
+msgstr "Use default RPC"
 
 #: src/PositionDetail.tsx
 msgid "Wait for the matching deposit amount."
@@ -1003,3 +971,11 @@ msgstr "Your positions"
 #: src/TermsPage.tsx
 msgid "Your responsibility"
 msgstr "Your responsibility"
+
+#: src/LiquidityChart.tsx
+msgid "Zoom in"
+msgstr "Zoom in"
+
+#: src/LiquidityChart.tsx
+msgid "Zoom out"
+msgstr "Zoom out"

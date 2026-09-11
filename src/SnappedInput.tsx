@@ -28,8 +28,13 @@ export function SnappedInput({
         }}
         onBlur={() => setEditing(false)}
       />
-      {!editing && adjusted ? (
-        <small id={description} aria-hidden="true" className="snapped-value">
+      {adjusted ? (
+        <small
+          id={description}
+          aria-hidden="true"
+          className="snapped-value"
+          style={{ visibility: editing ? "hidden" : "visible" }}
+        >
           <Trans>Adjusted to nearest valid value</Trans>
         </small>
       ) : null}

@@ -3,37 +3,21 @@ import { DEFAULT_POSITION_DATA_FETCHER } from "./deployments";
 import {
   encodeFunctionData,
   decodeFunctionResult,
-  encodeDeployData,
   erc20Abi,
   zeroAddress,
   type Abi,
   type Address,
-  type Hex,
 } from "viem";
 import snapshotArtifact from "../artifacts/FreeLPDataFetcher.json" with { type: "json" };
 import managerArtifact from "../artifacts/FreeLP.json" with { type: "json" };
-import coreArtifact from "../artifacts/Core.json" with { type: "json" };
 import { rpc } from "./rpc";
 import type { Position, Settings } from "./types";
-const CONTRACT_ARTIFACTS = {
-  Core: coreArtifact,
-  FreeLP: managerArtifact,
-  FreeLPDataFetcher: snapshotArtifact,
-};
-export type ContractKind = keyof typeof CONTRACT_ARTIFACTS;
+export type ContractKind = "Core" | "FreeLP" | "FreeLPDataFetcher";
 export const managerAbi = managerArtifact.abi as Abi;
 export const managerData = (
   functionName: string,
   args: readonly unknown[] = [],
 ) => encodeFunctionData({ abi: managerAbi, functionName, args });
-export function deployment(kind: ContractKind, core: Address) {
-  const artifact = CONTRACT_ARTIFACTS[kind];
-  return encodeDeployData({
-    abi: artifact.abi as Abi,
-    bytecode: artifact.bytecode as Hex,
-    args: kind === "Core" ? [] : [core],
-  });
-}
 export async function read<T>(
   settings: Settings,
   functionName: string,

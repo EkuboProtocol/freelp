@@ -1,8 +1,19 @@
+import { useSession } from "./session";
 import { NetworkSettingSelect } from "./NetworkSettingSelect";
 import { Trans } from "@lingui/react/macro";
 import { DeploymentCard } from "./DeploymentCard";
 import { DEPLOYMENT_SALT, CREATE2_FACTORY } from "./deterministic";
 export function DeployPage() {
+  const { networks } = useSession();
+  if (!networks.length)
+    return (
+      <p>
+        <Trans>Enable a network in Settings to deploy contracts.</Trans>{" "}
+        <a href="#/settings">
+          <Trans>Settings</Trans>
+        </a>
+      </p>
+    );
   return (
     <section>
       <h2>
@@ -31,8 +42,8 @@ export function DeployPage() {
         </p>
         <p>
           <Trans>
-            This build uses fixed contract addresses on every network.
-            Custom networks must provide the standard CREATE2 factory.
+            This build uses fixed contract addresses on every network. Networks
+            must provide the standard CREATE2 factory.
           </Trans>
         </p>
       </details>

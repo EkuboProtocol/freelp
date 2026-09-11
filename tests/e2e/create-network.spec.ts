@@ -33,7 +33,7 @@ test("any nonempty code enables a chain-scoped form with visible pool cards", as
   await expect(
     page.getByText("Token metadata fallback", { exact: true }),
   ).toHaveCount(0);
-  await page.getByText("Advanced pool settings", { exact: true }).click();
+  await page.getByRole("switch", { name: "Advanced", exact: true }).click();
   await expect(page.getByLabel("Extension address")).toBeVisible();
   await expect(page.locator(".tick-spacing-control")).toBeVisible();
   await page.getByRole("button", { name: "Select first token" }).click();

@@ -1,8 +1,10 @@
-import { snapCreateForm, snapPrice } from "./snapCreateForm";
+import { useBatchSupport } from "./useBatchSupport";
+import { depositCalls } from "./walletCalls";
+import { snapCreateForm, snapPrice, snapNumber } from "./snapCreateForm";
 import { SnappedInput } from "./SnappedInput";
 import { PoolChart } from "./PoolChart";
 import { useSelectedPool } from "./useSelectedPool";
-import { tickPrice } from "./prices";
+import { MAX_TICK, tickPrice } from "./prices";
 import { CreateDeploymentGate } from "./CreateDeploymentGate";
 import { networkName } from "./networks";
 import { defaultCreateForm } from "./createForm";
@@ -49,9 +51,7 @@ export function CreatePage() {
   if (!network)
     return (
       <p role="alert">
-        <Trans>
-          Configure this network in Settings before using this link.
-        </Trans>
+        <Trans>Enable this network in Settings before using this link.</Trans>
       </p>
     );
   return (
@@ -100,6 +100,7 @@ function CreatePositionForm({
   setForm: Dispatch<SetStateAction<CreateForm>>;
 }) {
   const { settings, account, send, revision } = useSession();
+  const batchSupported = useBatchSupport();
   const pool = useSelectedPool(inputForm);
   const form = {
     ...inputForm,
@@ -177,6 +178,7 @@ function CreatePositionForm({
         options: form,
         initialized: pool.data?.state.sqrtRatio !== 0n,
         revision,
+        state: pool.data!.state,
       });
       if (id !== request.current) return;
       if (next.adjusted) {
@@ -207,7 +209,7 @@ function CreatePositionForm({
     };
   }, [key, pool.data]);
   async function create() {
-    if (!current) throw new Error(t`Refresh the preview.`);
+    if (!current) throw new Error(t`Enter a deposit amount.`);
     if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
       throw new Error(t`Slippage must be between 0 and 1000 basis points.`);
     const limits = {
@@ -216,7 +218,7 @@ function CreatePositionForm({
       minLiquidity: (current.liquidity * BigInt(10000 - slippage)) / 10000n,
       deadline: BigInt(Math.floor(Date.now() / 1000) + 1200),
     };
-    await send({
+    const transaction = {
       to: settings.manager,
       data: managerData("createPosition", [
         current.descriptor,
@@ -225,7 +227,17 @@ function CreatePositionForm({
       ]),
       value:
         current.descriptor.poolKey.token0 === zeroAddress ? current.max0 : 0n,
-    });
+    };
+    await send(
+      batchSupported
+        ? depositCalls(
+            current.tokens,
+            [current.max0, current.max1],
+            settings.manager,
+            transaction,
+          )
+        : transaction,
+    );
     window.location.hash = "#/positions";
   }
   return (
@@ -252,21 +264,28 @@ function CreatePositionForm({
       <PoolLoadStatus pool={pool} />
       {pool.data ? (
         <>
-          <PoolChart
-            data={pool.data}
-            options={form}
-            spacing={range.spacing}
-            range={range}
-            onRangeChange={setRange}
-          />
-          <RangeFields
-            range={range}
-            sourceRange={sourceForm.range}
-            setRange={setRange}
-            symbols={symbols}
-            stable={form.kind === "stable"}
-            initialized={pool.data.state.sqrtRatio !== 0n}
-          />
+          <section className="range-section">
+            <h3>
+              <Trans>Price range and liquidity</Trans>
+            </h3>
+            <PoolChart
+              symbols={symbols}
+              data={pool.data}
+              options={form}
+              spacing={range.spacing}
+              range={range}
+              onRangeChange={setRange}
+            />
+            <RangeFields
+              range={range}
+              sourceRange={sourceForm.range}
+              setRange={setRange}
+              symbols={symbols}
+              decimals={pool.data.decimals}
+              stable={form.kind === "stable"}
+              initialized={pool.data.state.sqrtRatio !== 0n}
+            />
+          </section>
           <h3>
             <Trans>Deposit amounts</Trans>
           </h3>
@@ -333,11 +352,6 @@ function CreatePositionForm({
               />
             </Field>
           </div>
-          <p className="row">
-            <button disabled={previewBusy} onClick={() => void preview()}>
-              <Trans>Preview position</Trans>
-            </button>
-          </p>
           <ErrorText error={previewError} />
           {previewBusy ? (
             <p role="status">
@@ -395,7 +409,9 @@ function CreatePositionForm({
                     current.liquidity === 0n ||
                     current.tokens.some(
                       (t, i) =>
-                        t.allowance < (i === 0 ? current.max0 : current.max1) ||
+                        (!batchSupported &&
+                          t.allowance <
+                            (i === 0 ? current.max0 : current.max1)) ||
                         t.balance < (i === 0 ? current.max0 : current.max1),
                     )
                   }
@@ -448,16 +464,48 @@ function poolRangeDefaults(
   range: CreateForm["range"],
   pool: ReturnType<typeof useSelectedPool>["data"],
 ) {
-  if (!pool || pool.state.sqrtRatio === 0n) return range;
-  const price = tickPrice(pool.state.tick, ...pool.decimals);
+  if (!pool) return range;
+  const initialized = pool.state.sqrtRatio !== 0n;
+  const price = initialized
+    ? tickPrice(pool.state.tick, ...pool.decimals)
+    : initialRangePrice(range, pool.decimals);
+  if (!Number.isFinite(price) || price <= 0) return range;
+  const center = snapNumber(
+    (Math.log(price) - (pool.decimals[0] - pool.decimals[1]) * Math.LN10) /
+      Math.log1p(0.000001),
+    -MAX_TICK,
+    MAX_TICK,
+    range.spacing,
+  );
   return {
     ...range,
     prices: [
       range.prices[0] ||
-        snapPrice(decimalInput(price * 0.9), ...pool.decimals, range.spacing),
+        snapPrice(
+          decimalInput(
+            tickPrice(center - range.spacing * 16, ...pool.decimals),
+          ),
+          ...pool.decimals,
+          range.spacing,
+        ),
       range.prices[1] ||
-        snapPrice(decimalInput(price * 1.1), ...pool.decimals, range.spacing),
+        snapPrice(
+          decimalInput(
+            tickPrice(center + range.spacing * 16, ...pool.decimals),
+          ),
+          ...pool.decimals,
+          range.spacing,
+        ),
       decimalInput(price),
     ] as CreateForm["range"]["prices"],
   };
+}
+
+function initialRangePrice(
+  range: CreateForm["range"],
+  decimals: [number, number],
+) {
+  return range.raw
+    ? tickPrice(Number(range.ticks[2]), ...decimals)
+    : Number(range.prices[2]);
 }

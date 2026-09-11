@@ -2,7 +2,7 @@
 
 ## User entry points
 
-After npm publication, recommend `bunx @ekubo/freelp` or `npx @ekubo/freelp`. Both serve the application bundled in the installed package and open a browser. The launcher requires Node 22+ for either command; npx users do not need Bun. Pin a version with `@ekubo/freelp@0.1.1`. To pass options explicitly with npx: `npx -- @ekubo/freelp --no-browser --port 4173`.
+After npm publication, recommend `bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest`. Both serve the application bundled in the installed package and open a browser. The launcher requires Node 22+ for either command; npx users do not need Bun. Pin a version with `@ekubo/freelp@0.1.1`. To pass options explicitly with npx: `npx -- @ekubo/freelp@latest --no-browser --port 4173`.
 
 Each stable release includes `deployment.json`, `site.car`, the npm tarball, and audit reports. The immutable alternative is `ipfs://<siteCid>`, or `http://127.0.0.1:8080/ipfs/<siteCid>/` through a local Kubo gateway. The public preview uses `https://<siteCid>.ipfs.dget.top/`, which provides a separate origin per CID. Filebase’s public gateway imposes a CSP that blocks RPC requests. dget.top works in user testing, but returns HTTP 403 from the development environment; live RPC access there has not been independently verified.
 

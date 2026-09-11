@@ -1,23 +1,32 @@
+import { fixedSqrtRatioToFloat, toSqrtRatio } from "@ekubo/sdk";
 import { Trans } from "@lingui/react/macro";
 import { decimalInput } from "./decimalFormat";
-import { rangeTicks, tickPrice, type RangeInput } from "./prices";
+import {
+  priceToTick,
+  rangeTicks,
+  tickPrice,
+  MAX_TICK,
+  type RangeInput,
+} from "./prices";
 import { stableBounds, type PoolOptions } from "./poolOptions";
 import { LiquidityChart } from "./LiquidityChart";
 import type { SelectedPool } from "./useSelectedPool";
 export function PoolChart({
   options,
+  symbols,
   data,
   spacing,
   range,
   onRangeChange,
 }: {
   range: RangeInput;
+  symbols: string[];
   options: PoolOptions;
   onRangeChange: (range: RangeInput) => void;
   data: SelectedPool;
   spacing: number;
 }) {
-  const original = data.state;
+  const original = initializedChartState(data, range);
   const state = chartState(original, options);
   const chartSpacing =
     options.kind === "stable"
@@ -31,6 +40,7 @@ export function PoolChart({
   return state.sqrtRatio !== 0n ? (
     <LiquidityChart
       data={state}
+      symbols={symbols}
       decimals0={data.decimals[0]}
       decimals1={data.decimals[1]}
       spacing={chartSpacing}
@@ -79,5 +89,27 @@ function chartState(state: SelectedPool["state"], options: PoolOptions) {
   return {
     ...state,
     liquidity: state.tick < lower || state.tick >= upper ? 0n : state.liquidity,
+    ticks: [
+      { number: lower, liquidityDelta: state.liquidity },
+      { number: upper, liquidityDelta: -state.liquidity },
+    ],
   };
+}
+
+function initializedChartState(data: SelectedPool, range: RangeInput) {
+  if (data.state.sqrtRatio !== 0n || !range.prices[2]) return data.state;
+  try {
+    const tick = priceToTick(range.prices[2], ...data.decimals, 1, "round");
+    return {
+      ...data.state,
+      tick,
+      sqrtRatio: fixedSqrtRatioToFloat(toSqrtRatio(tick, "evm")),
+      minTick: -MAX_TICK,
+      maxTick: MAX_TICK,
+      liquidity: 0n,
+      ticks: [],
+    };
+  } catch {
+    return data.state;
+  }
 }

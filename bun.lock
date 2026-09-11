@@ -7,6 +7,7 @@
       "devDependencies": {
         "@axe-core/playwright": "4.13.0",
         "@babel/core": "^8.0.1",
+        "@ekubo/sdk": "0.0.10",
         "@eslint/js": "10.0.1",
         "@ipld/car": "^5.4.7",
         "@lingui/babel-plugin-lingui-macro": "6.6.0",
@@ -82,6 +83,8 @@
     "@colors/colors": ["@colors/colors@1.5.0", "", {}, "sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ=="],
 
     "@dnsquery/dns-packet": ["@dnsquery/dns-packet@6.1.1", "", { "dependencies": { "@leichtgewicht/ip-codec": "^2.0.4", "utf8-codec": "^1.0.0" } }, "sha512-WXTuFvL3G+74SchFAtz3FgIYVOe196ycvGsMgvSH/8Goptb1qpIQtIuM4SOK9G9lhMWYpHxnXyy544ZhluFOew=="],
+
+    "@ekubo/sdk": ["@ekubo/sdk@0.0.10", "", {}, "sha512-lH+gA6MBkvdC4xwyv6sBulHrewj6tu3lwShSoorVe6YBsCnd7QZOmNQ175JIfi2cZXruZ28A25SiyJ+3Z+2trA=="],
 
     "@eslint-community/eslint-utils": ["@eslint-community/eslint-utils@4.10.1", "", { "dependencies": { "eslint-visitor-keys": "^3.4.3" }, "peerDependencies": { "eslint": "^6.0.0 || ^7.0.0 || >=8.0.0" } }, "sha512-cuadcxVFE8sDK6iWJbs8Sn0av2Nrh2QSGQhVlBW9AaAHqHwjWsZHT8LJ4hFGPh7ASBV2deFdM7H/DPjulmh8rg=="],
 

@@ -11,14 +11,18 @@ import {
 } from "react";
 import { getAddress, type Address } from "viem";
 export { rpc } from "./rpc";
-import { loadNetworks, updateNetworks } from "./networks";
-import { loadSettings, validateSettings } from "./config";
+import { loadNetworks, updateNetworks, setNetworkEnabled } from "./networks";
+import { loadSettings, validateSettings, DEFAULT_SETTINGS } from "./config";
 import { save } from "./storage";
-import { executeTransaction } from "./transactions";
 import type { Settings, Transaction, Wallet } from "./types";
 function useSessionState() {
   const [networks, setNetworks] = useState(loadNetworks);
-  const [settings, setSettings] = useState(loadSettings);
+  const [settings, setSettings] = useState(
+    () =>
+      networks.find((network) => network.chainId === loadSettings().chainId) ??
+      networks[0] ??
+      DEFAULT_SETTINGS,
+  );
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [wallet, setWallet] = useState<Wallet>();
   const [account, setAccount] = useState<Address>();
@@ -77,11 +81,28 @@ function useSessionState() {
       );
     next = validateSettings(next);
     ensureNativeCurrency(next);
-    setSettings(next);
+    setSettings((current) =>
+      current.chainId === next.chainId ? next : current,
+    );
     setNetworks((current) => updateNetworks(current, next));
-    save("freelp:settings", next);
     setRevision((n) => n + 1);
   }, []);
+  function toggleNetwork(id: number, enabled: boolean) {
+    if (transactionLock.current)
+      throw new Error(
+        t`Finish the pending transaction before changing settings.`,
+      );
+    const next = setNetworkEnabled(networks, id, enabled);
+    setNetworks(next);
+    const active =
+      next.find((network) => network.chainId === settings.chainId) ??
+      next[0] ??
+      DEFAULT_SETTINGS;
+    if (enabled)
+      ensureNativeCurrency(next.find((network) => network.chainId === id)!);
+    setSettings(active);
+    save("freelp:settings", active);
+  }
   function selectNetwork(chainId: number) {
     const next = networks.find((network) => network.chainId === chainId);
     if (!next || next.chainId === settings.chainId) return;
@@ -93,7 +114,7 @@ function useSessionState() {
     setSettings(next);
     save("freelp:settings", next);
   }
-  async function send(tx: Transaction, target = settings) {
+  async function send(tx: Transaction | Transaction[], target = settings) {
     if (!wallet || !account) throw new Error(t`Connect a wallet first.`);
     if (transactionLock.current)
       throw new Error(t`A transaction is already pending.`);
@@ -101,16 +122,23 @@ function useSessionState() {
     setBusy(true);
     setStatus(t`Simulating and requesting wallet confirmation…`);
     try {
-      const receipt = await executeTransaction(
-        wallet.provider,
-        account,
-        target,
-        tx,
-      );
+      const receipt = await (Array.isArray(tx)
+        ? (await import("./walletBatch")).executeBatch(
+            wallet.provider,
+            account,
+            target,
+            tx,
+          )
+        : (await import("./transactions")).executeTransaction(
+            wallet.provider,
+            account,
+            target,
+            tx,
+          ));
       setStatus(t`Confirmed: ${receipt.transactionHash}`);
-      setRevision((n) => n + 1);
       return receipt;
     } finally {
+      setRevision((n) => n + 1);
       transactionLock.current = false;
       setBusy(false);
     }
@@ -120,7 +148,9 @@ function useSessionState() {
     networks,
     selectNetwork,
     configure,
+    toggleNetwork,
     wallets,
+    provider: wallet?.provider,
     account,
     connect,
     busy,

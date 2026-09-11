@@ -1,4 +1,8 @@
-import { getAddress, toHex } from "viem";
+import {
+  encodeEvmConcentratedPoolConfig,
+  encodeEvmStableswapPoolConfig,
+} from "@ekubo/sdk";
+import { getAddress } from "viem";
 import { exactFeeFromPercent } from "./fee";
 import { checkSpacing } from "./pools";
 import { MAX_TICK, rangeTicks, type RangeInput } from "./prices";
@@ -15,21 +19,19 @@ export function poolConfig(fee: string, spacing: number, options: PoolOptions) {
   const feeValue = BigInt(exact);
   if (feeValue < 0n || feeValue >= 1n << 64n)
     throw new Error("Fee must fit uint64 and be below 100%.");
-  return toHex(
-    (BigInt(getAddress(options.extension)) << 96n) |
-      (feeValue << 32n) |
-      typeConfig(spacing, options),
-    { size: 32 },
-  );
-}
-function typeConfig(spacing: number, options: PoolOptions) {
+  const base = { fee: feeValue, extension: getAddress(options.extension) };
   if (options.kind === "concentrated") {
     checkSpacing(spacing);
-    return 0x80000000n | BigInt(spacing);
+    return encodeEvmConcentratedPoolConfig({ ...base, tickSpacing: spacing });
   }
   const { amplification, center } = stableParameters(options);
-  return (BigInt(amplification) << 24n) | (BigInt(center / 16) & 0xffffffn);
+  return encodeEvmStableswapPoolConfig({
+    ...base,
+    amplification,
+    centerTick: center,
+  });
 }
+
 function stableParameters(options: PoolOptions) {
   const amplification = Number(options.amplification),
     center = Number(options.center);

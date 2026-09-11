@@ -1,55 +1,57 @@
-import {
-  NetworkDetailsFields,
-  EMPTY_NETWORK_DETAILS,
-  type NetworkDetailsInput,
-} from "./NetworkDetailsFields";
-import { nativeCurrency } from "./nativeCurrency";
 import { t } from "@lingui/core/macro";
-import { useRef, useState } from "react";
 import { Trans } from "@lingui/react/macro";
-import { createPublicClient, http } from "viem";
-import { useSession } from "./session";
-import { DEFAULT_CONTRACTS } from "./deployments";
-import { NETWORKS, networkName } from "./networks";
+import { useRef, useState } from "react";
+import { MAINNET_CHAINS, chainDefinition, rpcEndpoint } from "./chains";
+import { configuredNetwork } from "./networks";
+import { validateSettings } from "./config";
+import { rpc, useSession } from "./session";
 import { errorMessage } from "./errors";
 import type { Settings } from "./types";
-
 export function SettingsPage() {
-  const { networks, configure } = useSession();
-  const dialog = useRef<HTMLDialogElement>(null);
-  const input = useRef<HTMLInputElement>(null);
+  const {
+    networks,
+    configure,
+    toggleNetwork,
+    busy: transactionBusy,
+  } = useSession();
+  const [search, setSearch] = useState("");
+  const [showAll, setShowAll] = useState(false);
+  const [limit, setLimit] = useState(40);
   const [editing, setEditing] = useState<Settings>();
-  const [details, setDetails] = useState(EMPTY_NETWORK_DETAILS);
   const [rpcUrl, setRpcUrl] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  function open(network?: Settings) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const input = useRef<HTMLInputElement>(null);
+  const enabled = new Set(networks.map((network) => network.chainId));
+  const choices = availableChoices(showAll, search, networks);
+  const matches = choices.filter((chain) =>
+    `${chain.name} ${chain.id}`
+      .toLowerCase()
+      .includes(search.trim().toLowerCase()),
+  );
+  function open(id: number) {
+    const network = configuredNetwork(id);
     setEditing(network);
-    setDetails(
-      network
-        ? {
-            name: network.name ?? "",
-            nativeSymbol: network.nativeSymbol,
-            nativeName: nativeCurrency(network).name,
-            nativeDecimals: String(nativeCurrency(network).decimals),
-          }
-        : EMPTY_NETWORK_DETAILS,
-    );
-    setRpcUrl(network?.rpcUrl ?? "");
+    setRpcUrl(network.rpcUrl);
     setError("");
     dialog.current?.showModal();
     input.current?.focus();
   }
   async function save() {
+    if (!editing) return;
     setBusy(true);
     setError("");
     try {
-      configure(
-        applyNetworkDetails(
-          await detectNetwork(rpcUrl, networks, editing),
-          details,
-        ),
-      );
+      const next = validateSettings({ ...editing, rpcUrl });
+      if (next.rpcUrl) {
+        const id = await rpc(next).getChainId();
+        if (id !== next.chainId)
+          throw new Error(
+            t`Expected chain ${next.chainId}, but this RPC reports ${id}.`,
+          );
+      }
+      configure(next);
       dialog.current?.close();
     } catch (error) {
       setError(errorMessage(error));
@@ -59,35 +61,78 @@ export function SettingsPage() {
   }
   return (
     <section>
-      <div className="row spread">
-        <h2>
-          <Trans>Networks</Trans>
-        </h2>
-        <button onClick={() => open()}>
-          <Trans>Add network</Trans>
-        </button>
-      </div>
+      <h2>
+        <Trans>Networks</Trans>
+      </h2>
       <p>
         <Trans>
-          Use public RPC URLs or your own nodes. Settings stay in this browser.
+          Enable the networks you use. Their names, native tokens and default
+          RPCs come from viem.
         </Trans>
       </p>
+      <input
+        aria-label={t`Search networks`}
+        placeholder={t`Search networks`}
+        value={search}
+        onChange={(event) => {
+          setSearch(event.target.value);
+          setLimit(40);
+        }}
+      />
       <div className="network-list">
-        {networks.map((network) => (
-          <div className="network-row" key={network.chainId}>
-            <div>
-              <strong>{networkName(network.chainId, network.name)}</strong>
-              <span className="network-rpc">{network.rpcUrl}</span>
-            </div>
+        {matches.slice(0, limit).map((chain) => (
+          <div className="network-row" key={chain.id}>
+            <label className="row">
+              <input
+                type="checkbox"
+                aria-label={t`Enable ${chain.name}`}
+                checked={enabled.has(chain.id)}
+                disabled={transactionBusy}
+                onChange={(event) =>
+                  toggleNetwork(chain.id, event.target.checked)
+                }
+              />
+              <span>
+                <strong>{chain.name}</strong>
+                <small>
+                  {chain.id} · {chain.nativeCurrency.symbol}
+                </small>
+              </span>
+            </label>
             <button
-              aria-label={t`Edit ${networkName(network.chainId, network.name)} RPC`}
-              onClick={() => open(network)}
+              aria-label={t`Edit ${chain.name} RPC`}
+              disabled={transactionBusy}
+              onClick={() => open(chain.id)}
             >
-              <Trans>Edit</Trans>
+              <Trans>RPC settings</Trans>
             </button>
           </div>
         ))}
       </div>
+      {!matches.length ? (
+        <p>
+          <Trans>No matching networks.</Trans>
+        </p>
+      ) : null}
+      {!search ? (
+        <button
+          onClick={() => {
+            setShowAll(!showAll);
+            setLimit(40);
+          }}
+        >
+          {showAll ? (
+            <Trans>Show enabled networks</Trans>
+          ) : (
+            <Trans>Show all networks</Trans>
+          )}
+        </button>
+      ) : null}
+      {matches.length > limit ? (
+        <button onClick={() => setLimit((value) => value + 40)}>
+          <Trans>Show more</Trans>
+        </button>
+      ) : null}
       <dialog
         ref={dialog}
         className="network-dialog"
@@ -104,7 +149,7 @@ export function SettingsPage() {
         >
           <div className="row spread">
             <h2 id="network-dialog-title">
-              {editing ? <Trans>Edit RPC</Trans> : <Trans>Add network</Trans>}
+              <Trans>RPC settings</Trans>
             </h2>
             <button
               type="button"
@@ -115,37 +160,31 @@ export function SettingsPage() {
               ×
             </button>
           </div>
+          <p>{editing?.name}</p>
           <label>
-            <span className="sr-only">
-              <Trans>RPC URL</Trans>
-            </span>
+            <Trans>RPC URL override</Trans>
             <input
               ref={input}
               type="url"
               value={rpcUrl}
-              placeholder="https://"
-              required
+              placeholder={
+                editing ? rpcEndpoint({ ...editing, rpcUrl: "" }) : "https://"
+              }
               autoComplete="off"
               spellCheck={false}
               disabled={busy}
               onChange={(event) => setRpcUrl(event.target.value)}
             />
           </label>
-          <p className="network-hint">
-            <Trans>The network is detected from your RPC URL.</Trans>
+          <p>
+            <Trans>Leave blank to use this network's default RPC.</Trans>
           </p>
-          <NetworkDetailsFields
-            value={details}
-            onChange={setDetails}
-            disabled={busy}
-          />
-          {error ? (
-            <p role="alert" className="error">
-              {error}
-            </p>
-          ) : null}
+          <button type="button" disabled={busy} onClick={() => setRpcUrl("")}>
+            <Trans>Use default RPC</Trans>
+          </button>
+          {error ? <p role="alert">{error}</p> : null}
           <button type="submit" disabled={busy}>
-            {busy ? <Trans>Connecting…</Trans> : <Trans>Save network</Trans>}
+            {busy ? <Trans>Checking RPC…</Trans> : <Trans>Save RPC</Trans>}
           </button>
         </form>
       </dialog>
@@ -153,63 +192,12 @@ export function SettingsPage() {
   );
 }
 
-async function detectNetwork(
-  rpcUrl: string,
+function availableChoices(
+  showAll: boolean,
+  search: string,
   networks: Settings[],
-  editing?: Settings,
-): Promise<Settings> {
-  const url = new URL(rpcUrl.trim());
-  if (!["http:", "https:"].includes(url.protocol))
-    throw new Error(t`RPC must use HTTP or HTTPS.`);
-  const client = createPublicClient({
-    ccipRead: false,
-    transport: http(url.href, { retryCount: 0, timeout: 15000 }),
-  });
-  const chainId = await client.getChainId();
-  if (!Number.isSafeInteger(chainId) || chainId < 1)
-    throw new Error(t`The RPC returned an invalid chain ID.`);
-  if (editing && chainId !== editing.chainId)
-    throw new Error(
-      t`Expected chain ${editing.chainId}, but this RPC reports ${chainId}.`,
-    );
-  const known =
-    networks.find((n) => n.chainId === chainId) ??
-    NETWORKS.find((n) => n.chainId === chainId);
-  return {
-    ...DEFAULT_CONTRACTS,
-    chainId,
-    rpcUrl: url.href,
-    ...networkDetails(chainId, known),
-  };
-}
-
-function networkDetails(
-  chainId: number,
-  known?: Pick<
-    Settings,
-    "name" | "nativeSymbol" | "nativeName" | "nativeDecimals"
-  >,
 ) {
-  return {
-    name: known?.name ?? t`Chain ${chainId}`,
-    nativeSymbol: known?.nativeSymbol ?? "native",
-    nativeName: known?.nativeName,
-    nativeDecimals: known?.nativeDecimals,
-  };
-}
-
-function applyNetworkDetails(
-  network: Settings,
-  details: NetworkDetailsInput,
-): Settings {
-  return {
-    ...network,
-    name: details.name.trim() || network.name,
-    nativeSymbol: details.nativeSymbol.trim() || network.nativeSymbol,
-    nativeName: details.nativeName.trim() || network.nativeName,
-    nativeDecimals:
-      details.nativeDecimals === ""
-        ? network.nativeDecimals
-        : Number(details.nativeDecimals),
-  };
+  return showAll || search
+    ? MAINNET_CHAINS
+    : networks.map((network) => chainDefinition(network.chainId));
 }

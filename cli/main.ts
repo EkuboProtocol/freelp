@@ -30,7 +30,7 @@ async function collect(directory: string, prefix = "") {
 }
 if (values.help)
   console.log(
-    "bunx @ekubo/freelp | npx @ekubo/freelp [--port 4173] [--no-browser]\nServes the app bundled in the installed package on localhost. No GitHub access or binary download is required.",
+    "bunx @ekubo/freelp@latest | npx @ekubo/freelp@latest [--port 4173] [--no-browser]\nServes the app bundled in the installed package on localhost. No GitHub access or binary download is required.",
   );
 else {
   try {

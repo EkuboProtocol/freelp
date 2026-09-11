@@ -1,206 +1,192 @@
-import { decimalDisplay } from "./decimalFormat";
 import { t } from "@lingui/core/macro";
-import { useState } from "react";
 import { Trans } from "@lingui/react/macro";
-import { liquidityAtTick } from "./liquidity";
+import { useMemo, useState, useRef } from "react";
+import { formatUnits } from "viem";
+import { liquidityBuckets } from "./liquidityBuckets";
+import { decimalDisplay } from "./decimalFormat";
+import { tickPrice } from "./prices";
 import type { QuoteDataFetcherResult } from "./quoteData";
-
+type Props = {
+  data: QuoteDataFetcherResult;
+  decimals0: number;
+  decimals1: number;
+  spacing: number;
+  symbols: string[];
+  selection?: { lower: number; upper: number };
+  onSelectRange?: (lower: number, upper: number) => void;
+};
 export function LiquidityChart({
   data,
   decimals0,
   decimals1,
   spacing,
+  symbols,
   selection,
   onSelectRange,
-}: {
-  selection?: { lower: number; upper: number };
-  onSelectRange?: (lower: number, upper: number) => void;
-  data: QuoteDataFetcherResult;
-  decimals0: number;
-  decimals1: number;
-  spacing: number;
-}) {
+}: Props) {
   const [zoom, setZoom] = useState(50);
   const [hover, setHover] = useState<number>();
-  const lower = Math.max(data.minTick, data.tick - spacing * zoom);
-  const upper = Math.min(data.maxTick, data.tick + spacing * zoom);
-  const samples = Array.from({ length: 80 }, (_, index) => {
-    const tick = Math.floor(lower + ((upper - lower) * (index + 0.5)) / 80);
-    return { tick, liquidity: liquidityAtTick(data, data.ticks, tick) };
-  });
-  const max = samples.reduce(
-    (value, point) => (point.liquidity > value ? point.liquidity : value),
-    1n,
+  const start = useRef<number | undefined>(undefined);
+  const { lower, upper, buckets } = useMemo(
+    () => liquidityBuckets(data, spacing, zoom),
+    [data, spacing, zoom],
   );
   const price = (tick: number) =>
-    decimalDisplay(
-      Math.exp(tick * Math.log1p(0.000001)) * 10 ** (decimals0 - decimals1),
-      5,
+    decimalDisplay(tickPrice(tick, decimals0, decimals1), 6);
+  // Use token1-equivalent values only for bar heights, keeping exact amounts in tooltips.
+  const priceNow = tickPrice(data.tick, decimals0, decimals1);
+  const values = buckets.map((b) => [
+    Number(formatUnits(b.amounts[0], decimals0)) * priceNow,
+    Number(formatUnits(b.amounts[1], decimals1)),
+  ]);
+  const max = Math.max(...values.flat(), Number.MIN_VALUE);
+  const x = (tick: number) =>
+    Math.max(
+      0,
+      Math.min(800, ((tick - lower) / Math.max(1, upper - lower)) * 800),
     );
-  const selected = samples[hover ?? 40];
+  const pointerTick = (event: React.PointerEvent<SVGSVGElement>) => {
+    const box = event.currentTarget.getBoundingClientRect();
+    return (
+      Math.round(
+        (lower +
+          Math.max(0, Math.min(1, (event.clientX - box.left) / box.width)) *
+            (upper - lower)) /
+          spacing,
+      ) * spacing
+    );
+  };
   return (
     <div className="liquidity-chart">
       <div className="row spread">
-        <div>
-          <h3>
-            <Trans>Liquidity distribution</Trans>
-          </h3>
-          <small>
-            <Trans>Current pool liquidity, read directly from chain</Trans>
-          </small>
-        </div>
-        <div className="segmented">
-          {[10, 25, 50, 100].map((value) => (
-            <button
-              key={value}
-              aria-pressed={zoom === value}
-              onClick={() => setZoom(value)}
-            >
-              {value}×
-            </button>
-          ))}
+        <small>
+          <span className="token-bar-key" />
+          {symbols[0]} <span className="token-bar-key secondary" />
+          {symbols[1]}
+        </small>
+        <div className="row">
+          <button
+            aria-label={t`Zoom out`}
+            disabled={zoom >= 256}
+            onClick={() => setZoom(Math.min(256, zoom * 2))}
+          >
+            −
+          </button>
+          <button
+            aria-label={t`Zoom in`}
+            disabled={zoom <= 4}
+            onClick={() => setZoom(Math.max(4, zoom / 2))}
+          >
+            +
+          </button>
         </div>
       </div>
       <svg
-        viewBox="0 0 800 240"
+        viewBox="0 0 800 210"
+        preserveAspectRatio="none"
         role="img"
-        aria-label={t`Pool liquidity by price`}
-        onMouseLeave={() => setHover(undefined)}
+        aria-label={t`Pool token amounts by price`}
+        className="depth-chart"
+        onPointerLeave={() => setHover(undefined)}
+        onPointerDown={(event) => {
+          start.current = pointerTick(event);
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerUp={(event) => {
+          const end = pointerTick(event),
+            from = start.current;
+          start.current = undefined;
+          if (from !== undefined && from !== end)
+            onSelectRange?.(Math.min(from, end), Math.max(from, end));
+        }}
       >
         {selection ? (
           <rect
-            x={Math.max(
-              0,
-              ((selection.lower - lower) / Math.max(upper - lower, 1)) * 800,
-            )}
-            y="0"
-            width={Math.max(
-              0,
-              Math.min(
-                800,
-                ((selection.upper - lower) / Math.max(upper - lower, 1)) * 800,
-              ) -
-                Math.max(
-                  0,
-                  ((selection.lower - lower) / Math.max(upper - lower, 1)) *
-                    800,
-                ),
-            )}
+            x={x(selection.lower)}
+            width={Math.max(0, x(selection.upper) - x(selection.lower))}
             height="210"
-            fill="#111"
+            fill="#000"
             opacity="0.08"
           />
         ) : null}
-        <line x1="0" y1="210" x2="800" y2="210" stroke="#ccc" />
-        {samples.map((point, index) => (
-          <rect
-            key={index}
-            x={index * 10 + 1}
-            y={210 - Number((point.liquidity * 190n) / max)}
-            width="8"
-            height={Number((point.liquidity * 190n) / max)}
-            fill={index === hover ? "#111" : "#888"}
-            onMouseEnter={() => setHover(index)}
-          >
-            <title>
-              {price(point.tick)}: {point.liquidity.toString()}
-            </title>
-          </rect>
+        {buckets.map((bucket, i) => (
+          <g key={bucket.lower} onPointerEnter={() => setHover(i)}>
+            {bucket.amounts.map((amount, side) => (
+              <rect
+                key={side}
+                x={
+                  x(bucket.lower) +
+                  ((x(bucket.upper) - x(bucket.lower)) * side) / 2
+                }
+                y={210 - (values[i][side] / max) * 190}
+                width={Math.max(
+                  0.5,
+                  (x(bucket.upper) - x(bucket.lower)) / 2 - 1,
+                )}
+                height={(values[i][side] / max) * 190}
+                fill={side === 0 ? "#111" : "#999"}
+              >
+                <title>
+                  {price(bucket.lower)}–{price(bucket.upper)}:{" "}
+                  {formatUnits(amount, side === 0 ? decimals0 : decimals1)}{" "}
+                  {symbols[side]}
+                </title>
+              </rect>
+            ))}
+            <rect
+              x={x(bucket.lower)}
+              width={Math.max(1, x(bucket.upper) - x(bucket.lower))}
+              height="210"
+              fill="transparent"
+            />
+          </g>
         ))}
         <line
-          x1={((data.tick - lower) / Math.max(upper - lower, 1)) * 800}
-          x2={((data.tick - lower) / Math.max(upper - lower, 1)) * 800}
-          y1="10"
-          y2="212"
+          x1={x(data.tick)}
+          x2={x(data.tick)}
+          y1="0"
+          y2="210"
           stroke="#111"
           strokeDasharray="4 4"
         />
-        <text x="0" y="236" fontSize="13">
-          {price(lower)}
-        </text>
-        <text x="800" y="236" textAnchor="end" fontSize="13">
-          {price(upper)}
-        </text>
       </svg>
-      {selection && onSelectRange ? (
-        <ChartRange
-          lower={lower}
-          upper={upper}
-          selection={selection}
-          onChange={onSelectRange}
-        />
-      ) : null}
-      <label>
-        <Trans>Explore liquidity by price</Trans>
-        <input
-          type="range"
-          min={0}
-          max={79}
-          value={hover ?? 40}
-          onChange={(event) => setHover(Number(event.target.value))}
-        />
-      </label>
-      <div className="row spread">
-        <small>
-          <Trans>Price</Trans> {price(selected.tick)}
-        </small>
-        <small>
-          <Trans>Active liquidity</Trans> {selected.liquidity.toString()}
-        </small>
+      <div className="row spread chart-axis">
+        <span>{price(lower)}</span>
+        <span>{price(upper)}</span>
       </div>
+      <div className="chart-tooltip" role="status">
+        {hover !== undefined && buckets[hover] ? (
+          <>
+            <span>
+              {price(buckets[hover].lower)}–{price(buckets[hover].upper)}
+            </span>
+            {buckets[hover].amounts.map((amount, side) => (
+              <span key={side}>
+                {formatUnits(amount, side === 0 ? decimals0 : decimals1)}{" "}
+                {symbols[side]}
+              </span>
+            ))}
+          </>
+        ) : (
+          <small>
+            <Trans>
+              Hover for token amounts. Drag across the chart to select a range.
+            </Trans>
+          </small>
+        )}
+      </div>
+      {selection ? (
+        <div className="row spread">
+          <span>{price(selection.lower)}</span>
+          <small>
+            <Trans>Selected range</Trans>
+          </small>
+          <span>{price(selection.upper)}</span>
+        </div>
+      ) : null}
       <small>
-        <Trans>
-          Only the on-chain tick range fetched is shown. Empty space outside
-          that range is not assumed to have zero liquidity.
-        </Trans>
+        <Trans>Only the range read from chain is shown.</Trans>
       </small>
-    </div>
-  );
-}
-
-function ChartRange({
-  lower,
-  upper,
-  selection,
-  onChange,
-}: {
-  lower: number;
-  upper: number;
-  selection: { lower: number; upper: number };
-  onChange: (lower: number, upper: number) => void;
-}) {
-  return (
-    <div className="grid">
-      <label>
-        <Trans>Range lower bound</Trans>
-        <input
-          type="range"
-          min={lower}
-          max={upper}
-          value={Math.max(lower, Math.min(upper, selection.lower))}
-          onChange={(e) =>
-            onChange(
-              Math.min(Number(e.target.value), selection.upper - 1),
-              selection.upper,
-            )
-          }
-        />
-      </label>
-      <label>
-        <Trans>Range upper bound</Trans>
-        <input
-          type="range"
-          min={lower}
-          max={upper}
-          value={Math.max(lower, Math.min(upper, selection.upper))}
-          onChange={(e) =>
-            onChange(
-              selection.lower,
-              Math.max(Number(e.target.value), selection.lower + 1),
-            )
-          }
-        />
-      </label>
     </div>
   );
 }

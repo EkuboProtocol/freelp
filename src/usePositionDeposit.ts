@@ -1,7 +1,7 @@
+import { toSqrtRatio } from "@ekubo/sdk";
 import { useEffect, useState } from "react";
 import { formatUnits } from "viem";
-import { rpc } from "./rpc";
-import { read, type Token } from "./contracts";
+import { type Token } from "./contracts";
 import { parseAmount } from "./amounts";
 import { quoteDeposit } from "./depositQuote";
 import { errorMessage } from "./errors";
@@ -30,7 +30,7 @@ export function usePositionDeposit(
     if (!tokens) return;
     let active = true;
     const timer = setTimeout(() => {
-      void loadRatio(settings, position, tokens, input)
+      void loadRatio(position, tokens, input)
         .then((result) => {
           if (active) setLoaded({ key, result });
         })
@@ -62,37 +62,26 @@ export function usePositionDeposit(
   };
 }
 async function loadRatio(
-  settings: Settings,
   position: Position,
   tokens: [Token, Token],
   input: { side: 0 | 1; value: string },
 ) {
-  const block = await rpc(settings).getBlockNumber();
-  const [, tick] = await read<[bigint, number, bigint]>(
-    settings,
-    "poolState",
-    [position.descriptor.poolKey],
-    block,
-  );
   const amounts: [bigint, bigint] = [0n, 0n];
   amounts[input.side] = parseAmount(
     input.value || "0",
     tokens[input.side].decimals,
   );
-  const quote = await quoteDeposit(
-    settings,
+  const quote = quoteDeposit(
     position.descriptor,
-    0,
+    position.sqrtRatio,
     amounts,
-    block,
-    tick,
     input.side,
   );
   return {
     ...quote,
     inactive: [
-      tick >= position.descriptor.tickUpper,
-      tick <= position.descriptor.tickLower,
+      position.sqrtRatio >= toSqrtRatio(position.descriptor.tickUpper, "evm"),
+      position.sqrtRatio <= toSqrtRatio(position.descriptor.tickLower, "evm"),
     ],
   };
 }

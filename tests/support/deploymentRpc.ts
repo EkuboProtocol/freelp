@@ -1,3 +1,4 @@
+import { rpcEndpoint } from "../../src/chains";
 import type { Page } from "@playwright/test";
 import { padHex, toHex, toFunctionSelector } from "viem";
 import { NETWORKS } from "../../src/networks";
@@ -15,13 +16,14 @@ export async function mockDeployments(
     (url) =>
       NETWORKS.some(
         (network) =>
-          network.rpcUrl.replace(/\/$/, "") === url.href.replace(/\/$/, ""),
+          rpcEndpoint(network).replace(/\/$/, "") ===
+          url.href.replace(/\/$/, ""),
       ),
     async (route) => {
       const body = route.request().postDataJSON();
       const network = NETWORKS.find(
         (network) =>
-          network.rpcUrl.replace(/\/$/, "") ===
+          rpcEndpoint(network).replace(/\/$/, "") ===
           route.request().url().replace(/\/$/, ""),
       )!;
       const result = deploymentReply(body, network.chainId, missing);

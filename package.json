@@ -1,6 +1,6 @@
 {
   "name": "@ekubo/freelp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": false,
   "type": "module",
   "license": "MIT",
@@ -23,6 +23,7 @@
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
     "@babel/core": "^8.0.1",
+    "@ekubo/sdk": "0.0.10",
     "@eslint/js": "10.0.1",
     "@ipld/car": "^5.4.7",
     "@lingui/babel-plugin-lingui-macro": "6.6.0",
@@ -73,7 +74,8 @@
     "ipfs-unixfs-importer",
     "react",
     "react-dom",
-    "viem"
+    "viem",
+    "@ekubo/sdk"
   ],
   "engines": {
     "node": ">=22"

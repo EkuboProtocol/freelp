@@ -2,12 +2,16 @@ import { t } from "@lingui/core/macro";
 import { positionState } from "./PositionRange";
 import { networkCurrencies } from "./tokens";
 import type { Position, Settings } from "./types";
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Trans } from "@lingui/react/macro";
 import { useSession, NetworkScope } from "./session";
 import { usePortfolio } from "./usePortfolio";
 import { networkName } from "./networks";
-import { PositionDetail } from "./PositionDetail";
+const PositionDetail = lazy(() =>
+  import("./PositionDetail").then((module) => ({
+    default: module.PositionDetail,
+  })),
+);
 import { PortfolioPosition } from "./PortfolioPosition";
 
 export function PositionsPage() {
@@ -135,7 +139,15 @@ export function PositionsPage() {
                 <Trans>Manage position</Trans> ·{" "}
                 {networkName(current.settings.chainId, current.settings.name)}
               </legend>
-              <PositionDetail key={selected} position={current.position} />
+              <Suspense
+                fallback={
+                  <p role="status">
+                    <Trans>Loading…</Trans>
+                  </p>
+                }
+              >
+                <PositionDetail key={selected} position={current.position} />
+              </Suspense>
             </fieldset>
           </NetworkScope>
         </>

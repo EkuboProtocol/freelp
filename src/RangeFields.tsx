@@ -1,127 +1,97 @@
+import { snapNumber } from "./snapCreateForm";
 import { t } from "@lingui/core/macro";
-import { SnappedInput } from "./SnappedInput";
-import { decimalInput } from "./decimalFormat";
 import { Trans } from "@lingui/react/macro";
 import type { Dispatch, SetStateAction } from "react";
+import { SnappedInput } from "./SnappedInput";
 import { Field } from "./common";
-import type { RangeInput } from "./prices";
-
+import { spacingPercent } from "./pools";
+import { decimalDisplay, decimalInput } from "./decimalFormat";
+import { priceToTick, tickPrice, MAX_TICK, type RangeInput } from "./prices";
 export function RangeFields({
   range,
   sourceRange = range,
   setRange,
   symbols,
+  decimals,
   stable = false,
   initialized = false,
 }: {
-  symbols: string[];
-  stable?: boolean;
-  initialized?: boolean;
   range: RangeInput;
   sourceRange?: RangeInput;
   setRange: Dispatch<SetStateAction<RangeInput>>;
+  symbols: string[];
+  decimals: [number, number];
+  stable?: boolean;
+  initialized?: boolean;
 }) {
-  const labels = range.raw
-    ? [t`Lower tick`, t`Upper tick`, t`Initial tick (new pools only)`]
-    : [t`Lower price`, t`Upper price`, t`Initial price (new pools only)`];
-  function update(index: number, value: string) {
-    setRange((previous) => {
-      const field = previous.raw ? "ticks" : "prices";
-      const values: [string, string, string] = [...previous[field]];
-      values[index] = value;
-      return { ...previous, [field]: values };
+  function select(spacings: number) {
+    const center = snapNumber(
+      priceToTick(range.prices[2], ...decimals, 1, "round"),
+      -MAX_TICK,
+      MAX_TICK,
+      range.spacing,
+    );
+    const edge = Math.floor(MAX_TICK / range.spacing) * range.spacing;
+    const lower = Math.max(-edge, center - spacings * range.spacing),
+      upper = Math.min(edge, center + spacings * range.spacing);
+    setRange({
+      ...range,
+      raw: false,
+      full: false,
+      prices: [
+        decimalInput(tickPrice(lower, ...decimals)),
+        decimalInput(tickPrice(upper, ...decimals)),
+        range.prices[2],
+      ],
     });
   }
   return (
-    <fieldset>
-      <legend>
-        <Trans>Price range</Trans>
-      </legend>
-      <p>
-        <Trans>
-          Prices are {symbols[1]} per {symbols[0]}. Prices snap to the nearest
-          usable tick; review the resulting range in the preview.
-        </Trans>
-      </p>
-      <label className="row">
-        <input
-          type="checkbox"
-          checked={range.raw}
-          onChange={(event) =>
-            setRange({ ...range, raw: event.target.checked })
-          }
-        />
-        <Trans>Use raw ticks</Trans>
-      </label>
+    <div className="range-controls">
       {!stable ? (
-        <div className="row">
-          {[1, 5, 20].map((percent) => (
+        <div className="row range-presets">
+          {[4, 16, 64, 256].map((n) => (
             <button
-              key={percent}
-              type="button"
+              key={n}
               disabled={!Number(range.prices[2])}
-              onClick={() =>
-                setRange({
-                  ...range,
-                  raw: false,
-                  full: false,
-                  prices: [
-                    decimalInput(Number(range.prices[2]) * (1 - percent / 100)),
-                    decimalInput(Number(range.prices[2]) * (1 + percent / 100)),
-                    range.prices[2],
-                  ],
-                })
-              }
+              onClick={() => select(n)}
             >
-              ±{percent}%
+              ±{decimalDisplay(spacingPercent(n * range.spacing), 3)}%
             </button>
           ))}
         </div>
       ) : null}
-      <div className="grid">
-        {labels.map((label, index) =>
-          (stable && index < 2) || (initialized && index === 2) ? null : (
-            <Field key={index} label={label}>
-              <SnappedInput
-                aria-label={label}
-                value={
-                  (range.raw ? sourceRange.ticks : sourceRange.prices)[index]
-                }
-                snapped={(range.raw ? range.ticks : range.prices)[index]}
-                disabled={range.full && index < 2}
-                onChange={(event) => update(index, event.target.value)}
-              />
-            </Field>
-          ),
-        )}
-      </div>
-      {!stable ? (
-        <>
-          {" "}
-          <button
-            type="button"
-            onClick={() => setRange({ ...range, full: !range.full })}
-          >
-            {range.full ? (
-              <Trans>Use custom range</Trans>
-            ) : (
-              <Trans>Use full range</Trans>
-            )}
-          </button>
-        </>
-      ) : (
-        <p>
-          <Trans>
-            Stableswap positions use the full active range defined by
-            amplification and center tick.
-          </Trans>
-        </p>
-      )}
-      {!stable && range.full ? (
-        <p>
-          <Trans>Full range selected.</Trans>
-        </p>
+      <small>
+        <Trans>
+          Prices in {symbols[1]} per {symbols[0]}.
+        </Trans>
+      </small>
+      {(range.raw ? sourceRange.ticks : sourceRange.prices)
+        .slice(0, 2)
+        .some(
+          (value, i) =>
+            value && value !== (range.raw ? range.ticks : range.prices)[i],
+        ) ? (
+        <small className="snapped-value">
+          <Trans>Adjusted to nearest valid value</Trans>
+        </small>
       ) : null}
-    </fieldset>
+      {!initialized ? (
+        <Field label={<Trans>Initial price</Trans>}>
+          <SnappedInput
+            aria-label={t`Initial price`}
+            inputMode="decimal"
+            value={sourceRange.prices[2]}
+            snapped={range.prices[2]}
+            onChange={(e) =>
+              setRange({
+                ...range,
+                raw: false,
+                prices: [range.prices[0], range.prices[1], e.target.value],
+              })
+            }
+          />
+        </Field>
+      ) : null}
+    </div>
   );
 }

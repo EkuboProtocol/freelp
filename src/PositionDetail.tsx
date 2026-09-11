@@ -1,3 +1,5 @@
+import { useBatchSupport } from "./useBatchSupport";
+import { depositCalls } from "./walletCalls";
 import { PoolIdentity } from "./PoolIdentity";
 import { displayAmount } from "./displayAmount";
 import { errorMessage } from "./errors";
@@ -28,6 +30,7 @@ function metadataImage(uri: string) {
 export function PositionDetail({ position: p }: { position: Position }) {
   const { settings, account, setStatus, send } = useSession();
   const [tokens, setTokens] = useState<[Token, Token]>();
+  const batchSupported = useBatchSupport();
   const sqrtRatio = p.sqrtRatio;
   const [recipient, setRecipient] = useState(account ?? "");
   const [portion, setPortion] = useState(100);
@@ -77,13 +80,17 @@ export function PositionDetail({ position: p }: { position: Position }) {
       10000n;
     await send({
       to: settings.manager,
-      data: managerData("withdraw", [
-        p.id,
-        liquidity,
-        getAddress(recipient),
-        min0,
-        min1,
-        deadline(),
+      data: managerData("multicall", [
+        [
+          managerData("withdraw", [
+            p.id,
+            liquidity,
+            getAddress(recipient),
+            min0,
+            min1,
+            deadline(),
+          ]),
+        ],
       ]),
     });
   }
@@ -92,7 +99,7 @@ export function PositionDetail({ position: p }: { position: Position }) {
     if (!deposit.result)
       throw new Error(t`Wait for the matching deposit amount.`);
     const { max0, max1, liquidity } = deposit.result;
-    await send({
+    const transaction = {
       to: settings.manager,
       data: managerData("addLiquidity", [
         p.id,
@@ -104,7 +111,12 @@ export function PositionDetail({ position: p }: { position: Position }) {
         },
       ]),
       value: p.descriptor.poolKey.token0 === zeroAddress ? max0 : 0n,
-    });
+    };
+    await send(
+      batchSupported
+        ? depositCalls(tokens, [max0, max1], settings.manager, transaction)
+        : transaction,
+    );
   }
   const image = metadataImage(p.metadata);
   return (
