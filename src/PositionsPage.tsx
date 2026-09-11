@@ -1,6 +1,4 @@
 import { positionState } from "./PositionRange";
-import { networkCurrencies } from "./tokens";
-import type { Position, Settings } from "./types";
 import { useState, lazy, Suspense } from "react";
 import { useSession, NetworkScope } from "./session";
 import { usePortfolio } from "./usePortfolio";
@@ -18,7 +16,6 @@ export function PositionsPage() {
   const { rows, pending } = usePortfolio(refresh);
   const selected = location.hash.split("/").slice(2).join(":");
   const [showClosed, setShowClosed] = useState(false);
-  const [search, setSearch] = useState("");
   const positions = rows.flatMap((row) =>
     row.items.map((position) => ({
       settings: row.settings,
@@ -31,9 +28,7 @@ export function PositionsPage() {
       `${settings.chainId}:${position.id}` === selected,
   );
   const visible = positions.filter(
-    ({ position, settings }) =>
-      (showClosed || positionState(position) !== "closed") &&
-      matchesPosition(position, settings, search),
+    ({ position }) => showClosed || positionState(position) !== "closed",
   );
   const errors = rows.filter((row) => row.error);
   return (
@@ -65,12 +60,6 @@ export function PositionsPage() {
               <p role="status">Reading {pending} networks…</p>
             ) : null}
             <div className="row portfolio-filters">
-              <input
-                aria-label={"Search positions"}
-                placeholder={"Search by token, network, address or ID"}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
               <label>
                 <input
                   type="checkbox"
@@ -137,32 +126,11 @@ export function PositionsPage() {
   );
 }
 
-function matchesPosition(
-  position: Position,
-  settings: Settings,
-  search: string,
-) {
-  const { token0, token1 } = position.descriptor.poolKey;
-  const addresses = [token0.toLowerCase(), token1.toLowerCase()];
-  const names = networkCurrencies(settings)
-    .filter((token) => addresses.includes(token.address.toLowerCase()))
-    .map((token) => `${token.symbol} ${token.name}`);
-  return [
-    position.id,
-    ...addresses,
-    ...names,
-    networkName(settings.chainId, settings.name),
-  ]
-    .join(" ")
-    .toLowerCase()
-    .includes(search.trim().toLowerCase());
-}
-
 function EmptyPositions({ total }: { total: number }) {
   return (
     <p>
       {total
-        ? "No matching positions. Try another search or show closed positions."
+        ? "No open positions. Enable Show closed to view closed positions."
         : "No positions found on the available networks."}
     </p>
   );

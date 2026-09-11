@@ -641,10 +641,6 @@ header { flex-wrap: wrap; }
 .portfolio-filters {
   margin: 16px 0;
 }
-.portfolio-filters > input {
-  flex: 1;
-  min-width: 220px;
-}
 .portfolio-filters label {
   display: flex;
   align-items: center;

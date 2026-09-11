@@ -105,16 +105,6 @@ test("all networks load independently with exactly one portfolio RPC each", asyn
     "Out of range",
   );
   await expect(page.locator(".position-status.closed")).toHaveText("Closed");
-  await page.getByLabel("Search positions").fill("USDC");
-  await expect(page.locator(".portfolio-position")).toHaveCount(3);
-  await page.getByLabel("Search positions").fill("Base");
-  await expect(page.locator(".portfolio-position")).toHaveCount(1);
-  await page.getByLabel("Search positions").fill("unknown token");
-  await expect(page.locator(".portfolio-position")).toHaveCount(0);
-  await expect(
-    page.getByText("No matching positions.", { exact: false }),
-  ).toBeVisible();
-  await page.getByLabel("Search positions").fill("");
   await page.getByLabel("Show closed").uncheck();
   expect(calls.size).toBe(11);
   for (const requests of calls.values()) expect(requests).toEqual(["eth_call"]);
