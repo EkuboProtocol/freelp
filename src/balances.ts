@@ -1,6 +1,6 @@
 import type { Address } from "viem";
-import tokenFetcher from "../artifacts/TokenDataFetcher.json" with { type: "json" };
-import { DEFAULT_TOKEN_DATA_FETCHER } from "./deployments";
+import tokenFetcher from "../artifacts/FreeLPDataFetcher.json" with { type: "json" };
+import { DEFAULT_POSITION_DATA_FETCHER } from "./deployments";
 import { rpc } from "./rpc";
 import type { Settings } from "./types";
 const cache = new Map<
@@ -18,7 +18,7 @@ export function tokenBalances(
   const key = JSON.stringify([
     settings.chainId,
     settings.rpcUrl,
-    (settings.tokenDataFetcher ?? DEFAULT_TOKEN_DATA_FETCHER).toLowerCase(),
+    (settings.freeLPDataFetcher ?? DEFAULT_POSITION_DATA_FETCHER).toLowerCase(),
     owner.toLowerCase(),
     tokens.map((address) => address.toLowerCase()),
     revision,
@@ -40,7 +40,7 @@ async function readBalances(
   tokens: Address[],
 ) {
   const [balances] = (await rpc(settings).readContract({
-    address: settings.tokenDataFetcher ?? DEFAULT_TOKEN_DATA_FETCHER,
+    address: settings.freeLPDataFetcher ?? DEFAULT_POSITION_DATA_FETCHER,
     abi: tokenFetcher.abi,
     functionName: "getNonzeroBalancesAndAllowances",
     args: [owner, tokens, []],

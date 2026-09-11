@@ -216,8 +216,8 @@ msgid "Core address"
 msgstr "Core address"
 
 #: src/SettingsPage.tsx
-msgid "Core and position manager match the bundled contract artifacts."
-msgstr "Core and position manager match the bundled contract artifacts."
+msgid "Core, position manager and data fetcher match the bundled contract artifacts."
+msgstr "Core, position manager and data fetcher match the bundled contract artifacts."
 
 #: src/DeploymentCard.tsx
 msgid "Core:"
@@ -240,9 +240,9 @@ msgstr "CREATE2 factory:"
 msgid "Current pool liquidity, read directly from chain"
 msgstr "Current pool liquidity, read directly from chain"
 
-#: src/DeployPage.tsx
-msgid "Data fetchers"
-msgstr "Data fetchers"
+#: src/SettingsPage.tsx
+msgid "Data fetcher address"
+msgstr "Data fetcher address"
 
 #: src/CurrencySelect.tsx
 msgid "decimals"
@@ -380,6 +380,10 @@ msgstr "Import settings"
 msgid "Import token"
 msgstr "Import token"
 
+#: src/DeploymentCard.tsx
+msgid "In use"
+msgstr "In use"
+
 #: src/RangeFields.tsx
 msgid "Initial price (new pools only)"
 msgstr "Initial price (new pools only)"
@@ -501,10 +505,6 @@ msgstr "Open with your local IPFS gateway"
 msgid "or"
 msgstr "or"
 
-#: src/TokenPickerRows.tsx
-msgid "Other tokens"
-msgstr "Other tokens"
-
 #: src/PortfolioPosition.tsx
 msgid "per"
 msgstr "per"
@@ -533,10 +533,6 @@ msgstr "Pool type"
 #: src/PositionDetail.tsx
 msgid "Position #{0}"
 msgstr "Position #{0}"
-
-#: src/SettingsPage.tsx
-msgid "Position data fetcher address"
-msgstr "Position data fetcher address"
 
 #: src/DeploymentCard.tsx
 msgid "Position manager"
@@ -587,10 +583,6 @@ msgstr "Prices are {0} per {1}. Range prices round outward to valid ticks; revie
 msgid "Principal:"
 msgstr "Principal:"
 
-#: src/SettingsPage.tsx
-msgid "Quote data fetcher address"
-msgstr "Quote data fetcher address"
-
 #: src/LiquidityChart.tsx
 msgid "Range lower bound"
 msgstr "Range lower bound"
@@ -616,11 +608,11 @@ msgstr "Reading {pending} networks…"
 msgid "Recipient address"
 msgstr "Recipient address"
 
-#: src/TokenPickerRows.tsx
+#: src/CurrencySelect.tsx
 msgid "Refresh"
 msgstr "Refresh"
 
-#: src/TokenPickerRows.tsx
+#: src/CurrencySelect.tsx
 msgid "Refresh balances"
 msgstr "Refresh balances"
 
@@ -824,10 +816,6 @@ msgstr "Token metadata fallback"
 msgid "Token metadata unavailable."
 msgstr "Token metadata unavailable."
 
-#: src/TokenPickerRows.tsx
-msgid "Tokens"
-msgstr "Tokens"
-
 #: src/PositionDetail.tsx
 msgid "Transfer NFT to recipient"
 msgstr "Transfer NFT to recipient"
@@ -869,10 +857,6 @@ msgstr "Use a version suffix to keep a specific release, for example @ekubo/free
 msgid "Use custom range"
 msgstr "Use custom range"
 
-#: src/DeploymentCard.tsx
-msgid "Use existing deployment"
-msgstr "Use existing deployment"
-
 #: src/RangeFields.tsx
 msgid "Use full range"
 msgstr "Use full range"
@@ -880,6 +864,10 @@ msgstr "Use full range"
 #: src/RangeFields.tsx
 msgid "Use raw ticks"
 msgstr "Use raw ticks"
+
+#: src/DeploymentCard.tsx
+msgid "Use this address"
+msgstr "Use this address"
 
 #: src/DeploymentCard.tsx
 msgid "Using {kind} at {address}."
@@ -921,7 +909,3 @@ msgstr "Withdrawal percentage must be 1–100."
 #: src/PositionsPage.tsx
 msgid "Your positions"
 msgstr "Your positions"
-
-#: src/TokenPickerRows.tsx
-msgid "Your tokens"
-msgstr "Your tokens"

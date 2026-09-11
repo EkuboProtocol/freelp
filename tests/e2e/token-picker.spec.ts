@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { decodeFunctionData, encodeFunctionResult, zeroAddress } from "viem";
 import { NETWORKS } from "../../src/networks";
-import fetcher from "../../artifacts/TokenDataFetcher.json" with { type: "json" };
+import fetcher from "../../artifacts/FreeLPDataFetcher.json" with { type: "json" };
 
 test("picker batches balances across networks, caches reads, and supports keyboard selection", async ({
   page,
@@ -61,8 +61,8 @@ test("picker batches balances across networks, caches reads, and supports keyboa
     dialog.locator(".token-row-balance strong", { hasText: "12.5" }),
   ).toHaveCount(11);
   await expect(
-    dialog.getByRole("heading", { name: "Your tokens" }),
-  ).toBeVisible();
+    dialog.getByRole("heading", { name: /Your tokens|Other tokens/ }),
+  ).toHaveCount(0);
   expect(calls.size).toBe(11);
   expect([...calls.values()]).toEqual(Array(11).fill(1));
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);

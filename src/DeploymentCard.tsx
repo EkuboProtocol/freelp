@@ -15,9 +15,6 @@ import type { Settings } from "./types";
 const FIELDS = {
   Core: "core",
   FreeLP: "manager",
-  QuoteDataFetcher: "quoteDataFetcher",
-  CoreDataFetcher: "coreDataFetcher",
-  TokenDataFetcher: "tokenDataFetcher",
   FreeLPDataFetcher: "freeLPDataFetcher",
 } as const;
 function configured(settings: Settings, kind: ContractKind) {
@@ -27,9 +24,6 @@ function configured(settings: Settings, kind: ContractKind) {
     ...settings,
     core: address,
     manager: deploymentAddress("FreeLP", address),
-    quoteDataFetcher: deploymentAddress("QuoteDataFetcher", address),
-    coreDataFetcher: deploymentAddress("CoreDataFetcher", address),
-    tokenDataFetcher: deploymentAddress("TokenDataFetcher", address),
     freeLPDataFetcher: deploymentAddress("FreeLPDataFetcher", address),
   };
 }
@@ -44,8 +38,8 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
   const scope = JSON.stringify([settings, kind, revision, refresh]);
   const address = deploymentAddress(kind, settings.core);
   const current = checked?.scope === scope ? checked : undefined;
-  const usesCore =
-    !["Core", "TokenDataFetcher", "FreeLPDataFetcher"].includes(kind);
+  const usesCore = kind !== "Core";
+  const inUse = isConfigured(settings, kind, address);
   useEffect(() => {
     let active = true;
     deploymentStatus(settings, kind)
@@ -91,11 +85,12 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
         </Action>
         {current?.exists ? (
           <button
+            disabled={inUse}
             onClick={() =>
               void activateExisting().catch((e) => setStatus(String(e)))
             }
           >
-            <Trans>Use existing deployment</Trans>
+            {inUse ? <Trans>In use</Trans> : <Trans>Use this address</Trans>}
           </button>
         ) : null}
         <button onClick={() => setRefresh((n) => n + 1)}>
@@ -127,4 +122,8 @@ function DeploymentMessage({ current }: { current: Check }) {
       <Trans>Unable to verify this address. Deployment is disabled.</Trans>
     );
   return <Trans>Not deployed · no code at this address</Trans>;
+}
+
+function isConfigured(settings: Settings, kind: ContractKind, address: string) {
+  return settings[FIELDS[kind]]?.toLowerCase() === address.toLowerCase();
 }

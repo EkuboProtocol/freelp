@@ -120,24 +120,31 @@ export function CurrencySelect({
             ×
           </button>
         </div>
-        <input
-          aria-label={t`Search tokens or paste an address`}
-          placeholder={t`Search tokens or paste an address`}
-          ref={searchInput}
-          name="token-search"
-          spellCheck={false}
-          autoComplete="off"
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setCandidate(undefined);
-          }}
-        />
-        <PickerBalanceStatus
-          connected={!!account}
-          balances={balances}
-          refresh={() => setRefresh((n) => n + 1)}
-        />
+        <div className="token-search-row">
+          <input
+            aria-label={t`Search tokens or paste an address`}
+            placeholder={t`Search tokens or paste an address`}
+            ref={searchInput}
+            name="token-search"
+            spellCheck={false}
+            autoComplete="off"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setCandidate(undefined);
+            }}
+          />
+          {account ? (
+            <button
+              type="button"
+              aria-label={t`Refresh balances`}
+              onClick={() => setRefresh((n) => n + 1)}
+            >
+              <Trans>Refresh</Trans>
+            </button>
+          ) : null}
+        </div>
+        <PickerBalanceStatus connected={!!account} balances={balances} />
         <div className="token-list">
           <TokenPickerRows
             entries={visible}

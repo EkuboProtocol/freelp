@@ -18,13 +18,7 @@ export function DeployPage() {
       <NetworkSettingSelect />
       <DeploymentCard kind="Core" />
       <DeploymentCard kind="FreeLP" />
-      <h2>
-        <Trans>Data fetchers</Trans>
-      </h2>
       <DeploymentCard kind="FreeLPDataFetcher" />
-      <DeploymentCard kind="QuoteDataFetcher" />
-      <DeploymentCard kind="CoreDataFetcher" />
-      <DeploymentCard kind="TokenDataFetcher" />
       <details>
         <summary>
           <Trans>Deterministic deployment details</Trans>

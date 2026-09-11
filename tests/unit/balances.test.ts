@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
 import { decodeFunctionData, encodeFunctionResult, zeroAddress } from "viem";
-import artifact from "../../artifacts/TokenDataFetcher.json";
+import artifact from "../../artifacts/FreeLPDataFetcher.json";
 import { tokenBalances } from "../../src/balances";
 
 test("picker balances use one sparse contract query, share in-flight reads, and isolate owners", async () => {

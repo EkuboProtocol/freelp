@@ -57,11 +57,11 @@ test("CREATE2 addresses are shared across accounts and occupied addresses cannot
     "does not match",
   );
   await node.setCode({ address: CREATE2_FACTORY, bytecode: "0x" });
-  await expect(prepareDeployment(settings, "TokenDataFetcher")).rejects.toThrow(
+  await expect(prepareDeployment(settings, "FreeLPDataFetcher")).rejects.toThrow(
     "factory is missing",
   );
   await expect(
-    prepareDeployment({ ...settings, chainId: 1 }, "TokenDataFetcher"),
+    prepareDeployment({ ...settings, chainId: 1 }, "FreeLPDataFetcher"),
   ).rejects.toThrow("RPC chain");
   expect(deploymentAddress("FreeLP", zeroAddress)).not.toBe(settings.manager);
 });

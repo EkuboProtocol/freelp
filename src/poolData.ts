@@ -1,17 +1,12 @@
 import { verifyCode } from "./contracts";
 import { zeroAddress } from "viem";
 import { rpc } from "./rpc";
-import { DEFAULT_CORE, DEFAULT_QUOTE_FETCHER } from "./deployments";
+import { DEFAULT_POSITION_DATA_FETCHER } from "./deployments";
 import { EVM_QUOTE_DATE_FETCHER_V3_ABI } from "./abis/quoteDataFetcher";
 import { parseQuoteDataFetcherResult } from "./quoteData";
 import type { Descriptor, Settings } from "./types";
 export function quoteFetcher(settings: Settings) {
-  return (
-    settings.quoteDataFetcher ??
-    (settings.core.toLowerCase() === DEFAULT_CORE.toLowerCase()
-      ? DEFAULT_QUOTE_FETCHER
-      : zeroAddress)
-  );
+  return settings.freeLPDataFetcher ?? DEFAULT_POSITION_DATA_FETCHER;
 }
 export async function fetchPools(
   settings: Settings,
@@ -20,11 +15,11 @@ export async function fetchPools(
   const address = quoteFetcher(settings);
   if (address === zeroAddress)
     throw new Error(
-      "Deploy or configure a quote data fetcher for this Core to display liquidity.",
+      "Deploy or configure a FreeLP data fetcher for this Core to display liquidity.",
     );
   const client = rpc(settings);
   const blockNumber = await client.getBlockNumber();
-  await verifyCode(settings, address, "QuoteDataFetcher");
+  await verifyCode(settings, address, "FreeLPDataFetcher");
   const result = await client.readContract({
     address,
     abi: EVM_QUOTE_DATE_FETCHER_V3_ABI,
@@ -35,7 +30,7 @@ export async function fetchPools(
   return result.map((entry) => {
     const parsed = parseQuoteDataFetcherResult(entry);
     if (!parsed)
-      throw new Error("Invalid pool state returned by quote data fetcher.");
+      throw new Error("Invalid pool state returned by FreeLP data fetcher.");
     return { ...parsed, blockNumber };
   });
 }

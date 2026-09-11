@@ -27,40 +27,30 @@ export function TokenPickerRows({
   const rest = entries.filter((entry) => !held.includes(entry));
   return (
     <>
-      {[
-        { title: t`Your tokens`, items: held },
-        { title: held.length ? t`Other tokens` : t`Tokens`, items: rest },
-      ].flatMap((section) =>
-        section.items.length
-          ? [
-              <h3 key={section.title}>{section.title}</h3>,
-              ...section.items.map(({ token, network }) => (
-                <button
-                  type="button"
-                  className="token-option"
-                  key={`${network.chainId}:${token.address}`}
-                  onClick={() => choose(token, network.chainId)}
-                  title={token.address}
-                >
-                  <span className="currency-mark" aria-hidden="true">
-                    {token.symbol.slice(0, 2)}
-                  </span>
-                  <span className="token-identity">
-                    <strong title={token.name}>{token.symbol}</strong>
-                    <span className="token-network">
-                      {networkName(network.chainId, network.name)}
-                    </span>
-                  </span>
-                  <TokenRowBalance
-                    token={token}
-                    state={balances.get(network.chainId)}
-                    connected={connected}
-                  />
-                </button>
-              )),
-            ]
-          : [],
-      )}
+      {[...held, ...rest].map(({ token, network }) => (
+        <button
+          type="button"
+          className="token-option"
+          key={`${network.chainId}:${token.address}`}
+          onClick={() => choose(token, network.chainId)}
+          title={token.address}
+        >
+          <span className="currency-mark" aria-hidden="true">
+            {token.symbol.slice(0, 2)}
+          </span>
+          <span className="token-identity">
+            <strong title={token.name}>{token.symbol}</strong>
+            <span className="token-network">
+              {networkName(network.chainId, network.name)}
+            </span>
+          </span>
+          <TokenRowBalance
+            token={token}
+            state={balances.get(network.chainId)}
+            connected={connected}
+          />
+        </button>
+      ))}
       {!entries.length ? (
         <p className="token-empty">
           <Trans>
@@ -112,24 +102,13 @@ function TokenRowBalance({
 export function PickerBalanceStatus({
   connected,
   balances,
-  refresh,
 }: {
   connected: boolean;
   balances: Map<number, BalanceState>;
-  refresh: () => void;
 }) {
   if (!connected) return null;
   return (
     <>
-      <div className="row spread token-balance-status">
-        <button
-          type="button"
-          aria-label={t`Refresh balances`}
-          onClick={refresh}
-        >
-          <Trans>Refresh</Trans>
-        </button>
-      </div>
       {[...balances.values()].some((state) => state.error) ? (
         <p className="balance-error">
           <Trans>

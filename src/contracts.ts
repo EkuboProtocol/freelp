@@ -15,15 +15,9 @@ import managerArtifact from "../artifacts/FreeLP.json" with { type: "json" };
 import coreArtifact from "../artifacts/Core.json" with { type: "json" };
 import { rpc } from "./rpc";
 import type { Position, Settings } from "./types";
-import quoteArtifact from "../artifacts/QuoteDataFetcher.json" with { type: "json" };
-import coreDataArtifact from "../artifacts/CoreDataFetcher.json" with { type: "json" };
-import tokenDataArtifact from "../artifacts/TokenDataFetcher.json" with { type: "json" };
 const CONTRACT_ARTIFACTS = {
   Core: coreArtifact,
   FreeLP: managerArtifact,
-  QuoteDataFetcher: quoteArtifact,
-  CoreDataFetcher: coreDataArtifact,
-  TokenDataFetcher: tokenDataArtifact,
   FreeLPDataFetcher: snapshotArtifact,
 };
 export type ContractKind = keyof typeof CONTRACT_ARTIFACTS;
@@ -37,12 +31,7 @@ export function deployment(kind: ContractKind, core: Address) {
   return encodeDeployData({
     abi: artifact.abi as Abi,
     bytecode: artifact.bytecode as Hex,
-    args:
-      kind === "Core" ||
-      kind === "TokenDataFetcher" ||
-      kind === "FreeLPDataFetcher"
-        ? []
-        : [core],
+    args: kind === "Core" ? [] : [core],
   });
 }
 export async function read<T>(

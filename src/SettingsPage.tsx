@@ -4,6 +4,7 @@ import { Trans } from "@lingui/react/macro";
 import { getAddress } from "viem";
 import { useSession, rpc } from "./session";
 import { DEFAULT_SETTINGS, validateSettings } from "./config";
+import { DEFAULT_POSITION_DATA_FETCHER } from "./deployments";
 import { verifyCode } from "./contracts";
 import { networkName } from "./networks";
 import { Field } from "./common";
@@ -42,8 +43,13 @@ export function SettingsPage() {
     try {
       await verifyCode(draft, draft.core, "Core");
       await verifyCode(draft, draft.manager, "FreeLP");
+      await verifyCode(
+        draft,
+        draft.freeLPDataFetcher ?? DEFAULT_POSITION_DATA_FETCHER,
+        "FreeLPDataFetcher",
+      );
       setStatus(
-        t`Core and position manager match the bundled contract artifacts.`,
+        t`Core, position manager and data fetcher match the bundled contract artifacts.`,
       );
     } catch (e) {
       setStatus(String(e));
@@ -69,9 +75,6 @@ export function SettingsPage() {
         core: parsed.core,
         manager: parsed.manager,
         nativeSymbol: parsed.nativeSymbol,
-        quoteDataFetcher: parsed.quoteDataFetcher,
-        coreDataFetcher: parsed.coreDataFetcher,
-        tokenDataFetcher: parsed.tokenDataFetcher,
         freeLPDataFetcher: parsed.freeLPDataFetcher,
       });
       setDraft(next);
@@ -152,21 +155,7 @@ export function SettingsPage() {
             onChange={(e) => update("manager", e.target.value)}
           />
         </Field>
-        <Field label={<Trans>Quote data fetcher address</Trans>}>
-          <input
-            value={draft.quoteDataFetcher ?? ""}
-            placeholder={t`Canonical deployment`}
-            onChange={(event) =>
-              setDraft({
-                ...draft,
-                quoteDataFetcher: event.target.value
-                  ? (event.target.value as Settings["core"])
-                  : undefined,
-              })
-            }
-          />
-        </Field>
-        <Field label={<Trans>Position data fetcher address</Trans>}>
+        <Field label={<Trans>Data fetcher address</Trans>}>
           <input
             value={draft.freeLPDataFetcher ?? ""}
             placeholder={t`Canonical deployment`}

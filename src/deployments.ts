@@ -1,21 +1,12 @@
 // Canonical v3 deployments reused from EkuboProtocol/interface.
 export const DEFAULT_CORE = "0x00000000000014aA86C5d3c41765bb24e11bd701";
-export const DEFAULT_QUOTE_FETCHER =
-  "0x5a3F0F1dA4Ac0c4b937d5685f330704c8e8303f1";
 
 // CREATE2 predictions for the pinned artifacts and protocol deployment salt.
 export const DEFAULT_MANAGER = "0x573af249A268ed80c358dA77986D2e637978A611";
-export const DEFAULT_CORE_DATA_FETCHER =
-  "0xF68F25CA6C817733b7B15a42191AE72A34d56a2B";
-export const DEFAULT_TOKEN_DATA_FETCHER =
-  "0x305Cf9A34dCb265522780D1D64544d3f7C450407";
 export const DEFAULT_POSITION_DATA_FETCHER =
-  "0xaf388FFa60a69D0bc59E0D31a9313D28EB8E3b18";
+  "0xE6965adE98F992e197554eDbF05c6E781e5127db";
 export const DEFAULT_CONTRACTS = {
   core: DEFAULT_CORE,
   manager: DEFAULT_MANAGER,
-  quoteDataFetcher: DEFAULT_QUOTE_FETCHER,
-  coreDataFetcher: DEFAULT_CORE_DATA_FETCHER,
-  tokenDataFetcher: DEFAULT_TOKEN_DATA_FETCHER,
   freeLPDataFetcher: DEFAULT_POSITION_DATA_FETCHER,
 } as const;

@@ -1,5 +1,8 @@
 import { retiredDefault } from "./retiredNetworks";
-import { DEFAULT_CONTRACTS } from "./deployments";
+import {
+  DEFAULT_CONTRACTS,
+  DEFAULT_POSITION_DATA_FETCHER,
+} from "./deployments";
 import { isAddress } from "viem";
 import { load } from "./storage";
 import type { Settings } from "./types";
@@ -28,7 +31,7 @@ export function validateSettings(value: Settings) {
   )
     throw new Error("Invalid network name.");
   validateAddresses(value);
-  return value;
+  return migrateFetcher(value);
 }
 
 export function loadSettings() {
@@ -46,11 +49,19 @@ function validateAddresses(value: Settings) {
   const addresses = [
     value.core,
     value.manager,
-    value.coreDataFetcher ?? "0x0000000000000000000000000000000000000000",
     value.freeLPDataFetcher ?? "0x0000000000000000000000000000000000000000",
-    value.tokenDataFetcher ?? "0x0000000000000000000000000000000000000000",
-    value.quoteDataFetcher ?? "0x0000000000000000000000000000000000000000",
   ];
   if (!addresses.every((address) => isAddress(address)))
     throw new Error("Invalid contract address.");
+}
+
+function migrateFetcher(value: Settings) {
+  return {
+    ...value,
+    freeLPDataFetcher:
+      value.freeLPDataFetcher?.toLowerCase() ===
+      "0xaf388ffa60a69d0bc59e0d31a9313d28eb8e3b18"
+        ? DEFAULT_POSITION_DATA_FETCHER
+        : value.freeLPDataFetcher,
+  };
 }

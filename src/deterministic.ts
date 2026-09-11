@@ -54,12 +54,7 @@ export async function prepareDeployment(
     throw new Error(
       "The standard CREATE2 factory is missing or has unexpected code on this network.",
     );
-  if (
-    kind !== "Core" &&
-    kind !== "TokenDataFetcher" &&
-    kind !== "FreeLPDataFetcher"
-  )
-    await verifyCode(settings, settings.core, "Core");
+  if (kind !== "Core") await verifyCode(settings, settings.core, "Core");
   return {
     to: CREATE2_FACTORY,
     data: concatHex([DEPLOYMENT_SALT, deployment(kind, settings.core)]),
@@ -70,14 +65,7 @@ export async function verifyDeploymentTransaction(
   settings: Settings,
   tx: Transaction,
 ) {
-  const kinds = [
-    "Core",
-    "FreeLP",
-    "QuoteDataFetcher",
-    "CoreDataFetcher",
-    "TokenDataFetcher",
-    "FreeLPDataFetcher",
-  ] as const;
+  const kinds = ["Core", "FreeLP", "FreeLPDataFetcher"] as const;
   const kind = kinds.find(
     (kind) =>
       concatHex([

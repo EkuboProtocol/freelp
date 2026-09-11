@@ -10,9 +10,6 @@ for (const name of [
   "Core",
   "FreeLP",
   "TestToken",
-  "QuoteDataFetcher",
-  "CoreDataFetcher",
-  "TokenDataFetcher",
   "FreeLPDataFetcher",
 ]) {
   const input = JSON.parse(

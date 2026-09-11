@@ -297,7 +297,7 @@ for (const { missingDecimals, native } of [
         "FreeLP",
       ),
     ).rejects.toThrow("already deployed");
-    await deployFetchers(page, missingDecimals, native);
+    await deployFetchers(page);
     const deployedManager = await page.evaluate(
       () => JSON.parse(localStorage.getItem("freelp:settings")!).manager as Hex,
     );
@@ -482,11 +482,7 @@ for (const { missingDecimals, native } of [
     expect(await client.getBalance({ address: deployedManager })).toBe(0n);
   });
 
-async function deployFetchers(
-  page: Page,
-  missingDecimals: boolean,
-  native: boolean,
-) {
+async function deployFetchers(page: Page) {
   await page
     .getByRole("button", { name: "Deploy FreeLPDataFetcher", exact: true })
     .click();
@@ -494,21 +490,8 @@ async function deployFetchers(
     "Using FreeLPDataFetcher at",
     { timeout: 30000 },
   );
-  if (missingDecimals || native) return;
-  for (const kind of [
-    "QuoteDataFetcher",
-    "CoreDataFetcher",
-    "TokenDataFetcher",
-  ]) {
-    await page
-      .getByRole("button", { name: `Deploy ${kind}`, exact: true })
-      .click();
-    await expect(page.locator(".status[role=status]")).toContainText(
-      `Using ${kind} at`,
-      { timeout: 30000 },
-    );
-  }
 }
+
 async function checkPoolChart(
   page: Page,
   missingDecimals: boolean,

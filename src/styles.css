@@ -536,7 +536,6 @@ input[type="range"], input[type="checkbox"] { accent-color: #111; }
 .deposit-input .currency-dialog label { padding: 0; margin-top: 12px; }
 .deposit-input .currency-dialog input { font-size: 16px; border: 1px solid #bbb; border-radius: 10px; padding: 12px 14px; }
 .currency-dialog .token-list { display: block; max-height: 60dvh; margin: 0 -8px; padding: 0 6px; scrollbar-gutter: stable; }
-.token-list h3 { font-size: 12px; font-weight: 600; color: #555; padding: 6px 8px 2px; margin: 0; }
 .currency-dialog .token-option { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; width: 100%; border-radius: 10px; padding: 6px 8px; gap: 10px; background: white; min-height: 54px; }
 .currency-dialog .token-option:hover, .currency-dialog .token-option:focus-visible { background: #f0f0f0; }
 .token-option .currency-mark { width: 36px; height: 36px; font-size: 13px; font-weight: 600; }
@@ -547,8 +546,6 @@ input[type="range"], input[type="checkbox"] { accent-color: #111; }
 .token-row-balance { min-width: 64px; max-width: 120px; text-align: right; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
 .token-row-balance strong { font-size: 14px; font-weight: 500; }
 .token-row-balance small, .token-address { color: #666; font-size: 11px; }
-.currency-dialog .token-balance-status { margin: 4px 0 0; gap: 8px; justify-content: flex-end; }
-.token-balance-status button { font-size: 12px; padding: 6px 8px; }
 .balance-error, .token-empty { font-size: 13px; color: #555; }
 .tick-spacing-control { margin: 14px 0; padding: 14px 0; border-top: 1px solid #ddd; }
 .tick-spacing-control > summary { font-weight: 600; }
@@ -564,3 +561,7 @@ input[type="range"], input[type="checkbox"] { accent-color: #111; }
 
 .deposit-input > input { width: calc(100% - 40px); margin: 0 20px 16px; padding: 0; }
 .deposit-input > .balance-actions { margin: 0 20px 16px; }
+
+.token-search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.token-search-row input { flex: 1; min-width: 0; }
+.token-search-row button { flex: none; font-size: 12px; padding: 8px; }
