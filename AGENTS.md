@@ -2,7 +2,7 @@
 
 Keep source and npm private until launch. Public IPFS previews of successful CI builds are authorized. Publish only that build’s site CAR; never expose historical private IPFS blockstores. EVM contracts PRs may be public.
 
-Use a dedicated worktree; keep the default checkout clean. New Solidity belongs in EkuboProtocol/evm-contracts. Import pinned compiled artifacts with `scripts/import-contracts.ts` and record their source commit in `artifacts/source.json`.
+Use worktrees; keep main clean. New Solidity belongs in EkuboProtocol/evm-contracts. Import pinned compiled artifacts with `scripts/import-contracts.ts` and record their source commit in `artifacts/source.json`.
 
 The application uses only configured RPC endpoints and injected wallets. Core, FreeLP and FreeLPDataFetcher addresses are fixed by the build; never expose protocol address overrides. Network dialogs accept an RPC URL and detect chain ID. No hosted metadata, token APIs, indexers, relays, analytics, fonts, or transaction services. All position/NFT data is on-chain. Distribute the static app as @ekubo/freelp, runnable with bunx or npx. Do not add attestations or compiled launchers.
 
