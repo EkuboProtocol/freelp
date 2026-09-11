@@ -1,26 +1,20 @@
+import { displayAmount } from "./displayAmount";
+import { TokenBalance } from "./TokenBalance";
 import { PoolPicker } from "./PoolPicker";
-import type { Currency } from "./tokens";
+import { currencies, type Currency } from "./tokens";
 import { CurrencySelect } from "./CurrencySelect";
 import { t } from "@lingui/core/macro";
-import { parseAmount } from "./amounts";
-import { concentratedConfig } from "./pools";
-import { DEFAULT_RANGE, rangeTicks } from "./prices";
+import { DEFAULT_RANGE } from "./prices";
 import { RangeFields } from "./RangeFields";
 import { ApprovalButton } from "./ApprovalButton";
 import { PricePreview } from "./PricePreview";
-import { rpc } from "./rpc";
-import { useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { loadDepositQuote } from "./loadDepositQuote";
 import { Trans } from "@lingui/react/macro";
-import {
-  formatUnits,
-  getAddress,
-  isAddress,
-  zeroAddress,
-  type Address,
-} from "viem";
+import { formatUnits, isAddress, zeroAddress } from "viem";
 import { useSession } from "./session";
-import { read, token, managerData, type Token } from "./contracts";
-import { Action, Field } from "./common";
+import { managerData, type Token } from "./contracts";
+import { Action, Field, ErrorText } from "./common";
 import type { Descriptor } from "./types";
 type Quote = {
   descriptor: Descriptor;
@@ -33,15 +27,24 @@ type Quote = {
   used0: bigint;
   used1: bigint;
   key: string;
+  inactive: boolean[];
 };
 export function CreatePage() {
-  const { settings, account, send, setStatus, revision } = useSession();
+  const { settings, account, send, revision } = useSession();
   const [a, setA] = useState("");
   const [b, setB] = useState("");
-  const [maxA, setMaxA] = useState("1");
-  const [maxB, setMaxB] = useState("1");
+  const [maxA, setMaxA] = useState("");
+  const [maxB, setMaxB] = useState("");
+  const [linked, setLinked] = useState(true);
+  const [specified, setSpecified] = useState<0 | 1>(0);
+  const [failure, setFailure] = useState<{ key: string; error: string }>();
+  const [pendingKey, setPendingKey] = useState<string>();
+  const request = useRef(0);
   const [fee, setFee] = useState("0.3");
-  const [range, setRange] = useState(DEFAULT_RANGE);
+  const [range, setRange] = useState({
+    ...DEFAULT_RANGE,
+    prices: ["", "", ""] as [string, string, string],
+  });
   const [slippage, setSlippage] = useState(50);
   const [quote, setQuote] = useState<Quote>();
   const [fallbackA, setFallbackA] = useState("");
@@ -61,7 +64,9 @@ export function CreatePage() {
       fallback.reverse();
       setMaxA(maxB);
       setMaxB(maxA);
+      setSpecified((previous) => (previous === 0 ? 1 : 0));
     }
+    setQuote(undefined);
     setA(pair[0]);
     setB(pair[1]);
     setFallbackA(fallback[0]);
@@ -79,71 +84,64 @@ export function CreatePage() {
     range,
     fallbackA,
     fallbackB,
+    linked,
+    specified,
   ]);
   const current = quote?.key === key ? quote : undefined;
+  const previewBusy = pendingKey === key;
+  const previewError = scopedError(failure, key);
+  const symbols = [a, b].map(
+    (address, index) =>
+      currencies(settings.chainId, settings.nativeSymbol).find(
+        (token) => token.address.toLowerCase() === address.toLowerCase(),
+      )?.symbol ?? (index === 0 ? t`First token` : t`Second token`),
+  );
   async function preview() {
+    const id = ++request.current;
+    setPendingKey(key);
+    setFailure(undefined);
     try {
-      if (!account) throw new Error(t`Connect a wallet to preview balances.`);
-      const addresses: [Address, Address] = [getAddress(a), getAddress(b)];
-      if (BigInt(addresses[0]) >= BigInt(addresses[1]))
-        throw new Error(t`Token 0 must sort before token 1 by address.`);
-      const poolKey = {
-        token0: addresses[0],
-        token1: addresses[1],
-        config: concentratedConfig(fee, range.spacing),
-      };
-      const block = await rpc(settings).getBlockNumber();
-      const [token0, token1, [sqrtRatio]] = await Promise.all([
-        token(
-          settings,
-          addresses[0],
-          account,
-          fallbackA === "" ? undefined : Number(fallbackA),
-        ),
-        token(
-          settings,
-          addresses[1],
-          account,
-          fallbackB === "" ? undefined : Number(fallbackB),
-        ),
-        read<[bigint, number, bigint]>(settings, "poolState", [poolKey], block),
-      ]);
-      const tokens: [Token, Token] = [token0, token1];
-      const max0 = parseAmount(maxA, tokens[0].decimals),
-        max1 = parseAmount(maxB, tokens[1].decimals);
-      const { lower, upper, initial } = rangeTicks(
-        range,
-        tokens[0].decimals,
-        tokens[1].decimals,
-        sqrtRatio !== 0n,
-      );
-      const descriptor = {
-        poolKey,
-        tickLower: lower,
-        tickUpper: upper,
-      };
-      const [liquidity, used0, used1] = await read<[bigint, bigint, bigint]>(
+      const next = await loadDepositQuote({
         settings,
-        "quoteDeposit",
-        [descriptor, initial, max0, max1],
-        block,
-      );
-      setQuote({
-        descriptor,
-        initialTick: initial,
-        sqrtRatio,
-        tokens,
-        max0,
-        max1,
-        liquidity,
-        used0,
-        used1,
-        key,
+        account,
+        a,
+        b,
+        maxA,
+        maxB,
+        fallbackA,
+        fallbackB,
+        fee,
+        range,
+        linked,
+        specified,
       });
+      if (id !== request.current) return;
+      if (linked && next.adjusted) {
+        setMaxA(formatUnits(next.max0, next.tokens[0].decimals));
+        setMaxB(formatUnits(next.max1, next.tokens[1].decimals));
+        return;
+      }
+      setQuote({ ...next, key });
     } catch (e) {
-      setStatus(String(e));
+      if (id === request.current) setFailure({ key, error: String(e) });
+    } finally {
+      if (id === request.current) setPendingKey(undefined);
     }
   }
+  const refreshPreview = useEffectEvent(preview);
+  const invalidatePreview = useEffectEvent(() => {
+    request.current++;
+  });
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isAddress(a) && isAddress(b) && a !== b && (maxA || maxB))
+        void refreshPreview();
+    }, 450);
+    return () => {
+      clearTimeout(timer);
+      invalidatePreview();
+    };
+  }, [key, a, b, maxA, maxB]);
   async function create() {
     if (!current) throw new Error(t`Refresh the preview.`);
     if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
@@ -173,9 +171,8 @@ export function CreatePage() {
       </h2>
       <p>
         <Trans>
-          Choose two tokens, explore available pools, and set the price range
-          for your liquidity. Token selections are ordered automatically. Prices
-          show the second token per first token.
+          Choose your tokens and pool, set a price range, and enter either
+          deposit amount. The matching amount and preview update automatically.
         </Trans>
       </p>
       <div className="grid deposit-inputs">
@@ -185,14 +182,27 @@ export function CreatePage() {
             label={t`Select first token`}
             onChange={(token) => chooseCurrency(0, token)}
           />
-          <Field label={<Trans>Maximum token 0 amount</Trans>}>
+          <Field label={<Trans>{symbols[0]} amount</Trans>}>
             <input
               inputMode="decimal"
               placeholder="0"
+              disabled={inactiveInput(current, linked, 0)}
+              data-testid="deposit-amount-0"
               value={maxA}
-              onChange={(e) => setMaxA(e.target.value)}
+              onChange={(e) => {
+                setSpecified(0);
+                setMaxA(e.target.value);
+              }}
             />
           </Field>
+          <TokenBalance
+            address={a}
+            fallback={fallbackA}
+            onAmount={(value) => {
+              setSpecified(0);
+              setMaxA(value);
+            }}
+          />
         </div>
         <div className="deposit-input">
           <CurrencySelect
@@ -200,16 +210,37 @@ export function CreatePage() {
             label={t`Select second token`}
             onChange={(token) => chooseCurrency(1, token)}
           />
-          <Field label={<Trans>Maximum token 1 amount</Trans>}>
+          <Field label={<Trans>{symbols[1]} amount</Trans>}>
             <input
               inputMode="decimal"
               placeholder="0"
+              disabled={inactiveInput(current, linked, 1)}
+              data-testid="deposit-amount-1"
               value={maxB}
-              onChange={(e) => setMaxB(e.target.value)}
+              onChange={(e) => {
+                setSpecified(1);
+                setMaxB(e.target.value);
+              }}
             />
           </Field>
+          <TokenBalance
+            address={b}
+            fallback={fallbackB}
+            onAmount={(value) => {
+              setSpecified(1);
+              setMaxB(value);
+            }}
+          />
         </div>
       </div>
+      <label className="row">
+        <input
+          type="checkbox"
+          checked={linked}
+          onChange={(e) => setLinked(e.target.checked)}
+        />
+        <Trans>Calculate the matching token amount</Trans>
+      </label>
       <details className="advanced-settings">
         <summary>
           <Trans>Advanced pool settings</Trans>
@@ -237,6 +268,8 @@ export function CreatePage() {
       </details>
       <PoolPicker
         key={JSON.stringify([settings, a, b])}
+        range={range}
+        onRangeChange={setRange}
         token0={a}
         token1={b}
         fee={fee}
@@ -256,7 +289,7 @@ export function CreatePage() {
           });
         }}
       />
-      <RangeFields range={range} setRange={setRange} />
+      <RangeFields range={range} setRange={setRange} symbols={symbols} />
       <details>
         <summary>
           <Trans>Token metadata fallback</Trans>
@@ -289,10 +322,16 @@ export function CreatePage() {
         </div>
       </details>
       <p className="row">
-        <button onClick={() => void preview()}>
+        <button disabled={previewBusy} onClick={() => void preview()}>
           <Trans>Preview position</Trans>
         </button>
       </p>
+      <ErrorText error={previewError} />
+      {previewBusy ? (
+        <p role="status">
+          <Trans>Updating deposit preview…</Trans>
+        </p>
+      ) : null}
       {current ? (
         <div className="panel">
           <h3>
@@ -303,7 +342,22 @@ export function CreatePage() {
             <p key={t.address}>
               {t.symbol}:{" "}
               {formatUnits(i === 0 ? current.used0 : current.used1, t.decimals)}{" "}
-              / <Trans>Balance:</Trans> {formatUnits(t.balance, t.decimals)}{" "}
+              / <Trans>Balance:</Trans>{" "}
+              <span title={formatUnits(t.balance, t.decimals)}>
+                {displayAmount(t.balance, t.decimals)}
+              </span>{" "}
+              {t.balance < (i === 0 ? current.max0 : current.max1) ? (
+                <strong>
+                  <Trans>Insufficient {t.symbol} balance</Trans>
+                </strong>
+              ) : null}
+              {current.inactive[i] ? (
+                <small>
+                  <Trans>
+                    This token is not needed for the selected range.
+                  </Trans>
+                </small>
+              ) : null}
               {t.metadataMissing ? (
                 <strong>
                   {(i === 0 ? fallbackA : fallbackB) === "" ? (
@@ -335,10 +389,12 @@ export function CreatePage() {
             ))}
             <Action
               disabled={
+                previewBusy ||
                 current.liquidity === 0n ||
                 current.tokens.some(
                   (t, i) =>
-                    t.allowance < (i === 0 ? current.max0 : current.max1),
+                    t.allowance < (i === 0 ? current.max0 : current.max1) ||
+                    t.balance < (i === 0 ? current.max0 : current.max1),
                 )
               }
               run={create}
@@ -350,4 +406,19 @@ export function CreatePage() {
       ) : null}
     </section>
   );
+}
+
+function inactiveInput(
+  quote: Quote | undefined,
+  linked: boolean,
+  side: number,
+) {
+  return linked && !!quote?.inactive[side];
+}
+
+function scopedError(
+  failure: { key: string; error: string } | undefined,
+  key: string,
+) {
+  return failure?.key === key ? failure.error : "";
 }

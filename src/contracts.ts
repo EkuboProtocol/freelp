@@ -54,6 +54,8 @@ export async function positions(
   settings: Settings,
   holder: Address,
 ): Promise<Position[]> {
+  const code = await rpc(settings).getCode({ address: settings.manager });
+  if (!code || code === "0x") return [];
   const block = await rpc(settings).getBlockNumber();
   const ids: bigint[] = [];
   const total = await read<bigint>(settings, "balanceOf", [holder], block);

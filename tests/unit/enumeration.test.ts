@@ -12,6 +12,7 @@ test("standard owner enumeration reads one block and sorts the complete list", a
       const body = await request.json();
       let result: unknown;
       if (body.method === "eth_blockNumber") result = "0x123";
+      else if (body.method === "eth_getCode") result = "0x6000";
       else {
         expect(body.method).toBe("eth_call");
         blocks.push(body.params[1]);

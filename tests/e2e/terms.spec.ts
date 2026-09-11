@@ -56,6 +56,16 @@ for (const storageAvailable of [true, false]) {
       },
       { storageAvailable },
     );
+    await page.route("https://ethereum-rpc.publicnode.com/", async (route) => {
+      const body = route.request().postDataJSON();
+      await route.fulfill({
+        json: {
+          jsonrpc: "2.0",
+          id: body.id,
+          result: body.method === "eth_chainId" ? "0x1" : "0x",
+        },
+      });
+    });
     await page.goto("/#/terms");
     await page.getByRole("button", { name: "Connect Test wallet" }).click();
     await expect(page.getByRole("checkbox")).not.toBeChecked();
@@ -70,7 +80,7 @@ for (const storageAvailable of [true, false]) {
     await expect(page.getByRole("checkbox")).not.toBeChecked();
     await page.getByRole("link", { name: "Deploy", exact: true }).click();
     await expect(
-      page.getByRole("button", { name: "Review and deploy new Core" }),
+      page.getByRole("button", { name: "Deploy Core", exact: true }),
     ).toBeDisabled();
     await page.getByRole("link", { name: "Terms", exact: true }).click();
     await page.getByRole("checkbox").check();
@@ -79,7 +89,7 @@ for (const storageAvailable of [true, false]) {
       .click();
     await page.getByRole("link", { name: "Deploy", exact: true }).click();
     await expect(
-      page.getByRole("button", { name: "Review and deploy new Core" }),
+      page.getByRole("button", { name: "Deploy Core", exact: true }),
     ).toBeEnabled();
     const requests = await page.evaluate(
       () => Reflect.get(window, "testWalletRequests") as string[],

@@ -19,7 +19,7 @@ export function CurrencySelect({
   const { settings } = useSession();
   const dialog = useRef<HTMLDialogElement>(null);
   const [search, setSearch] = useState("");
-  const tokens = currencies(settings.chainId);
+  const tokens = currencies(settings.chainId, settings.nativeSymbol);
   const [candidate, setCandidate] = useState<Currency>();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);

@@ -1,12 +1,11 @@
-import { DEFAULT_CORE } from "./deployments";
+import { DEFAULT_CONTRACTS } from "./deployments";
 import { isAddress } from "viem";
 import { load } from "./storage";
 import type { Settings } from "./types";
 export const DEFAULT_SETTINGS: Settings = {
   rpcUrl: "https://ethereum-rpc.publicnode.com",
   chainId: 1,
-  core: DEFAULT_CORE,
-  manager: "0x0000000000000000000000000000000000000000",
+  ...DEFAULT_CONTRACTS,
   nativeSymbol: "ETH",
 };
 export function validateSettings(value: Settings) {
@@ -22,6 +21,11 @@ export function validateSettings(value: Settings) {
     throw new Error("Invalid chain ID.");
   if (value.nativeSymbol.length > 16)
     throw new Error("Native token symbol is too long.");
+  if (
+    value.name !== undefined &&
+    (typeof value.name !== "string" || value.name.length > 80)
+  )
+    throw new Error("Invalid network name.");
   validateAddresses(value);
   return value;
 }

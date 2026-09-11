@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { rangeTicks, tickPrice, type RangeInput } from "./prices";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { erc20Abi, getAddress, isAddress, zeroAddress } from "viem";
 import { Trans } from "@lingui/react/macro";
 import { useSession, rpc } from "./session";
@@ -15,11 +16,15 @@ export function PoolPicker({
   fee,
   spacing,
   onSelect,
+  range,
+  onRangeChange,
 }: {
   token0: string;
   token1: string;
   fee: string;
   spacing: number;
+  range: RangeInput;
+  onRangeChange: (range: RangeInput) => void;
   onSelect: (fee: string, spacing: number, currentPrice?: string) => void;
 }) {
   const { settings } = useSession();
@@ -52,7 +57,7 @@ export function PoolPicker({
         functionName: "decimals",
       });
     } catch (error) {
-      const imported = currencies(settings.chainId).find(
+      const imported = currencies(settings.chainId, settings.nativeSymbol).find(
         (token) => token.address.toLowerCase() === address.toLowerCase(),
       );
       if (imported) return imported.decimals;
@@ -99,6 +104,14 @@ export function PoolPicker({
       setBusy(false);
     }
   }
+  const refreshPools = useEffectEvent(discover);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isAddress(token0) && isAddress(token1) && token0 !== token1)
+        void refreshPools();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [key, token0, token1]);
   return (
     <section className="pool-picker">
       <div className="row spread">
@@ -136,7 +149,13 @@ export function PoolPicker({
         ))}
       </div>
       {data && selected >= 0 ? (
-        <PoolChart data={data} selected={selected} spacing={spacing} />
+        <PoolChart
+          data={data}
+          selected={selected}
+          spacing={spacing}
+          range={range}
+          onRangeChange={onRangeChange}
+        />
       ) : null}
       <ErrorText error={error} />
     </section>
@@ -146,7 +165,11 @@ function PoolChart({
   data,
   selected,
   spacing,
+  range,
+  onRangeChange,
 }: {
+  range: RangeInput;
+  onRangeChange: (range: RangeInput) => void;
   data: Loaded;
   selected: number;
   spacing: number;
@@ -158,6 +181,19 @@ function PoolChart({
       decimals0={data.decimals[0]}
       decimals1={data.decimals[1]}
       spacing={spacing}
+      selection={chartSelection(range, data.decimals)}
+      onSelectRange={(lower, upper) =>
+        onRangeChange({
+          ...range,
+          raw: false,
+          full: false,
+          prices: [
+            String(tickPrice(lower, ...data.decimals)),
+            String(tickPrice(upper, ...data.decimals)),
+            range.prices[2],
+          ],
+        })
+      }
     />
   ) : (
     <p>
@@ -167,4 +203,12 @@ function PoolChart({
       </Trans>
     </p>
   );
+}
+
+function chartSelection(range: RangeInput, decimals: [number, number]) {
+  try {
+    return rangeTicks(range, ...decimals, true);
+  } catch {
+    return undefined;
+  }
 }

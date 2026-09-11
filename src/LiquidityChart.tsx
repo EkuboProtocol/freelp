@@ -9,7 +9,11 @@ export function LiquidityChart({
   decimals0,
   decimals1,
   spacing,
+  selection,
+  onSelectRange,
 }: {
+  selection?: { lower: number; upper: number };
+  onSelectRange?: (lower: number, upper: number) => void;
   data: QuoteDataFetcherResult;
   decimals0: number;
   decimals1: number;
@@ -62,6 +66,30 @@ export function LiquidityChart({
         aria-label={t`Pool liquidity by price`}
         onMouseLeave={() => setHover(undefined)}
       >
+        {selection ? (
+          <rect
+            x={Math.max(
+              0,
+              ((selection.lower - lower) / Math.max(upper - lower, 1)) * 800,
+            )}
+            y="0"
+            width={Math.max(
+              0,
+              Math.min(
+                800,
+                ((selection.upper - lower) / Math.max(upper - lower, 1)) * 800,
+              ) -
+                Math.max(
+                  0,
+                  ((selection.lower - lower) / Math.max(upper - lower, 1)) *
+                    800,
+                ),
+            )}
+            height="210"
+            fill="#111"
+            opacity="0.08"
+          />
+        ) : null}
         <line x1="0" y1="210" x2="800" y2="210" stroke="#ccc" />
         {samples.map((point, index) => (
           <rect
@@ -93,6 +121,14 @@ export function LiquidityChart({
           {price(upper)}
         </text>
       </svg>
+      {selection && onSelectRange ? (
+        <ChartRange
+          lower={lower}
+          upper={upper}
+          selection={selection}
+          onChange={onSelectRange}
+        />
+      ) : null}
       <label>
         <Trans>Explore liquidity by price</Trans>
         <input
@@ -117,6 +153,53 @@ export function LiquidityChart({
           that range is not assumed to have zero liquidity.
         </Trans>
       </small>
+    </div>
+  );
+}
+
+function ChartRange({
+  lower,
+  upper,
+  selection,
+  onChange,
+}: {
+  lower: number;
+  upper: number;
+  selection: { lower: number; upper: number };
+  onChange: (lower: number, upper: number) => void;
+}) {
+  return (
+    <div className="grid">
+      <label>
+        <Trans>Range lower bound</Trans>
+        <input
+          type="range"
+          min={lower}
+          max={upper}
+          value={Math.max(lower, Math.min(upper, selection.lower))}
+          onChange={(e) =>
+            onChange(
+              Math.min(Number(e.target.value), selection.upper - 1),
+              selection.upper,
+            )
+          }
+        />
+      </label>
+      <label>
+        <Trans>Range upper bound</Trans>
+        <input
+          type="range"
+          min={lower}
+          max={upper}
+          value={Math.max(lower, Math.min(upper, selection.upper))}
+          onChange={(e) =>
+            onChange(
+              selection.lower,
+              Math.max(Number(e.target.value), selection.lower + 1),
+            )
+          }
+        />
+      </label>
     </div>
   );
 }

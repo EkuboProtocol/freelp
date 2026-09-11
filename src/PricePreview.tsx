@@ -37,7 +37,10 @@ export function PricePreview({
         </p>
       ) : null}
       <p>
-        <Trans>Price (token 1 per token 0):</Trans> ≈ {displayPrice(price)}
+        <Trans>
+          Price ({b.symbol} per {a.symbol}):
+        </Trans>{" "}
+        ≈ {displayPrice(price)}
       </p>
       <p>
         <Trans>Position range:</Trans> ≈{" "}

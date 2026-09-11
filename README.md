@@ -14,11 +14,11 @@ During private development, build with `bun install --frozen-lockfile && bun run
 
 ## Use FreeLP
 
-Robinhood Chain, Base, Arbitrum, and Ethereum have bundled network configurations and free public RPC defaults. Each network retains its own RPC and contract addresses. Settings also supports custom EVM networks. Public RPC operators can change availability; replace an endpoint or use your own node at any time.
+Robinhood Chain, Base, Arbitrum, and Ethereum have bundled network configurations and free public RPC defaults. Each network retains its own RPC and contract addresses. The four corresponding testnets are also bundled. Use Add network in Settings for custom EVM networks. Public RPC operators can change availability; replace an endpoint or use your own node at any time.
 
 Choose bundled tokens or import a token by address using on-chain metadata. Select a fee tier and discover existing pools using QuoteDataFetcher. The liquidity chart reconstructs current liquidity from initialized ticks, using the original interface's liquidity math. It shows only the fetched tick range, without historical or USD data. Choose a range, preview amounts, approve tokens, and create a position. Positions can be listed across configured networks and managed on their respective network.
 
-Canonical Core and QuoteDataFetcher addresses are bundled. A FreeLP manager must be configured or deployed before managing positions. The Deploy page can deploy Core, FreeLP, QuoteDataFetcher, CoreDataFetcher, and TokenDataFetcher from pinned artifacts, verifies the resulting runtime, and saves addresses per network. Deploying a fresh Core creates an independent liquidity system. Wallet transactions require terms acceptance and wallet confirmation.
+Canonical Core and QuoteDataFetcher addresses are bundled. The shared FreeLP manager address is bundled; it needs a one-time deployment on each network before managing positions. The Deploy page uses a fixed CREATE2 salt for Core, FreeLP, QuoteDataFetcher, CoreDataFetcher, and TokenDataFetcher, detects existing code, verifies the runtime, and saves addresses per network. Every user gets the same address for the same Core and pinned bytecode. Deploying a fresh Core creates an independent liquidity system. Wallet transactions require terms acceptance and wallet confirmation.
 
 ## Development and verification
 
@@ -37,3 +37,5 @@ Stable IPNS updates remain a separate, launch-gated job. A CID identifies immuta
 New interface and CLI code are MIT. The repository started with one squashed reduced-interface commit; squashing does not relicense dependencies or contract artifacts. Reused Ekubo interface math, ABI, and configuration logic are identified in source. Retain the licenses and attribution in THIRD_PARTY_NOTICES.md.
 
 See [distribution and infrastructure](docs/distribution.md) for the bunx/npx commands, immutable IPFS and stable IPNS URLs, allocated node, privacy gates, and recovery instructions.
+
+See [position UX and deterministic deployment validation](docs/ship-ux.md) for the shared addresses, deployment status, and tested behavior.

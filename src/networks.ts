@@ -1,5 +1,4 @@
-import { DEFAULT_CORE } from "./deployments";
-import { zeroAddress } from "viem";
+import { DEFAULT_CONTRACTS } from "./deployments";
 import { load, save } from "./storage";
 import { validateSettings } from "./config";
 import type { Settings } from "./types";
@@ -17,18 +16,34 @@ export const NETWORKS = [
     name: "Ethereum",
     rpcUrl: "https://ethereum-rpc.publicnode.com",
   },
+  {
+    chainId: 11155111,
+    name: "Ethereum Sepolia",
+    rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",
+  },
+  { chainId: 84532, name: "Base Sepolia", rpcUrl: "https://sepolia.base.org" },
+  {
+    chainId: 421614,
+    name: "Arbitrum Sepolia",
+    rpcUrl: "https://sepolia-rollup.arbitrum.io/rpc",
+  },
+  {
+    chainId: 46630,
+    name: "Robinhood Chain Testnet",
+    rpcUrl: "https://rpc.testnet.chain.robinhood.com",
+  },
 ] as const;
-export function networkName(chainId: number) {
+export function networkName(chainId: number, name?: string) {
   return (
-    NETWORKS.find((network) => network.chainId === chainId)?.name ??
+    name ||
+    NETWORKS.find((network) => network.chainId === chainId)?.name ||
     `Chain ${chainId}`
   );
 }
 export function loadNetworks(): Settings[] {
   const defaults: Settings[] = NETWORKS.map((network) => ({
     ...network,
-    core: DEFAULT_CORE,
-    manager: zeroAddress,
+    ...DEFAULT_CONTRACTS,
     nativeSymbol: "ETH",
   }));
   const saved = load<Settings[]>("freelp:networks", []);

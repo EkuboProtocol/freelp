@@ -1,5 +1,6 @@
 import type { Address, Hex } from "viem";
 export type Settings = {
+  name?: string;
   rpcUrl: string;
   chainId: number;
   core: Address;

@@ -65,10 +65,10 @@ export function NetworkPortfolio() {
           const result = results.find((row) => row.chainId === network.chainId);
           return (
             <article className="network-card" key={network.chainId}>
-              <h3>{networkName(network.chainId)}</h3>
+              <h3>{networkName(network.chainId, network.name)}</h3>
               {network.manager === zeroAddress ? (
-                <button onClick={() => open(network.chainId, "#/deploy")}>
-                  <Trans>Set up positions</Trans>
+                <button onClick={() => open(network.chainId, "#/positions")}>
+                  <Trans>View network</Trans>
                 </button>
               ) : (
                 <>

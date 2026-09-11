@@ -27,7 +27,7 @@ const lists: Record<number, Currency[]> = Object.fromEntries(
     ],
   ]),
 );
-export function currencies(chainId: number): Currency[] {
+export function currencies(chainId: number, nativeSymbol = "ETH"): Currency[] {
   const imported = load<Currency[]>(`freelp:tokens:${chainId}`, []);
   const valid = Array.isArray(imported)
     ? imported.filter(
@@ -49,7 +49,15 @@ export function currencies(chainId: number): Currency[] {
   for (const token of valid)
     if (!merged.has(token.address.toLowerCase()))
       merged.set(token.address.toLowerCase(), token);
-  return [...merged.values()];
+  return [...merged.values()].map((token) =>
+    token.address === zeroAddress
+      ? {
+          ...token,
+          symbol: nativeSymbol,
+          name: nativeSymbol === "ETH" ? "Ether" : nativeSymbol,
+        }
+      : token,
+  );
 }
 export function importCurrency(chainId: number, token: Currency) {
   const next = {

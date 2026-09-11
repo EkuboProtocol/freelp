@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Trans } from "@lingui/react/macro";
 import { getAddress } from "viem";
 import { useSession, rpc } from "./session";
-import { validateSettings } from "./config";
+import { DEFAULT_SETTINGS, validateSettings } from "./config";
 import { verifyCode } from "./contracts";
 import { networkName } from "./networks";
 import { Field } from "./common";
@@ -63,6 +63,7 @@ export function SettingsPage() {
     try {
       const parsed = JSON.parse(importText) as Settings;
       const next = validateSettings({
+        name: parsed.name,
         rpcUrl: parsed.rpcUrl,
         chainId: parsed.chainId,
         core: parsed.core,
@@ -88,6 +89,13 @@ export function SettingsPage() {
           stay in this browser.
         </Trans>
       </p>
+      <button
+        onClick={() =>
+          setDraft({ ...DEFAULT_SETTINGS, name: "", chainId: 0, rpcUrl: "" })
+        }
+      >
+        <Trans>Add network</Trans>
+      </button>
       <Field label={<Trans>Network configuration</Trans>}>
         <select
           value={draft.chainId}
@@ -98,12 +106,24 @@ export function SettingsPage() {
             if (selected) setDraft(selected);
           }}
         >
+          {!networks.some((network) => network.chainId === draft.chainId) ? (
+            <option value={draft.chainId}>
+              <Trans>New network</Trans>
+            </option>
+          ) : null}
           {networks.map((network) => (
             <option key={network.chainId} value={network.chainId}>
-              {networkName(network.chainId)}
+              {networkName(network.chainId, network.name)}
             </option>
           ))}
         </select>
+      </Field>
+      <Field label={<Trans>Network name</Trans>}>
+        <input
+          value={draft.name ?? ""}
+          maxLength={80}
+          onChange={(e) => update("name", e.target.value)}
+        />
       </Field>
       <div className="grid">
         <Field label={<Trans>RPC URL</Trans>}>

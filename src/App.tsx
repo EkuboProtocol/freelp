@@ -174,7 +174,7 @@ export function App() {
             >
               {session.networks.map((network) => (
                 <option key={network.chainId} value={network.chainId}>
-                  {networkName(network.chainId)}
+                  {networkName(network.chainId, network.name)}
                 </option>
               ))}
             </select>

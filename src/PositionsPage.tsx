@@ -69,7 +69,7 @@ export function PositionsPage() {
       <NetworkPortfolio />
       <div className="row spread">
         <h2>
-          <Trans>Your positions</Trans> · {networkName(settings.chainId)}
+          <Trans>Your positions</Trans> · {networkName(settings.chainId, settings.name)}
         </h2>
         <a className="primary-link" href="#/create">
           <Trans>Create position</Trans>
@@ -92,9 +92,6 @@ export function PositionsPage() {
           </p>
           <a href="#/settings">
             <Trans>Use an existing manager</Trans>
-          </a>
-          <a href="#/deploy">
-            <Trans>Deploy your own</Trans>
           </a>
         </div>
       ) : null}

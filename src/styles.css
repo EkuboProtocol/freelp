@@ -513,3 +513,8 @@ input,
     scroll-behavior: auto !important;
   }
 }
+
+input[type="range"], input[type="checkbox"] { accent-color: #111; }
+.balance-actions { margin-top: 0.75rem; }
+.balance-actions small { display: block; overflow-wrap: anywhere; }
+.balance-actions .row { margin-top: 0.5rem; }

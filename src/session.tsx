@@ -1,3 +1,4 @@
+import { switchWalletChain } from "./walletNetwork";
 import { t } from "@lingui/core/macro";
 import {
   createContext,
@@ -88,10 +89,7 @@ function useSessionState() {
     if (!wallet) throw new Error(t`Connect a wallet first.`);
     if (transactionLock.current)
       throw new Error(t`Finish the pending transaction first.`);
-    await wallet.provider.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: `0x${settings.chainId.toString(16)}` }],
-    });
+    await switchWalletChain(wallet.provider, settings);
     await connect(wallet);
     setStatus(t`Wallet connected to the selected network.`);
   }

@@ -1,3 +1,4 @@
+import { CREATE2_FACTORY, verifyDeploymentTransaction } from "./deterministic";
 import { rpc } from "./rpc";
 import { verifyCode } from "./contracts";
 import { toHex, isAddressEqual, type Address } from "viem";
@@ -33,7 +34,9 @@ export async function executeTransaction(
   if ((await client.getChainId()) !== settings.chainId)
     throw new Error("RPC chain ID does not match settings.");
   await assertWallet(provider, account, settings.chainId);
-  if (tx.to) {
+  if (tx.to?.toLowerCase() === CREATE2_FACTORY.toLowerCase()) {
+    await verifyDeploymentTransaction(settings, tx);
+  } else if (tx.to) {
     await Promise.all([
       verifyCode(settings, settings.core, "Core"),
       verifyCode(settings, settings.manager, "FreeLP"),

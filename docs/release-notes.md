@@ -1,7 +1,5 @@
-FreeLP: RPC-only EVM liquidity position management, token selectors/imports, on-chain pool discovery and liquidity charts, per-network settings, and browser deployment of Core, FreeLP and data fetchers.
+FreeLP now uses shared CREATE2 deployments with a fixed salt, code detection, and duplicate-deployment protection. All eight supported EVM networks have bundled contract addresses; Settings includes an explicit Add network flow. Deploy remains a tab without home-page shortcuts.
 
-The npm tarball bundles the complete app for a local Node-compatible server through bunx or npx. Trust comes from the installed package and publisher; no separate binary or GitHub attestation flow is used. This release also includes the static site's CAR and per-commit CID record.
+Position creation adds automatic pool discovery, linked amounts from on-chain quotes, automatic previews, balance shortcuts, range presets and graph controls, readable token labels, and explicit new-pool pricing. The app uses only configured RPCs and injected wallets.
 
-Private development artifacts: do not publish or seed their CIDs publicly before launch readiness. Contracts and dependency notices retain their original licenses. Network gas applies; public RPC and IPFS availability are not guaranteed by the application.
-
-This revision adds accessibility and Lighthouse gates, clearer setup and transaction refresh states, and stable IPNS release automation backed by a persistent DigitalOcean IPFS node. Public publication remains disabled during private development.
+Each verified build is pinned to the persistent IPFS node, with gateway links in the commit status and Actions summary. The source repository and npm package remain private. FreeLP managers require a one-time deployment per network; the Deploy tab shows current code status. Network gas applies.

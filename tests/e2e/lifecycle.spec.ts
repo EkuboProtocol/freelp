@@ -1,7 +1,9 @@
+import { NETWORKS } from "../../src/networks";
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
 import {
   createPublicClient,
+  createTestClient,
   erc20Abi,
   createWalletClient,
   http,
@@ -14,12 +16,23 @@ import { foundry } from "viem/chains";
 import coreArtifact from "../../artifacts/Core.json" with { type: "json" };
 import managerArtifact from "../../artifacts/FreeLP.json" with { type: "json" };
 import tokenArtifact from "../../artifacts/TestToken.json" with { type: "json" };
+import {
+  CREATE2_FACTORY,
+  FACTORY_RUNTIME,
+  deploymentAddress,
+  prepareDeployment,
+} from "../../src/deterministic";
 const rpcUrl = "http://127.0.0.1:18545";
 // Anvil's documented public development key. Never use on a funded chain.
 const account = privateKeyToAccount(
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
 );
 const client = createPublicClient({ chain: foundry, transport: http(rpcUrl) });
+const testClient = createTestClient({
+  mode: "anvil",
+  chain: foundry,
+  transport: http(rpcUrl),
+});
 const wallet = createWalletClient({
   chain: foundry,
   transport: http(rpcUrl),
@@ -82,12 +95,15 @@ for (const { missingDecimals, native } of [
   test(`RPC-only LP lifecycle with terms enforced (missing decimals: ${missingDecimals}, native: ${native})`, async ({
     page,
   }) => {
+    await testClient.request({ method: "anvil_reset", params: [] });
+    await testClient.setCode({
+      address: CREATE2_FACTORY,
+      bytecode: FACTORY_RUNTIME,
+    });
     const amount = (value: number) =>
       missingDecimals
         ? (BigInt(value) * 10n ** 18n).toString()
         : value.toString();
-    const deploymentStatus = (success: string) =>
-      missingDecimals ? "Deployment verification RPC unavailable" : success;
     const core = zeroAddress;
     const manager = zeroAddress;
     const tokens = [
@@ -95,9 +111,7 @@ for (const { missingDecimals, native } of [
       await deploy(tokenArtifact, [account.address]),
     ].sort((a, b) => (BigInt(a) < BigInt(b) ? -1 : 1));
     const unexpected: string[] = [];
-    let verificationFailure: "core" | "manager" | undefined = missingDecimals
-      ? "core"
-      : undefined;
+    let verificationFailure: "core" | "manager" | undefined;
     let deployedCore: string = zeroAddress;
     function failsCodeRead(method: string, address: string) {
       return (
@@ -107,12 +121,23 @@ for (const { missingDecimals, native } of [
           address.toLowerCase() !== deployedCore.toLowerCase())
       );
     }
+    for (const network of NETWORKS)
+      await page.route(
+        network.rpcUrl.replace(/\/$/, "") + "/",
+        async (route) => {
+          const body = route.request().postDataJSON();
+          await route.fulfill({
+            json: { jsonrpc: "2.0", id: body.id, result: "0x" },
+          });
+        },
+      );
     page.on("request", (request) => {
       const url = request.url();
       if (
         !url.startsWith("http://127.0.0.1:14173") &&
         !url.startsWith(rpcUrl) &&
-        !url.startsWith("data:")
+        !url.startsWith("data:") &&
+        !NETWORKS.some((network) => url.startsWith(network.rpcUrl))
       )
         unexpected.push(url);
     });
@@ -206,7 +231,7 @@ for (const { missingDecimals, native } of [
     await page.getByRole("button", { name: "Connect Local wallet" }).click();
     await page.getByRole("link", { name: "Deploy", exact: true }).click();
     await expect(
-      page.getByRole("button", { name: "Review and deploy new Core" }),
+      page.getByRole("button", { name: "Deploy Core", exact: true }),
     ).toBeDisabled();
     await page.getByRole("link", { name: "Terms", exact: true }).click();
     await page.getByRole("checkbox").check();
@@ -214,44 +239,63 @@ for (const { missingDecimals, native } of [
       .getByRole("button", { name: "Accept terms", exact: true })
       .click();
     await page.getByRole("link", { name: "Deploy", exact: true }).click();
+    if (missingDecimals) {
+      verificationFailure = "core";
+      await page.reload();
+      await page.getByRole("button", { name: "Connect Local wallet" }).click();
+      await expect(
+        page.getByRole("button", { name: "Deploy Core", exact: true }),
+      ).toBeDisabled();
+      await expect(
+        page
+          .getByText("Unable to verify this address. Deployment is disabled.")
+          .first(),
+      ).toBeVisible();
+      verificationFailure = undefined;
+      await page
+        .getByRole("button", { name: "Refresh status" })
+        .first()
+        .click();
+    }
     await page
-      .getByRole("button", { name: "Review and deploy new Core" })
+      .getByRole("button", { name: "Deploy Core", exact: true })
       .click();
     await expect(page.locator(".status[role=status]")).toContainText(
-      deploymentStatus("Core deployed and verified:"),
+      "Using Core at",
       { timeout: 30000 },
     );
     deployedCore = await page.evaluate(
       () => JSON.parse(localStorage.getItem("freelp:settings")!).core,
     );
-    expect(deployedCore).not.toBe(zeroAddress);
-    verificationFailure = missingDecimals ? "manager" : undefined;
-    if (missingDecimals) {
-      await page.reload();
-      await page.getByRole("button", { name: "Connect Local wallet" }).click();
-      await expect(
-        page.getByText(deployedCore, { exact: true }).first(),
-      ).toBeVisible();
-    }
+    expect(deployedCore).toBe("0x00000000000014aA86C5d3c41765bb24e11bd701");
+    await expect(
+      page.getByRole("button", { name: "Deploy Core", exact: true }),
+    ).toBeDisabled();
     await page
-      .getByRole("button", { name: "Review and deploy position manager" })
+      .getByRole("button", { name: "Deploy FreeLP", exact: true })
       .click();
     await expect(page.locator(".status[role=status]")).toContainText(
-      deploymentStatus("Position manager deployed and verified:"),
+      "Using FreeLP at",
       { timeout: 30000 },
     );
-    verificationFailure = undefined;
-    if (missingDecimals) {
-      await page.reload();
-      await page.getByRole("button", { name: "Connect Local wallet" }).click();
-      await page.getByRole("link", { name: "Settings", exact: true }).click();
-      await page
-        .getByRole("button", { name: "Verify contracts", exact: true })
-        .click();
-      await expect(page.locator(".status[role=status]")).toContainText(
-        "match the bundled contract artifacts",
-      );
-    }
+    await expect(
+      page.getByRole("button", { name: "Deploy FreeLP", exact: true }),
+    ).toBeDisabled();
+    expect(deploymentAddress("FreeLP", deployedCore as Hex)).toBe(
+      "0x775A601a3aF4Ccb4a79FF01FAFB455F0Af8fdaC0",
+    );
+    await expect(
+      prepareDeployment(
+        {
+          rpcUrl,
+          chainId: 31337,
+          core: deployedCore as Hex,
+          manager: zeroAddress,
+          nativeSymbol: "ETH",
+        },
+        "FreeLP",
+      ),
+    ).rejects.toThrow("already deployed");
     await deployFetchers(page, missingDecimals, native);
     const deployedManager = await page.evaluate(
       () => JSON.parse(localStorage.getItem("freelp:settings")!).manager as Hex,
@@ -261,8 +305,28 @@ for (const { missingDecimals, native } of [
     await page.getByLabel("Token 0 address").fill(tokens[0]);
     await page.getByLabel("Token 1 address").fill(tokens[1]);
     await checkTokenImports(page, tokens, missingDecimals, native);
-    await page.getByLabel("Maximum token 0 amount").fill(amount(1));
-    await page.getByLabel("Maximum token 1 amount").fill(amount(1));
+    await page.getByLabel("Initial price (new pools only)").fill("1");
+    await page.getByLabel("Lower price", { exact: true }).fill("0.99");
+    await page.getByLabel("Upper price", { exact: true }).fill("1.01");
+    if (!missingDecimals && !native) {
+      await page.getByTestId("deposit-amount-0").fill("1");
+      await expect(
+        page.getByRole("heading", { name: "Deposit preview", exact: true }),
+      ).toBeVisible({ timeout: 15000 });
+      await page.screenshot({
+        path: test.info().outputPath("create-preview.png"),
+        fullPage: true,
+      });
+      const paired = await page.getByTestId("deposit-amount-1").inputValue();
+      expect(Number(paired)).toBeGreaterThan(0);
+      await page.getByTestId("deposit-amount-0").fill("0.5");
+      await expect(page.getByTestId("deposit-amount-1")).not.toHaveValue(
+        paired,
+      );
+    }
+    await page.getByLabel("Calculate the matching token amount").uncheck();
+    await page.getByTestId("deposit-amount-0").fill(amount(1));
+    await page.getByTestId("deposit-amount-1").fill(amount(1));
     await page.getByRole("button", { name: "Preview position" }).click();
     await expect(
       page.getByRole("heading", { name: "Deposit preview" }),
@@ -294,6 +358,11 @@ for (const { missingDecimals, native } of [
     await page.getByLabel("Token 0 address").fill(tokens[0]);
     await page.getByLabel("Token 1 address").fill(tokens[1]);
     await checkPoolChart(page, missingDecimals, native);
+    await captureChart(page, missingDecimals, native);
+    await page.getByLabel("Lower price", { exact: true }).fill("0.99");
+    await page.getByLabel("Upper price", { exact: true }).fill("1.01");
+    await page.getByTestId("deposit-amount-0").fill(amount(1));
+    await page.getByTestId("deposit-amount-1").fill(amount(1));
     await page
       .getByLabel("Initial price (new pools only)")
       .fill("ignored for existing pool");
@@ -413,7 +482,7 @@ async function deployFetchers(
       .getByRole("button", { name: `Deploy ${kind}`, exact: true })
       .click();
     await expect(page.locator(".status[role=status]")).toContainText(
-      `${kind} deployed and verified:`,
+      `Using ${kind} at`,
       { timeout: 30000 },
     );
   }
@@ -466,4 +535,23 @@ async function checkTokenImports(
   expect(
     await page.evaluate(() => localStorage.getItem("freelp:tokens:8453")),
   ).toBeNull();
+}
+
+async function captureChart(
+  page: Page,
+  missingDecimals: boolean,
+  native: boolean,
+) {
+  if (!missingDecimals && !native) {
+    await page.screenshot({
+      path: test.info().outputPath("liquidity-chart-desktop.png"),
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({
+      path: test.info().outputPath("liquidity-chart-mobile.png"),
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 1280, height: 720 });
+  }
 }

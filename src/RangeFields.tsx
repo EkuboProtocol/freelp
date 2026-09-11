@@ -7,7 +7,9 @@ import type { RangeInput } from "./prices";
 export function RangeFields({
   range,
   setRange,
+  symbols,
 }: {
+  symbols: string[];
   range: RangeInput;
   setRange: Dispatch<SetStateAction<RangeInput>>;
 }) {
@@ -37,8 +39,8 @@ export function RangeFields({
       </legend>
       <p>
         <Trans>
-          Prices are token 1 per token 0. Range prices round outward to valid
-          ticks; review the resulting range in the preview.
+          Prices are {symbols[1]} per {symbols[0]}. Range prices round outward
+          to valid ticks; review the resulting range in the preview.
         </Trans>
       </p>
       <label className="row">
@@ -51,6 +53,29 @@ export function RangeFields({
         />
         <Trans>Use raw ticks</Trans>
       </label>
+      <div className="row">
+        {[1, 5, 20].map((percent) => (
+          <button
+            key={percent}
+            type="button"
+            disabled={!Number(range.prices[2])}
+            onClick={() =>
+              setRange({
+                ...range,
+                raw: false,
+                full: false,
+                prices: [
+                  String(Number(range.prices[2]) * (1 - percent / 100)),
+                  String(Number(range.prices[2]) * (1 + percent / 100)),
+                  range.prices[2],
+                ],
+              })
+            }
+          >
+            ±{percent}%
+          </button>
+        ))}
+      </div>
       <div className="grid">
         {labels.map((label, index) => (
           <Field key={index} label={label}>

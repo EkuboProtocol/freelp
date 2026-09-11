@@ -13,19 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#. placeholder {0}: entry.kind
-#. placeholder {1}: receipt.contractAddress
-#: src/FetcherDeployments.tsx
-msgid "{0} deployed and verified: {1}"
-msgstr "{0} deployed and verified: {1}"
-
-#: src/DeployPage.tsx
-msgid "1. Core"
-msgstr "1. Core"
-
-#: src/DeployPage.tsx
-msgid "2. Position manager"
-msgstr "2. Position manager"
+#. placeholder {0}: symbols[0]
+#. placeholder {0}: symbols[1]
+#: src/CreatePage.tsx
+msgid "{0} amount"
+msgstr "{0} amount"
 
 #: src/session.tsx
 msgid "A transaction is already pending."
@@ -59,6 +51,10 @@ msgstr "Active network"
 msgid "Add liquidity"
 msgstr "Add liquidity"
 
+#: src/SettingsPage.tsx
+msgid "Add network"
+msgstr "Add network"
+
 #: src/CreatePage.tsx
 msgid "Advanced pool settings"
 msgstr "Advanced pool settings"
@@ -67,12 +63,17 @@ msgstr "Advanced pool settings"
 msgid "After public launch, the IPNS address follows the latest stable release. Each release also includes its immutable IPFS address and a CAR you can pin yourself."
 msgstr "After public launch, the IPNS address follows the latest stable release. Each release also includes its immutable IPFS address and a CAR you can pin yourself."
 
+#: src/DeploymentCard.tsx
+msgid "Already deployed · code verified"
+msgstr "Already deployed · code verified"
+
 #. placeholder {0}: token.symbol
 #: src/ApprovalButton.tsx
 msgid "Approve {0}"
 msgstr "Approve {0}"
 
 #: src/CreatePage.tsx
+#: src/TokenBalance.tsx
 msgid "Balance:"
 msgstr "Balance:"
 
@@ -88,6 +89,10 @@ msgstr "Build details"
 msgid "Burn empty NFT"
 msgstr "Burn empty NFT"
 
+#: src/CreatePage.tsx
+msgid "Calculate the matching token amount"
+msgstr "Calculate the matching token amount"
+
 #: src/SettingsPage.tsx
 msgid "Canonical deployment"
 msgstr "Canonical deployment"
@@ -96,13 +101,25 @@ msgstr "Canonical deployment"
 msgid "Chain ID"
 msgstr "Chain ID"
 
+#: src/DeployPage.tsx
+msgid "Changing the Core constructor address or contract bytecode changes dependent contract addresses. Custom networks must provide the standard CREATE2 factory."
+msgstr "Changing the Core constructor address or contract bytecode changes dependent contract addresses. Custom networks must provide the standard CREATE2 factory."
+
+#: src/DeploymentCard.tsx
+msgid "Checking code on this network…"
+msgstr "Checking code on this network…"
+
 #: src/PoolPicker.tsx
 msgid "Choose a pool"
 msgstr "Choose a pool"
 
+#: src/loadDepositQuote.ts
+msgid "Choose two different tokens in address order."
+msgstr "Choose two different tokens in address order."
+
 #: src/CreatePage.tsx
-msgid "Choose two tokens, explore available pools, and set the price range for your liquidity. Token selections are ordered automatically. Prices show the second token per first token."
-msgstr "Choose two tokens, explore available pools, and set the price range for your liquidity. Token selections are ordered automatically. Prices show the second token per first token."
+msgid "Choose your tokens and pool, set a price range, and enter either deposit amount. The matching amount and preview update automatically."
+msgstr "Choose your tokens and pool, set a price range, and enter either deposit amount. The matching amount and preview update automatically."
 
 #: src/CurrencySelect.tsx
 msgid "Close token selector"
@@ -138,10 +155,6 @@ msgstr "Connect a wallet first."
 msgid "Connect a wallet to load positions directly from the chain."
 msgstr "Connect a wallet to load positions directly from the chain."
 
-#: src/CreatePage.tsx
-msgid "Connect a wallet to preview balances."
-msgstr "Connect a wallet to preview balances."
-
 #: src/TermsPage.tsx
 msgid "Connect a wallet to record your acceptance."
 msgstr "Connect a wallet to record your acceptance."
@@ -153,11 +166,6 @@ msgstr "Connected to chain {chain}."
 #: src/SettingsPage.tsx
 msgid "Connection settings"
 msgstr "Connection settings"
-
-#: src/DeployPage.tsx
-#: src/FetcherDeployments.tsx
-msgid "Constructor Core address:"
-msgstr "Constructor Core address:"
 
 #: src/App.tsx
 msgid "Contract license"
@@ -179,10 +187,9 @@ msgstr "Core address"
 msgid "Core and position manager match the bundled contract artifacts."
 msgstr "Core and position manager match the bundled contract artifacts."
 
-#. placeholder {0}: receipt.contractAddress
-#: src/DeployPage.tsx
-msgid "Core deployed and verified: {0}"
-msgstr "Core deployed and verified: {0}"
+#: src/DeploymentCard.tsx
+msgid "Core:"
+msgstr "Core:"
 
 #: src/App.tsx
 msgid "Create"
@@ -193,11 +200,15 @@ msgstr "Create"
 msgid "Create position"
 msgstr "Create position"
 
+#: src/DeployPage.tsx
+msgid "CREATE2 factory:"
+msgstr "CREATE2 factory:"
+
 #: src/LiquidityChart.tsx
 msgid "Current pool liquidity, read directly from chain"
 msgstr "Current pool liquidity, read directly from chain"
 
-#: src/FetcherDeployments.tsx
+#: src/DeployPage.tsx
 msgid "Data fetchers"
 msgstr "Data fetchers"
 
@@ -221,31 +232,25 @@ msgstr "Dependency notices"
 msgid "Deploy"
 msgstr "Deploy"
 
-#. placeholder {0}: entry.kind
-#: src/FetcherDeployments.tsx
-msgid "Deploy {0}"
-msgstr "Deploy {0}"
-
-#: src/DeployPage.tsx
-msgid "Deploy an ownerless position manager against an existing compatible Core, or deploy a fresh Core first. A fresh Core has separate pools and liquidity. You pay network gas."
-msgstr "Deploy an ownerless position manager against an existing compatible Core, or deploy a fresh Core first. A fresh Core has separate pools and liquidity. You pay network gas."
+#: src/DeploymentCard.tsx
+msgid "Deploy {kind}"
+msgstr "Deploy {kind}"
 
 #: src/DeployPage.tsx
 msgid "Deploy contracts"
 msgstr "Deploy contracts"
 
-#: src/PositionsPage.tsx
-msgid "Deploy your own"
-msgstr "Deploy your own"
-
 #: src/DeployPage.tsx
-#: src/FetcherDeployments.tsx
-msgid "Deployment receipt has no address."
-msgstr "Deployment receipt has no address."
+msgid "Deploy missing contracts once for everyone on this network. Addresses depend on the fixed salt and contract code, never on your wallet. Existing contracts are detected before any deployment."
+msgstr "Deploy missing contracts once for everyone on this network. Addresses depend on the fixed salt and contract code, never on your wallet. Existing contracts are detected before any deployment."
 
 #: src/CreatePage.tsx
 msgid "Deposit preview"
 msgstr "Deposit preview"
+
+#: src/DeployPage.tsx
+msgid "Deterministic deployment details"
+msgstr "Deterministic deployment details"
 
 #: src/common.tsx
 msgid "Error: {error}"
@@ -283,9 +288,21 @@ msgstr "Finish the pending transaction before changing settings."
 msgid "Finish the pending transaction first."
 msgstr "Finish the pending transaction first."
 
+#: src/CreatePage.tsx
+msgid "First token"
+msgstr "First token"
+
+#: src/DeployPage.tsx
+msgid "Fixed salt:"
+msgstr "Fixed salt:"
+
 #: src/RangeFields.tsx
 msgid "Full range selected."
 msgstr "Full range selected."
+
+#: src/TokenBalance.tsx
+msgid "Half"
+msgstr "Half"
 
 #: src/TermsPage.tsx
 msgid "I have read and agree to the Terms of Service and understand that I use FreeLP at my own risk."
@@ -310,6 +327,11 @@ msgstr "Initial price (new pools only)"
 #: src/RangeFields.tsx
 msgid "Initial tick (new pools only)"
 msgstr "Initial tick (new pools only)"
+
+#. placeholder {0}: t.symbol
+#: src/CreatePage.tsx
+msgid "Insufficient {0} balance"
+msgstr "Insufficient {0} balance"
 
 #: src/PositionsPage.tsx
 msgid "Invalid slippage."
@@ -343,13 +365,9 @@ msgstr "Main navigation"
 msgid "Manage position"
 msgstr "Manage position"
 
-#: src/CreatePage.tsx
-msgid "Maximum token 0 amount"
-msgstr "Maximum token 0 amount"
-
-#: src/CreatePage.tsx
-msgid "Maximum token 1 amount"
-msgstr "Maximum token 1 amount"
+#: src/TokenBalance.tsx
+msgid "Max"
+msgstr "Max"
 
 #: src/App.tsx
 msgid "MIT license"
@@ -362,6 +380,14 @@ msgstr "Native token symbol"
 #: src/SettingsPage.tsx
 msgid "Network configuration"
 msgstr "Network configuration"
+
+#: src/SettingsPage.tsx
+msgid "Network name"
+msgstr "Network name"
+
+#: src/SettingsPage.tsx
+msgid "New network"
+msgstr "New network"
 
 #: src/PricePreview.tsx
 msgid "New pool: creation will initialize its price."
@@ -378,6 +404,10 @@ msgstr "No injected wallet detected. Open this page in a browser with a wallet e
 #: src/PositionsPage.tsx
 msgid "No positions in this manager."
 msgstr "No positions in this manager."
+
+#: src/DeploymentCard.tsx
+msgid "Not deployed · no code at this address"
+msgstr "Not deployed · no code at this address"
 
 #: src/App.tsx
 msgid "Official source repository:"
@@ -424,14 +454,13 @@ msgstr "Position"
 msgid "Position #{0}"
 msgstr "Position #{0}"
 
+#: src/DeploymentCard.tsx
+msgid "Position manager"
+msgstr "Position manager"
+
 #: src/SettingsPage.tsx
 msgid "Position manager address"
 msgstr "Position manager address"
-
-#. placeholder {0}: receipt.contractAddress
-#: src/DeployPage.tsx
-msgid "Position manager deployed and verified: {0}"
-msgstr "Position manager deployed and verified: {0}"
 
 #: src/PricePreview.tsx
 msgid "Position range:"
@@ -453,17 +482,21 @@ msgstr "Preview position"
 msgid "Price"
 msgstr "Price"
 
+#. placeholder {0}: b.symbol
+#. placeholder {1}: a.symbol
 #: src/PricePreview.tsx
-msgid "Price (token 1 per token 0):"
-msgstr "Price (token 1 per token 0):"
+msgid "Price ({0} per {1}):"
+msgstr "Price ({0} per {1}):"
 
 #: src/RangeFields.tsx
 msgid "Price range"
 msgstr "Price range"
 
+#. placeholder {0}: symbols[1]
+#. placeholder {1}: symbols[0]
 #: src/RangeFields.tsx
-msgid "Prices are token 1 per token 0. Range prices round outward to valid ticks; review the resulting range in the preview."
-msgstr "Prices are token 1 per token 0. Range prices round outward to valid ticks; review the resulting range in the preview."
+msgid "Prices are {0} per {1}. Range prices round outward to valid ticks; review the resulting range in the preview."
+msgstr "Prices are {0} per {1}. Range prices round outward to valid ticks; review the resulting range in the preview."
 
 #: src/PositionsPage.tsx
 msgid "Principal:"
@@ -473,9 +506,13 @@ msgstr "Principal:"
 msgid "Quote data fetcher address"
 msgstr "Quote data fetcher address"
 
-#: src/FetcherDeployments.tsx
-msgid "QuoteDataFetcher supplies current prices and initialized ticks for liquidity charts. Deploy it for a new Core, or use the canonical deployment. All fetchers below are bundled and deployable from this page."
-msgstr "QuoteDataFetcher supplies current prices and initialized ticks for liquidity charts. Deploy it for a new Core, or use the canonical deployment. All fetchers below are bundled and deployable from this page."
+#: src/LiquidityChart.tsx
+msgid "Range lower bound"
+msgstr "Range lower bound"
+
+#: src/LiquidityChart.tsx
+msgid "Range upper bound"
+msgstr "Range upper bound"
 
 #: src/CurrencySelect.tsx
 msgid "Read token from chain"
@@ -489,6 +526,10 @@ msgstr "Reading positions…"
 msgid "Recipient address"
 msgstr "Recipient address"
 
+#: src/DeploymentCard.tsx
+msgid "Refresh status"
+msgstr "Refresh status"
+
 #: src/CreatePage.tsx
 msgid "Refresh the preview."
 msgstr "Refresh the preview."
@@ -497,14 +538,6 @@ msgstr "Refresh the preview."
 #: src/ApprovalButton.tsx
 msgid "Reset {0} approval"
 msgstr "Reset {0} approval"
-
-#: src/DeployPage.tsx
-msgid "Review and deploy new Core"
-msgstr "Review and deploy new Core"
-
-#: src/DeployPage.tsx
-msgid "Review and deploy position manager"
-msgstr "Review and deploy position manager"
 
 #: src/SettingsPage.tsx
 msgid "RPC reports chain {chain}."
@@ -538,6 +571,10 @@ msgstr "Save settings"
 msgid "Search tokens or paste an address"
 msgstr "Search tokens or paste an address"
 
+#: src/CreatePage.tsx
+msgid "Second token"
+msgstr "Second token"
+
 #: src/CurrencySelect.tsx
 msgid "Select a token"
 msgstr "Select a token"
@@ -558,17 +595,9 @@ msgstr "Select second token"
 msgid "Select token"
 msgstr "Select token"
 
-#: src/DeployPage.tsx
-msgid "Set an existing Core in Settings, or deploy one here. This step creates a new independent Core."
-msgstr "Set an existing Core in Settings, or deploy one here. This step creates a new independent Core."
-
 #: src/PositionsPage.tsx
 msgid "Set up a position manager for this network to start providing liquidity."
 msgstr "Set up a position manager for this network to start providing liquidity."
-
-#: src/NetworkPortfolio.tsx
-msgid "Set up positions"
-msgstr "Set up positions"
 
 #: src/App.tsx
 msgid "Settings"
@@ -594,10 +623,6 @@ msgstr "Slippage (basis points)"
 #: src/CreatePage.tsx
 msgid "Slippage must be between 0 and 1000 basis points."
 msgstr "Slippage must be between 0 and 1000 basis points."
-
-#: src/FetcherDeployments.tsx
-msgid "Standalone token balance and metadata reader. No Core constructor argument."
-msgstr "Standalone token balance and metadata reader. No Core constructor argument."
 
 #: src/App.tsx
 msgid "Switch wallet to this network"
@@ -627,13 +652,17 @@ msgstr "The IPNS address is reserved during private development. Public gateway 
 msgid "The package contains the complete application. Your package manager handles package integrity; the launcher serves local files without fetching a separate build or contacting GitHub."
 msgstr "The package contains the complete application. Your package manager handles package integrity; the launcher serves local files without fetching a separate build or contacting GitHub."
 
-#: src/DeployPage.tsx
-msgid "There is no owner, upgrade key, or manager fee. All position information and NFT metadata are on-chain."
-msgstr "There is no owner, upgrade key, or manager fee. All position information and NFT metadata are on-chain."
+#: src/loadDepositQuote.ts
+msgid "The shared position manager is not deployed on this network yet. Open the Deploy tab to set it up once for everyone."
+msgstr "The shared position manager is not deployed on this network yet. Open the Deploy tab to set it up once for everyone."
 
 #: src/PoolPicker.tsx
 msgid "This pool is not initialized. Set its initial price when creating the first position."
 msgstr "This pool is not initialized. Set its initial price when creating the first position."
+
+#: src/CreatePage.tsx
+msgid "This token is not needed for the selected range."
+msgstr "This token is not needed for the selected range."
 
 #: src/PositionsPage.tsx
 msgid "Tick range"
@@ -659,10 +688,6 @@ msgstr "Token 0 fallback decimals"
 #: src/PositionsPage.tsx
 msgid "Token 0 maximum"
 msgstr "Token 0 maximum"
-
-#: src/CreatePage.tsx
-msgid "Token 0 must sort before token 1 by address."
-msgstr "Token 0 must sort before token 1 by address."
 
 #: src/CreatePage.tsx
 msgid "Token 1 address"
@@ -692,9 +717,17 @@ msgstr "Token pair"
 msgid "Transfer NFT to recipient"
 msgstr "Transfer NFT to recipient"
 
+#: src/DeploymentCard.tsx
+msgid "Unable to verify this address. Deployment is disabled."
+msgstr "Unable to verify this address. Deployment is disabled."
+
 #: src/PositionsPage.tsx
 msgid "Uncollected fees:"
 msgstr "Uncollected fees:"
+
+#: src/CreatePage.tsx
+msgid "Updating deposit preview…"
+msgstr "Updating deposit preview…"
 
 #: src/RangeFields.tsx
 msgid "Upper price"
@@ -703,6 +736,10 @@ msgstr "Upper price"
 #: src/RangeFields.tsx
 msgid "Upper tick"
 msgstr "Upper tick"
+
+#: src/TokenBalance.tsx
+msgid "Use 95%"
+msgstr "Use 95%"
 
 #: src/SettingsPage.tsx
 msgid "Use a public RPC or your own node. No API key is required. Settings stay in this browser."
@@ -720,6 +757,10 @@ msgstr "Use an existing manager"
 msgid "Use custom range"
 msgstr "Use custom range"
 
+#: src/DeploymentCard.tsx
+msgid "Use existing deployment"
+msgstr "Use existing deployment"
+
 #: src/RangeFields.tsx
 msgid "Use full range"
 msgstr "Use full range"
@@ -727,6 +768,10 @@ msgstr "Use full range"
 #: src/RangeFields.tsx
 msgid "Use raw ticks"
 msgstr "Use raw ticks"
+
+#: src/DeploymentCard.tsx
+msgid "Using {kind} at {address}."
+msgstr "Using {kind} at {address}."
 
 #. placeholder {0}: t.decimals
 #: src/CreatePage.tsx
@@ -736,6 +781,10 @@ msgstr "Using manually supplied decimals: {0}"
 #: src/SettingsPage.tsx
 msgid "Verify contracts"
 msgstr "Verify contracts"
+
+#: src/NetworkPortfolio.tsx
+msgid "View network"
+msgstr "View network"
 
 #: src/session.tsx
 msgid "Wallet changed. Connect again to review the active account."
