@@ -1,3 +1,4 @@
+import { retiredDefault } from "./retiredNetworks";
 import { DEFAULT_CONTRACTS } from "./deployments";
 import { isAddress } from "viem";
 import { load } from "./storage";
@@ -32,9 +33,10 @@ export function validateSettings(value: Settings) {
 
 export function loadSettings() {
   try {
-    return validateSettings(
+    const settings = validateSettings(
       load<Settings>("freelp:settings", DEFAULT_SETTINGS),
     );
+    return retiredDefault(settings) ? DEFAULT_SETTINGS : settings;
   } catch {
     return DEFAULT_SETTINGS;
   }

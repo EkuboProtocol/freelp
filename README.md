@@ -14,7 +14,7 @@ During private development, build with `bun install --frozen-lockfile && bun run
 
 ## Use FreeLP
 
-Robinhood Chain, Base, Arbitrum, and Ethereum have bundled network configurations and free public RPC defaults. Each network retains its own RPC and contract addresses. The four corresponding testnets are also bundled. Use Add network in Settings for custom EVM networks. Public RPC operators can change availability; replace an endpoint or use your own node at any time.
+Ethereum, Arbitrum, Base, Robinhood Chain, Optimism, BNB Smart Chain, Gnosis, Unichain, Polygon, Monad, and Ink have bundled mainnet configurations and free public RPC defaults. Each network retains its own RPC and contract addresses. Testnets are not bundled. Use Add network in Settings for custom EVM networks. Public RPC operators can change availability; replace an endpoint or use your own node at any time.
 
 Choose bundled tokens or import a token by address using on-chain metadata. Select a fee tier and discover existing pools using QuoteDataFetcher. The liquidity chart reconstructs current liquidity from initialized ticks, using the original interface's liquidity math. It shows only the fetched tick range, without historical or USD data. Choose a range, preview amounts, approve tokens, and create a position. Positions can be listed across configured networks and managed on their respective network.
 

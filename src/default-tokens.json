@@ -246,7 +246,7 @@
     },
     {
       "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
-      "symbol": "USD₮0",
+      "symbol": "USD\u20ae0",
       "name": "Tether USD (USDT0)",
       "decimals": 6
     },
@@ -875,6 +875,98 @@
       "symbol": "STONX",
       "name": "Ekubo Stock Liquidity Token",
       "decimals": 18
+    }
+  ],
+  "10": [
+    {
+      "address": "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
+      "symbol": "USDT",
+      "name": "Tether USD",
+      "decimals": 6
+    },
+    {
+      "address": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+      "symbol": "USDC",
+      "name": "USDC",
+      "decimals": 6
+    }
+  ],
+  "56": [
+    {
+      "address": "0x55d398326f99059fF775485246999027B3197955",
+      "symbol": "USDT",
+      "name": "Tether USD",
+      "decimals": 18
+    },
+    {
+      "address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+      "symbol": "USDC",
+      "name": "USD Coin",
+      "decimals": 18
+    }
+  ],
+  "100": [
+    {
+      "address": "0x2a22f9c3b484c3629090feed35f17ff8f88f76f0",
+      "symbol": "USDC.e",
+      "name": "Bridged USDC (Gnosis)",
+      "decimals": 6
+    }
+  ],
+  "130": [
+    {
+      "address": "0x9151434b16b9763660705744891fA906F660EcC5",
+      "symbol": "USDT0",
+      "name": "USDT0",
+      "decimals": 6
+    },
+    {
+      "address": "0x078D782b760474a361dDA0AF3839290b0EF57AD6",
+      "symbol": "USDC",
+      "name": "USDC",
+      "decimals": 6
+    }
+  ],
+  "137": [
+    {
+      "address": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+      "symbol": "USDT0",
+      "name": "USDT0",
+      "decimals": 6
+    },
+    {
+      "address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      "symbol": "USDC",
+      "name": "USDC",
+      "decimals": 6
+    }
+  ],
+  "143": [
+    {
+      "address": "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+      "symbol": "USDT0",
+      "name": "USDT0",
+      "decimals": 6
+    },
+    {
+      "address": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+      "symbol": "USDC",
+      "name": "USDC",
+      "decimals": 6
+    }
+  ],
+  "57073": [
+    {
+      "address": "0x0200c29006150606b650577bbe7b6248f58470c1",
+      "symbol": "USDT0",
+      "name": "USDT0",
+      "decimals": 6
+    },
+    {
+      "address": "0x2d270e6886d130d724215a266106e6832161eaed",
+      "symbol": "USDC",
+      "name": "USDC",
+      "decimals": 6
     }
   ]
 }
