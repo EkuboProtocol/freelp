@@ -1,8 +1,6 @@
 import { retiredDefault } from "./retiredNetworks";
-import {
-  DEFAULT_CONTRACTS,
-  DEFAULT_POSITION_DATA_FETCHER,
-} from "./deployments";
+import { DEFAULT_CONTRACTS } from "./deployments";
+import { deploymentAddress } from "./deterministic";
 import { isAddress } from "viem";
 import { load } from "./storage";
 import type { Settings } from "./types";
@@ -59,9 +57,10 @@ function migrateFetcher(value: Settings) {
   return {
     ...value,
     freeLPDataFetcher:
-      value.freeLPDataFetcher?.toLowerCase() ===
-      "0xaf388ffa60a69d0bc59e0d31a9313d28eb8e3b18"
-        ? DEFAULT_POSITION_DATA_FETCHER
+      !value.freeLPDataFetcher ||
+      value.freeLPDataFetcher.toLowerCase() ===
+        "0xaf388ffa60a69d0bc59e0d31a9313d28eb8e3b18"
+        ? deploymentAddress("FreeLPDataFetcher", value.core)
         : value.freeLPDataFetcher,
   };
 }

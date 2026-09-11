@@ -22,3 +22,24 @@ test("amount parsing never silently rounds user maxima", () => {
     expect(() => parseAmount(value, 2)).toThrow();
   expect(() => parseAmount("1", 256)).toThrow();
 });
+
+test("legacy and omitted readers follow a custom Core without replacing custom readers", async () => {
+  const { validateSettings, DEFAULT_SETTINGS } =
+    await import("../../src/config");
+  const { deploymentAddress } = await import("../../src/deterministic");
+  const core = "0x1111111111111111111111111111111111111111" as const;
+  const expected = deploymentAddress("FreeLPDataFetcher", core);
+  for (const freeLPDataFetcher of [
+    undefined,
+    "0xaf388FFa60a69D0bc59E0D31a9313D28EB8E3b18",
+  ] as const) {
+    expect(
+      validateSettings({ ...DEFAULT_SETTINGS, core, freeLPDataFetcher })
+        .freeLPDataFetcher,
+    ).toBe(expected);
+  }
+  expect(
+    validateSettings({ ...DEFAULT_SETTINGS, core, freeLPDataFetcher: core })
+      .freeLPDataFetcher,
+  ).toBe(core);
+});
