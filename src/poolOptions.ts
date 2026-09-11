@@ -1,5 +1,5 @@
 import { getAddress, toHex } from "viem";
-import { parseAmount } from "./amounts";
+import { exactFeeFromPercent } from "./fee";
 import { checkSpacing } from "./pools";
 import { MAX_TICK, rangeTicks, type RangeInput } from "./prices";
 export type PoolOptions = {
@@ -10,10 +10,9 @@ export type PoolOptions = {
   center: string;
 };
 export function poolConfig(fee: string, spacing: number, options: PoolOptions) {
-  const feeValue =
-    options.exactFee === ""
-      ? (parseAmount(fee, 20) * (1n << 64n)) / (100n * 10n ** 20n)
-      : BigInt(options.exactFee);
+  const exact = options.exactFee || exactFeeFromPercent(fee);
+  if (!/^\d+$/.test(exact)) throw new Error("Invalid pool fee.");
+  const feeValue = BigInt(exact);
   if (feeValue < 0n || feeValue >= 1n << 64n)
     throw new Error("Fee must fit uint64 and be below 100%.");
   return toHex(

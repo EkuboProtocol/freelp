@@ -35,7 +35,7 @@ test("create links restore all pool parameters and amounts on reload and history
     form.extension,
   );
   await page.locator(".pool-edit summary").click();
-  await expect(page.getByLabel("Exact fee (uint64, optional)")).toHaveValue(
+  await expect(page.getByLabel("Exact fee (uint64)")).toHaveValue(
     form.exactFee,
   );
   await expect(page.getByLabel("Center tick (multiple of 16)")).toHaveValue(
@@ -63,4 +63,41 @@ test("create links restore all pool parameters and amounts on reload and history
   await page.goBack();
   await expect(page.getByTestId("deposit-amount-0")).toHaveValue("1.25");
   expect(page.url()).toBe(saved);
+});
+
+test("pool fee editors stay synchronized and deposit amounts follow pool configuration", async ({
+  page,
+}) => {
+  await page.route("https://**", (route) => route.abort());
+  await page.goto("/#/create");
+  await expect(page.getByLabel("Slippage (basis points)")).toBeVisible();
+  await expect(page.getByLabel("Token 0 address", { exact: true })).toHaveCount(
+    0,
+  );
+  await expect(page.getByLabel("Token 1 address", { exact: true })).toHaveCount(
+    0,
+  );
+  await page.locator(".pool-edit summary").click();
+  const percent = page.getByLabel("Pool fee (%)", { exact: true });
+  const exact = page.getByLabel("Exact fee (uint64)");
+  await percent.fill("0.3");
+  await expect(exact).toHaveValue("55340232221128654");
+  await exact.fill("9223372036854775808");
+  await expect(percent).toHaveValue("50");
+  await percent.fill("0.05");
+  await expect(exact).toHaveValue("9223372036854775");
+  const amount = page.getByTestId("deposit-amount-0");
+  const range = page.getByRole("group", { name: "Price range", exact: true });
+  expect(
+    await range.evaluate((element) => {
+      const amount = document.querySelector(
+        '[data-testid="deposit-amount-0"]',
+      )!;
+      return !!(
+        element.compareDocumentPosition(amount) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+      );
+    }),
+  ).toBe(true);
+  await expect(amount).toBeVisible();
 });

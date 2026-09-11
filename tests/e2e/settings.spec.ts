@@ -1,3 +1,4 @@
+import { readCreateForm } from "../../src/createForm";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { DEFAULT_CONTRACTS } from "../../src/deployments";
@@ -85,11 +86,9 @@ test("editing an RPC checks chain identity and preserves other networks", async 
   await expect(dialog).not.toBeVisible();
   await page.reload();
   await expect(
-    page
-      .locator(".network-row")
-      .filter({
-        has: page.getByRole("button", { name: "Edit Base RPC", exact: true }),
-      }),
+    page.locator(".network-row").filter({
+      has: page.getByRole("button", { name: "Edit Base RPC", exact: true }),
+    }),
   ).toContainText(url);
   await expect(
     page.locator(".network-row").filter({ hasText: "Arbitrum" }),
@@ -130,12 +129,12 @@ test("Robinhood defaults include USDG and tokenized assets without wrapping ETH"
   await expect(dialog.getByRole("button", { name: /NVDA/ })).toBeVisible();
   await dialog.getByLabel("Search tokens or paste an address").fill("USDG");
   await dialog.getByRole("button", { name: /USDG/ }).click();
-  await expect(page.getByLabel("Token 0 address")).toHaveValue(
-    "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
-  );
+  await expect
+    .poll(() => readCreateForm(new URL(page.url()).hash, 1).a)
+    .toBe("0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168");
   await page.getByRole("button", { name: "Select second token" }).click();
   await dialog.getByRole("button", { name: /ETH/ }).click();
-  await expect(page.getByLabel("Token 0 address")).toHaveValue(
-    "0x0000000000000000000000000000000000000000",
-  );
+  await expect
+    .poll(() => readCreateForm(new URL(page.url()).hash, 1).a)
+    .toBe("0x0000000000000000000000000000000000000000");
 });

@@ -33,6 +33,7 @@ export function CurrencySelect({
   const tokens = currencies(settings.chainId, settings.nativeSymbol);
   const [importNetwork, setImportNetwork] = useState(settings);
   const [candidate, setCandidate] = useState<Currency>();
+  const [missingDecimals, setMissingDecimals] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const selected = tokens.find(
@@ -64,7 +65,7 @@ export function CurrencySelect({
     try {
       const address = getAddress(search);
       const client = rpc(network);
-      const [symbol, name, decimals] = await Promise.all([
+      const [symbol, name, decimals] = await Promise.allSettled([
         client.readContract({ address, abi: erc20Abi, functionName: "symbol" }),
         client.readContract({ address, abi: erc20Abi, functionName: "name" }),
         client.readContract({
@@ -73,7 +74,17 @@ export function CurrencySelect({
           functionName: "decimals",
         }),
       ]);
-      setCandidate({ address, symbol, name, decimals });
+      const code = await client.getCode({ address });
+      if (!code || code === "0x")
+        throw new Error(t`No token contract at this address.`);
+      setMissingDecimals(decimals.status === "rejected");
+      setCandidate({
+        address,
+        symbol:
+          symbol.status === "fulfilled" ? symbol.value : address.slice(0, 8),
+        name: name.status === "fulfilled" ? name.value : address,
+        decimals: decimals.status === "fulfilled" ? decimals.value : 0,
+      });
     } catch (error) {
       setError(errorMessage(error));
     } finally {
@@ -98,7 +109,7 @@ export function CurrencySelect({
           {selected?.symbol.slice(0, 1) ?? "+"}
         </span>
         <span>
-          {selected?.symbol ?? <Trans>Select token</Trans>}{" "}
+          {selected?.symbol ?? <UnlistedToken value={value} />}{" "}
           <small>{selectedNetworkLabel(selected, settings)}</small>
         </span>
         <span aria-hidden="true">⌄</span>
@@ -176,6 +187,11 @@ export function CurrencySelect({
               {candidate.name} · {candidate.decimals} <Trans>decimals</Trans>
             </p>
             <p className="mono">{candidate.address}</p>
+            <ImportDecimals
+              visible={missingDecimals}
+              candidate={candidate}
+              setCandidate={setCandidate}
+            />
             <button
               onClick={() => {
                 const imported = importCurrency(
@@ -200,4 +216,40 @@ function selectedNetworkLabel(
   settings: Settings,
 ) {
   return selected ? networkName(settings.chainId, settings.name) : "";
+}
+
+function ImportDecimals({
+  visible,
+  candidate,
+  setCandidate,
+}: {
+  visible: boolean;
+  candidate: Currency;
+  setCandidate: (value: Currency) => void;
+}) {
+  if (!visible) return null;
+  return (
+    <label>
+      <Trans>Token decimals (0 for raw units)</Trans>
+      <input
+        type="number"
+        min={0}
+        max={255}
+        value={candidate.decimals}
+        onChange={(event) =>
+          setCandidate({ ...candidate, decimals: Number(event.target.value) })
+        }
+      />
+    </label>
+  );
+}
+
+function UnlistedToken({ value }: { value: string }) {
+  return isAddress(value) ? (
+    <span title={value}>
+      {value.slice(0, 6)}…{value.slice(-4)}
+    </span>
+  ) : (
+    <Trans>Select token</Trans>
+  );
 }

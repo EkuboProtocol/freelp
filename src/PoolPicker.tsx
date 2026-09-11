@@ -1,3 +1,4 @@
+import { exactFeeFromPercent, percentFromExactFee } from "./fee";
 import { errorMessage } from "./errors";
 import { decimalInput, decimalDisplay } from "./decimalFormat";
 import { spacingPercent } from "./pools";
@@ -116,7 +117,8 @@ export function PoolPicker({
       if (selected >= 0 && states[selected].sqrtRatio !== 0n)
         select(selected, next);
     } catch (error) {
-      if (id === request.current) setFailure({ key, error: errorMessage(error) });
+      if (id === request.current)
+        setFailure({ key, error: errorMessage(error) });
     } finally {
       if (id === request.current) setPending(undefined);
     }
@@ -283,16 +285,17 @@ function FeeOptions({
       <Field label={<Trans>Pool fee (%)</Trans>}>
         <input
           inputMode="decimal"
-          value={fee}
-          disabled={options.exactFee !== ""}
+          value={options.exactFee ? percentFromExactFee(options.exactFee) : fee}
           onChange={(e) => onFeeChange(e.target.value, "")}
         />
       </Field>
-      <Field label={<Trans>Exact fee (uint64, optional)</Trans>}>
+      <Field label={<Trans>Exact fee (uint64)</Trans>}>
         <input
           inputMode="numeric"
-          value={options.exactFee}
-          onChange={(e) => onFeeChange(fee, e.target.value)}
+          value={options.exactFee || exactFeeFromPercent(fee)}
+          onChange={(e) =>
+            onFeeChange(percentFromExactFee(e.target.value), e.target.value)
+          }
         />
       </Field>
       <div className="pool-options">
@@ -300,7 +303,10 @@ function FeeOptions({
           <button
             key={`${preset.fee}:${preset.spacing}`}
             className={selected === index ? "selected" : ""}
-            onClick={() => select(index)}
+            onClick={() => {
+              onFeeChange(preset.fee, "");
+              select(index);
+            }}
           >
             <strong>{feeDisplay(preset.fee, options)}%</strong>
             <small>

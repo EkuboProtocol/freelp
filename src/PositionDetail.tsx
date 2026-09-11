@@ -1,19 +1,16 @@
+import { PoolIdentity } from "./PoolIdentity";
+import { displayAmount } from "./displayAmount";
 import { errorMessage } from "./errors";
 import { t } from "@lingui/core/macro";
-import { parseAmount } from "./amounts";
-import { ApprovalButton } from "./ApprovalButton";
+import { usePositionDeposit } from "./usePositionDeposit";
+import { PositionDepositFields } from "./PositionDepositFields";
+import { PositionRange, PositionStatus } from "./PositionRange";
 import { PricePreview } from "./PricePreview";
 import { useEffect, useState } from "react";
 import { Trans } from "@lingui/react/macro";
-import {
-  encodeFunctionData,
-  erc721Abi,
-  formatUnits,
-  getAddress,
-  zeroAddress,
-} from "viem";
+import { encodeFunctionData, erc721Abi, getAddress, zeroAddress } from "viem";
 import { useSession } from "./session";
-import { read, token, managerData, type Token } from "./contracts";
+import { token, managerData, type Token } from "./contracts";
 import { Action, Field } from "./common";
 import type { Position } from "./types";
 function metadataImage(uri: string) {
@@ -35,8 +32,7 @@ export function PositionDetail({ position: p }: { position: Position }) {
   const [recipient, setRecipient] = useState(account ?? "");
   const [portion, setPortion] = useState(100);
   const [slippage, setSlippage] = useState(50);
-  const [amount0, setAmount0] = useState("0");
-  const [amount1, setAmount1] = useState("0");
+  const deposit = usePositionDeposit(settings, p, tokens);
   useEffect(() => {
     let active = true;
     if (!account) return;
@@ -93,13 +89,9 @@ export function PositionDetail({ position: p }: { position: Position }) {
   }
   async function add() {
     if (!tokens) throw new Error(t`Token metadata unavailable.`);
-    const max0 = parseAmount(amount0, tokens[0].decimals),
-      max1 = parseAmount(amount1, tokens[1].decimals);
-    const [liquidity] = await read<[bigint, bigint, bigint]>(
-      settings,
-      "quoteDeposit",
-      [p.descriptor, 0, max0, max1],
-    );
+    if (!deposit.result)
+      throw new Error(t`Wait for the matching deposit amount.`);
+    const { max0, max1, liquidity } = deposit.result;
     await send({
       to: settings.manager,
       data: managerData("addLiquidity", [
@@ -116,12 +108,23 @@ export function PositionDetail({ position: p }: { position: Position }) {
   }
   const image = metadataImage(p.metadata);
   return (
-    <div className="panel">
-      <h3>
+    <div className="position-detail">
+      <h2>
         <Trans>Position #{p.id.toString()}</Trans>
-      </h3>
+      </h2>
+      <PositionStatus position={p} />
+      <PoolIdentity descriptor={p.descriptor} />
       {image ? (
-        <img className="nft" src={image} alt="On-chain position metadata" />
+        <details className="nft-metadata">
+          <summary>
+            <Trans>Position NFT</Trans>
+          </summary>
+          <img
+            className="nft"
+            src={image}
+            alt={t`On-chain position metadata`}
+          />
+        </details>
       ) : null}
       {tokens ? (
         <PricePreview
@@ -145,19 +148,25 @@ export function PositionDetail({ position: p }: { position: Position }) {
               ) : null}
               <br />
               <Trans>Principal:</Trans>{" "}
-              {formatUnits(
+              {displayAmount(
                 i === 0 ? p.amounts.principal0 : p.amounts.principal1,
                 t.decimals,
               )}
               <br />
               <Trans>Uncollected fees:</Trans>{" "}
-              {formatUnits(
+              {displayAmount(
                 i === 0 ? p.amounts.fees0 : p.amounts.fees1,
                 t.decimals,
               )}
             </p>
           ))}
         </div>
+      ) : null}
+      {tokens ? (
+        <PositionRange
+          position={p}
+          decimals={[tokens[0].decimals, tokens[1].decimals]}
+        />
       ) : null}
       <div className="grid">
         <Field label={<Trans>Recipient address</Trans>}>
@@ -187,6 +196,26 @@ export function PositionDetail({ position: p }: { position: Position }) {
             onChange={(e) => setPortion(Number(e.target.value))}
           />
         </Field>
+        <input
+          type="range"
+          aria-label={t`Withdrawal portion`}
+          min={1}
+          max={100}
+          value={portion}
+          onChange={(event) => setPortion(Number(event.target.value))}
+        />
+        <div className="row">
+          {[25, 50, 75, 100].map((value) => (
+            <button
+              type="button"
+              key={value}
+              aria-pressed={portion === value}
+              onClick={() => setPortion(value)}
+            >
+              {value}%
+            </button>
+          ))}
+        </div>
         <p className="row">
           <Action run={() => withdraw(false)}>
             <Trans>Withdraw liquidity and fees</Trans>
@@ -196,37 +225,12 @@ export function PositionDetail({ position: p }: { position: Position }) {
           </Action>
         </p>
       </fieldset>
-      <fieldset>
-        <legend>
-          <Trans>Add liquidity</Trans>
-        </legend>
-        <div className="grid">
-          <Field label={<Trans>Token 0 maximum</Trans>}>
-            <input
-              value={amount0}
-              onChange={(e) => setAmount0(e.target.value)}
-            />
-          </Field>
-          <Field label={<Trans>Token 1 maximum</Trans>}>
-            <input
-              value={amount1}
-              onChange={(e) => setAmount1(e.target.value)}
-            />
-          </Field>
-        </div>
-        <p className="row">
-          {tokens?.map((t, i) => (
-            <ApprovalButton
-              key={t.address}
-              token={t}
-              amount={i === 0 ? amount0 : amount1}
-            />
-          ))}
-          <Action run={add}>
-            <Trans>Add liquidity</Trans>
-          </Action>
-        </p>
-      </fieldset>
+      <PositionDepositFields
+        position={p}
+        tokens={tokens}
+        deposit={deposit}
+        add={add}
+      />
       <p className="row">
         <Action
           run={() =>

@@ -209,7 +209,7 @@ function CreatePositionForm({
     window.location.hash = "#/positions";
   }
   return (
-    <section>
+    <section className="create-position">
       <h2>
         <Trans>Create position</Trans>
       </h2>
@@ -219,84 +219,25 @@ function CreatePositionForm({
           deposit amount. The matching amount and preview update automatically.
         </Trans>
       </p>
-      <div className="grid deposit-inputs">
-        <div className="deposit-input">
-          <CurrencySelect
-            value={a}
-            label={t`Select first token`}
-            allNetworks
-            onChange={(token, chainId) => chooseCurrency(0, token, chainId)}
-          />
-          <input
-            aria-label={t`${symbols[0]} amount`}
-            inputMode="decimal"
-            placeholder="0"
-            disabled={!!current?.inactive[0]}
-            data-testid="deposit-amount-0"
-            value={maxA}
-            onChange={(e) => {
-              setSpecified(0);
-              setMaxA(e.target.value);
-            }}
-          />
-          <TokenBalance
-            address={a}
-            fallback={fallbackA}
-            onAmount={(value) => {
-              setSpecified(0);
-              setMaxA(value);
-            }}
-          />
-        </div>
-        <div className="deposit-input">
-          <CurrencySelect
-            value={b}
-            label={t`Select second token`}
-            onChange={(token, chainId) => chooseCurrency(1, token, chainId)}
-          />
-          <input
-            aria-label={t`${symbols[1]} amount`}
-            inputMode="decimal"
-            placeholder="0"
-            disabled={!!current?.inactive[1]}
-            data-testid="deposit-amount-1"
-            value={maxB}
-            onChange={(e) => {
-              setSpecified(1);
-              setMaxB(e.target.value);
-            }}
-          />
-          <TokenBalance
-            address={b}
-            fallback={fallbackB}
-            onAmount={(value) => {
-              setSpecified(1);
-              setMaxB(value);
-            }}
-          />
-        </div>
+      <div className="grid currency-pair">
+        <CurrencySelect
+          value={a}
+          label={t`Select first token`}
+          allNetworks
+          onChange={(token, chainId) => chooseCurrency(0, token, chainId)}
+        />
+        <CurrencySelect
+          value={b}
+          label={t`Select second token`}
+          onChange={(token, chainId) => chooseCurrency(1, token, chainId)}
+        />
       </div>
       <details className="advanced-settings">
         <summary>
           <Trans>Advanced pool settings</Trans>
         </summary>
         <div className="grid">
-          <Field label={<Trans>Token 0 address</Trans>}>
-            <input value={a} onChange={(e) => setA(e.target.value)} />
-          </Field>
-          <Field label={<Trans>Token 1 address</Trans>}>
-            <input value={b} onChange={(e) => setB(e.target.value)} />
-          </Field>
           <PoolKeyFields form={form} setForm={setForm} />
-          <Field label={<Trans>Slippage (basis points)</Trans>}>
-            <input
-              type="number"
-              min={0}
-              max={1000}
-              value={slippage}
-              onChange={(e) => setSlippage(Number(e.target.value))}
-            />
-          </Field>
         </div>
       </details>
       <PoolPicker
@@ -363,6 +304,68 @@ function CreatePositionForm({
           </Field>
         </div>
       </details>
+      <h3>
+        <Trans>Deposit amounts</Trans>
+      </h3>
+      <div className="grid deposit-inputs">
+        <div className="deposit-input">
+          <strong className="deposit-token">{symbols[0]}</strong>
+          <input
+            aria-label={t`${symbols[0]} amount`}
+            inputMode="decimal"
+            placeholder="0"
+            disabled={!!current?.inactive[0]}
+            data-testid="deposit-amount-0"
+            value={maxA}
+            onChange={(e) => {
+              setSpecified(0);
+              setMaxA(e.target.value);
+            }}
+          />
+          <TokenBalance
+            address={a}
+            fallback={fallbackA}
+            onAmount={(value) => {
+              setSpecified(0);
+              setMaxA(value);
+            }}
+          />
+        </div>
+        <div className="deposit-input">
+          <strong className="deposit-token">{symbols[1]}</strong>
+          <input
+            aria-label={t`${symbols[1]} amount`}
+            inputMode="decimal"
+            placeholder="0"
+            disabled={!!current?.inactive[1]}
+            data-testid="deposit-amount-1"
+            value={maxB}
+            onChange={(e) => {
+              setSpecified(1);
+              setMaxB(e.target.value);
+            }}
+          />
+          <TokenBalance
+            address={b}
+            fallback={fallbackB}
+            onAmount={(value) => {
+              setSpecified(1);
+              setMaxB(value);
+            }}
+          />
+        </div>
+      </div>
+      <div className="slippage-control">
+        <Field label={<Trans>Slippage (basis points)</Trans>}>
+          <input
+            type="number"
+            min={0}
+            max={1000}
+            value={slippage}
+            onChange={(e) => setSlippage(Number(e.target.value))}
+          />
+        </Field>
+      </div>
       <p className="row">
         <button disabled={previewBusy} onClick={() => void preview()}>
           <Trans>Preview position</Trans>

@@ -44,13 +44,17 @@ msgstr "Accepted for the connected wallet."
 msgid "Active liquidity"
 msgstr "Active liquidity"
 
-#: src/PositionDetail.tsx
+#: src/PositionDepositFields.tsx
 msgid "Add liquidity"
 msgstr "Add liquidity"
 
 #: src/SettingsPage.tsx
 msgid "Add network"
 msgstr "Add network"
+
+#: src/PositionDepositFields.tsx
+msgid "Add token {i} amount"
+msgstr "Add token {i} amount"
 
 #: src/CreatePage.tsx
 msgid "Advanced pool settings"
@@ -59,6 +63,10 @@ msgstr "Advanced pool settings"
 #: src/PositionsPage.tsx
 msgid "All networks. Positions, pool data, and fees are read together from each chain."
 msgstr "All networks. Positions, pool data, and fees are read together from each chain."
+
+#: src/PositionsPage.tsx
+msgid "All positions"
+msgstr "All positions"
 
 #: src/DeploymentCard.tsx
 msgid "Already deployed · code verified"
@@ -109,6 +117,10 @@ msgstr "Build details"
 msgid "Burn empty NFT"
 msgstr "Burn empty NFT"
 
+#: src/PositionDepositFields.tsx
+msgid "Calculating matching amount…"
+msgstr "Calculating matching amount…"
+
 #: src/PoolKeyFields.tsx
 msgid "Center tick (multiple of 16)"
 msgstr "Center tick (multiple of 16)"
@@ -140,6 +152,10 @@ msgstr "Close network dialog"
 #: src/CurrencySelect.tsx
 msgid "Close token selector"
 msgstr "Close token selector"
+
+#: src/PositionRange.tsx
+msgid "Closed"
+msgstr "Closed"
 
 #: src/PositionDetail.tsx
 msgid "Collect fees"
@@ -218,6 +234,13 @@ msgstr "CREATE2 factory:"
 msgid "Current pool liquidity, read directly from chain"
 msgstr "Current pool liquidity, read directly from chain"
 
+#. placeholder {0}: displayPrice(current)
+#. placeholder {1}: displayPrice(lower)
+#. placeholder {2}: displayPrice(upper)
+#: src/PositionRange.tsx
+msgid "Current price {0}; range {1} to {2}"
+msgstr "Current price {0}; range {1} to {2}"
+
 #: src/CurrencySelect.tsx
 msgid "decimals"
 msgstr "decimals"
@@ -259,6 +282,10 @@ msgid "Deployment network"
 msgstr "Deployment network"
 
 #: src/CreatePage.tsx
+msgid "Deposit amounts"
+msgstr "Deposit amounts"
+
+#: src/CreatePage.tsx
 msgid "Deposit preview"
 msgstr "Deposit preview"
 
@@ -296,8 +323,8 @@ msgid "Error: {error}"
 msgstr "Error: {error}"
 
 #: src/PoolPicker.tsx
-msgid "Exact fee (uint64, optional)"
-msgstr "Exact fee (uint64, optional)"
+msgid "Exact fee (uint64)"
+msgstr "Exact fee (uint64)"
 
 #: src/PricePreview.tsx
 msgid "Exact ticks"
@@ -327,6 +354,10 @@ msgstr "Extension address"
 #: src/PoolPicker.tsx
 msgid "Fee tier"
 msgstr "Fee tier"
+
+#: src/PoolIdentity.tsx
+msgid "Fee:"
+msgstr "Fee:"
 
 #: src/PoolPicker.tsx
 msgid "Find pools on chain"
@@ -367,6 +398,10 @@ msgstr "If a token has no decimals method, amounts use raw integer units. You ca
 #: src/CurrencySelect.tsx
 msgid "Import token"
 msgstr "Import token"
+
+#: src/PositionRange.tsx
+msgid "In range"
+msgstr "In range"
 
 #: src/RangeFields.tsx
 msgid "Initial price (new pools only)"
@@ -417,6 +452,11 @@ msgstr "Main navigation"
 msgid "Manage position"
 msgstr "Manage position"
 
+#. placeholder {0}: p.id.toString()
+#: src/PortfolioPosition.tsx
+msgid "Manage position #{0}"
+msgstr "Manage position #{0}"
+
 #: src/TokenBalance.tsx
 msgid "Max"
 msgstr "Max"
@@ -437,6 +477,10 @@ msgstr "New pool: creation will initialize its price."
 msgid "No application fees. Network gas applies."
 msgstr "No application fees. Network gas applies."
 
+#: src/PositionsPage.tsx
+msgid "No matching positions. Try another search or show closed positions."
+msgstr "No matching positions. Try another search or show closed positions."
+
 #: src/TokenPickerRows.tsx
 msgid "No matching tokens. Paste a contract address to import one."
 msgstr "No matching tokens. Paste a contract address to import one."
@@ -444,6 +488,10 @@ msgstr "No matching tokens. Paste a contract address to import one."
 #: src/PositionsPage.tsx
 msgid "No positions found on the available networks."
 msgstr "No positions found on the available networks."
+
+#: src/CurrencySelect.tsx
+msgid "No token contract at this address."
+msgstr "No token contract at this address."
 
 #: src/AccountControl.tsx
 msgid "No wallet detected"
@@ -457,6 +505,10 @@ msgstr "Not deployed · no code at this address"
 msgid "Official source repository:"
 msgstr "Official source repository:"
 
+#: src/PositionDetail.tsx
+msgid "On-chain position metadata"
+msgstr "On-chain position metadata"
+
 #: src/LiquidityChart.tsx
 msgid "Only the on-chain tick range fetched is shown. Empty space outside that range is not assumed to have zero liquidity."
 msgstr "Only the on-chain tick range fetched is shown. Empty space outside that range is not assumed to have zero liquidity."
@@ -464,6 +516,10 @@ msgstr "Only the on-chain tick range fetched is shown. Empty space outside that 
 #: src/App.tsx
 msgid "or"
 msgstr "or"
+
+#: src/PositionRange.tsx
+msgid "Out of range"
+msgstr "Out of range"
 
 #: src/PortfolioPosition.tsx
 msgid "per"
@@ -497,6 +553,10 @@ msgstr "Position #{0}"
 #: src/DeploymentCard.tsx
 msgid "Position manager"
 msgstr "Position manager"
+
+#: src/PositionDetail.tsx
+msgid "Position NFT"
+msgstr "Position NFT"
 
 #: src/PricePreview.tsx
 msgid "Position range:"
@@ -613,6 +673,14 @@ msgstr "Run the installed app locally with"
 msgid "Save network"
 msgstr "Save network"
 
+#: src/PositionsPage.tsx
+msgid "Search by token, network, address or ID"
+msgstr "Search by token, network, address or ID"
+
+#: src/PositionsPage.tsx
+msgid "Search positions"
+msgstr "Search positions"
+
 #: src/CurrencySelect.tsx
 msgid "Search tokens or paste an address"
 msgstr "Search tokens or paste an address"
@@ -645,6 +713,10 @@ msgstr "Select token"
 msgid "Settings"
 msgstr "Settings"
 
+#: src/PositionsPage.tsx
+msgid "Show closed"
+msgstr "Show closed"
+
 #: src/session.tsx
 msgid "Simulating and requesting wallet confirmation…"
 msgstr "Simulating and requesting wallet confirmation…"
@@ -670,6 +742,7 @@ msgstr "Some balances could not be loaded. Refresh or check your RPC settings."
 msgid "Spacing is the price change between adjacent usable ticks. It is independent of the pool fee."
 msgstr "Spacing is the price change between adjacent usable ticks. It is independent of the pool fee."
 
+#: src/PoolIdentity.tsx
 #: src/PoolKeyFields.tsx
 #: src/PoolPicker.tsx
 msgid "Stableswap"
@@ -690,6 +763,10 @@ msgstr "Terms of Service"
 #: src/TermsPage.tsx
 msgid "Terms version: {TERMS_HASH}"
 msgstr "Terms version: {TERMS_HASH}"
+
+#: src/PositionDepositFields.tsx
+msgid "The matching amount is calculated from this position’s range and current pool price."
+msgstr "The matching amount is calculated from this position’s range and current pool price."
 
 #: src/SettingsPage.tsx
 msgid "The network is detected from your RPC URL."
@@ -741,29 +818,21 @@ msgstr "Tick spacing (%)"
 msgid "Tick spacing (ticks)"
 msgstr "Tick spacing (ticks)"
 
-#: src/CreatePage.tsx
-msgid "Token 0 address"
-msgstr "Token 0 address"
+#: src/PoolIdentity.tsx
+msgid "Tick spacing:"
+msgstr "Tick spacing:"
 
 #: src/CreatePage.tsx
 msgid "Token 0 fallback decimals"
 msgstr "Token 0 fallback decimals"
 
-#: src/PositionDetail.tsx
-msgid "Token 0 maximum"
-msgstr "Token 0 maximum"
-
-#: src/CreatePage.tsx
-msgid "Token 1 address"
-msgstr "Token 1 address"
-
 #: src/CreatePage.tsx
 msgid "Token 1 fallback decimals"
 msgstr "Token 1 fallback decimals"
 
-#: src/PositionDetail.tsx
-msgid "Token 1 maximum"
-msgstr "Token 1 maximum"
+#: src/CurrencySelect.tsx
+msgid "Token decimals (0 for raw units)"
+msgstr "Token decimals (0 for raw units)"
 
 #: src/CreatePage.tsx
 msgid "Token metadata fallback"
@@ -827,6 +896,10 @@ msgstr "Use raw ticks"
 msgid "Using manually supplied decimals: {0}"
 msgstr "Using manually supplied decimals: {0}"
 
+#: src/PositionDetail.tsx
+msgid "Wait for the matching deposit amount."
+msgstr "Wait for the matching deposit amount."
+
 #: src/session.tsx
 msgid "Wallet changed. Connect again to review the active account."
 msgstr "Wallet changed. Connect again to review the active account."
@@ -850,6 +923,10 @@ msgstr "Withdraw percentage"
 #: src/PositionDetail.tsx
 msgid "Withdrawal percentage must be 1–100."
 msgstr "Withdrawal percentage must be 1–100."
+
+#: src/PositionDetail.tsx
+msgid "Withdrawal portion"
+msgstr "Withdrawal portion"
 
 #: src/PositionsPage.tsx
 msgid "Your positions"

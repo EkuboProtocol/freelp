@@ -1,3 +1,5 @@
+import { PoolIdentity } from "./PoolIdentity";
+import { PositionStatus, PositionRange } from "./PositionRange";
 import type { Currency } from "./tokens";
 import { displayPrice, tickPrice } from "./prices";
 import { t } from "@lingui/core/macro";
@@ -32,6 +34,8 @@ export function PortfolioPosition({
         </h3>
         <span>{networkName(settings.chainId, settings.name)}</span>
       </div>
+      <PositionStatus position={p} />
+      <PoolIdentity descriptor={p.descriptor} />
       <p>
         <Trans>Principal:</Trans> {amount(p.amounts.principal0, 0)} /{" "}
         {amount(p.amounts.principal1, 1)}
@@ -41,6 +45,12 @@ export function PortfolioPosition({
         {amount(p.amounts.fees1, 1)}
       </p>
       <PositionRangePrice tokens={tokens} position={p} />
+      {tokens[0] && tokens[1] ? (
+        <PositionRange
+          position={p}
+          decimals={[tokens[0].decimals, tokens[1].decimals]}
+        />
+      ) : null}
       <details>
         <summary>
           <Trans>Pool details</Trans>
@@ -50,7 +60,9 @@ export function PortfolioPosition({
           {p.descriptor.tickUpper}
         </p>
       </details>
-      <button onClick={onSelect}>#{p.id.toString()}</button>
+      <button onClick={onSelect}>
+        <Trans>Manage position #{p.id.toString()}</Trans>
+      </button>
     </article>
   );
 }

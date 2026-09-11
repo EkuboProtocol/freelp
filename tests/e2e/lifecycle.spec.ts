@@ -2,6 +2,7 @@ import { NETWORKS } from "../../src/networks";
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
 import {
+  parseUnits,
   createPublicClient,
   createTestClient,
   erc20Abi,
@@ -56,7 +57,30 @@ async function approveDeposits(
   manager: Hex,
   tokens: Hex[],
   amount: string,
+  missingDecimals: boolean,
 ) {
+  await expect(page.getByTestId("position-amount-0")).not.toHaveValue("");
+  await expect(
+    page.getByRole("button", { name: "Add liquidity", exact: true }),
+  ).toBeEnabled();
+  const required = await Promise.all(
+    tokens
+      .filter((address) => address !== zeroAddress)
+      .map(async (address) => {
+        const index = tokens.indexOf(address);
+        const decimals = missingDecimals
+          ? 0
+          : await client.readContract({
+              address,
+              abi: erc20Abi,
+              functionName: "decimals",
+            });
+        return parseUnits(
+          await page.getByTestId(`position-amount-${index}`).inputValue(),
+          decimals,
+        );
+      }),
+  );
   const buttons = page.getByRole("button", {
     name: /^(Reset TT approval|Approve TT)$/,
   });
@@ -74,7 +98,7 @@ async function approveDeposits(
         ),
     );
     const labels = allowances
-      .filter((amount) => amount < 2n * 10n ** 18n)
+      .filter((amount, index) => amount < required[index])
       .map((amount) => (amount === 0n ? "Approve TT" : "Reset TT approval"));
     await expect(buttons).toHaveText(labels);
     if (!labels.length) return;
@@ -83,7 +107,7 @@ async function approveDeposits(
     await buttons.first().click();
     await expect(status).not.toHaveText(previous);
     await expect(status).toContainText("Confirmed:", { timeout: 30000 });
-    await expect(page.getByLabel("Token 0 maximum")).toHaveValue(amount);
+    await expect(page.getByTestId("position-amount-1")).toHaveValue(amount);
   }
   throw new Error("Approvals did not converge");
 }
@@ -306,8 +330,6 @@ for (const { missingDecimals, native } of [
       .getByRole("link", { name: "Create position", exact: true })
       .click();
     await page.getByText("Advanced pool settings", { exact: true }).click();
-    await page.getByLabel("Token 0 address").fill(tokens[0]);
-    await page.getByLabel("Token 1 address").fill(tokens[1]);
     await checkTokenImports(page, tokens, missingDecimals, native);
     await page.getByLabel("Initial price (new pools only)").fill("1");
     await page.getByLabel("Lower price", { exact: true }).fill("0.99");
@@ -357,15 +379,14 @@ for (const { missingDecimals, native } of [
       .getByRole("button", { name: "Create position", exact: true })
       .click();
     await expect(
-      page.getByRole("button", { name: "#1", exact: true }),
+      page.getByRole("button", { name: "Manage position #1", exact: true }),
     ).toBeVisible({ timeout: 30000 });
     await page.getByRole("link", { name: "Positions", exact: true }).click();
     await page
       .getByRole("link", { name: "Create position", exact: true })
       .click();
     await page.getByText("Advanced pool settings", { exact: true }).click();
-    await page.getByLabel("Token 0 address").fill(tokens[0]);
-    await page.getByLabel("Token 1 address").fill(tokens[1]);
+    await checkTokenImports(page, tokens, missingDecimals, native);
     await checkPoolChart(page, missingDecimals, native);
     await captureChart(page, missingDecimals, native);
     await checkCustomSpacing(page, missingDecimals, native);
@@ -383,7 +404,22 @@ for (const { missingDecimals, native } of [
     await page.getByRole("link", { name: "Positions", exact: true }).click();
     await page.reload();
     await page.getByRole("button", { name: "Connect Local wallet" }).click();
-    await page.getByRole("button", { name: "#1", exact: true }).click();
+    await page.getByRole("link", { name: "Positions", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Manage position #1", exact: true })
+      .click();
+    await expect(page.locator(".portfolio-positions")).not.toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "All positions", exact: true }),
+    ).toBeVisible();
+    await page.goBack();
+    await expect(page.locator(".portfolio-positions")).toBeVisible();
+    await page.goForward();
+    await expect(page.getByTestId("position-amount-1")).toBeVisible();
+    await page.screenshot({
+      path: test.info().outputPath("manage-position.png"),
+      fullPage: true,
+    });
     const before = (await client.readContract({
       address: deployedManager,
       abi: managerArtifact.abi as Abi,
@@ -398,9 +434,14 @@ for (const { missingDecimals, native } of [
           )
           .first(),
       ).toBeVisible();
-    await page.getByLabel("Token 0 maximum").fill(amount(2));
-    await page.getByLabel("Token 1 maximum").fill(amount(2));
-    await approveDeposits(page, deployedManager, tokens, amount(2));
+    await page.getByTestId("position-amount-1").fill(amount(2));
+    await approveDeposits(
+      page,
+      deployedManager,
+      tokens,
+      amount(2),
+      missingDecimals,
+    );
     await page
       .getByRole("button", { name: "Add liquidity", exact: true })
       .click();
@@ -448,7 +489,10 @@ for (const { missingDecimals, native } of [
     await client.waitForTransactionReceipt({ hash: returned });
     await page.reload();
     await page.getByRole("button", { name: "Connect Local wallet" }).click();
-    await page.getByRole("button", { name: "#1", exact: true }).click();
+    await page.getByRole("link", { name: "Positions", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Manage position #1", exact: true })
+      .click();
     await page
       .getByRole("button", { name: "Collect fees", exact: true })
       .click();
@@ -522,10 +566,9 @@ async function checkPoolChart(
 async function checkTokenImports(
   page: Page,
   tokens: Hex[],
-  missingDecimals: boolean,
+  _missingDecimals: boolean,
   native: boolean,
 ) {
-  if (missingDecimals || native) return;
   for (const [index, address] of tokens.entries()) {
     await page
       .getByRole("button", {
@@ -534,6 +577,14 @@ async function checkTokenImports(
       .click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Search tokens or paste an address").fill(address);
+    if (address === zeroAddress) {
+      await dialog
+        .locator(".token-option")
+        .filter({ hasText: "Chain 31337" })
+        .first()
+        .click();
+      continue;
+    }
     await dialog
       .getByRole("button", { name: "Read token on Chain 31337" })
       .click();
@@ -541,6 +592,7 @@ async function checkTokenImports(
       .getByRole("button", { name: "Import token", exact: true })
       .click();
   }
+  if (native) return;
   const saved = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("freelp:tokens:31337")!),
   );
@@ -627,11 +679,10 @@ async function checkStableCreation(
     .getByRole("link", { name: "Create position", exact: true })
     .click();
   await page.getByText("Advanced pool settings", { exact: true }).click();
-  await page.getByLabel("Token 0 address").fill(tokens[0]);
-  await page.getByLabel("Token 1 address").fill(tokens[1]);
+  await checkTokenImports(page, tokens, false, false);
   await page.getByLabel("Pool type", { exact: true }).selectOption("stable");
   await page.locator(".pool-edit summary").click();
-  await page.getByLabel("Exact fee (uint64, optional)").fill("123456789");
+  await page.getByLabel("Exact fee (uint64)").fill("123456789");
   await page.locator(".pool-edit summary").click();
   await page.getByLabel("Amplification exponent").fill("10");
   await page.getByLabel("Center tick (multiple of 16)").fill("16");
@@ -644,7 +695,9 @@ async function checkStableCreation(
   await page
     .getByRole("button", { name: "Create position", exact: true })
     .click();
-  await page.getByRole("button", { name: "#2", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Manage position #2", exact: true })
+    .click();
   const descriptor = (await client.readContract({
     address: manager,
     abi: managerArtifact.abi as Abi,
@@ -668,7 +721,9 @@ async function checkStableCreation(
     fullPage: true,
   });
   await page.getByRole("link", { name: "Positions", exact: true }).click();
-  await page.getByRole("button", { name: "#2", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Manage position #2", exact: true })
+    .click();
   await page.getByLabel("Withdraw percentage").fill("100");
   await page
     .getByRole("button", { name: "Withdraw liquidity and fees" })
