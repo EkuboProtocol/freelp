@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { decodeFunctionData, toFunctionSelector } from "viem";
 import { mockDeployments } from "../support/deploymentRpc";
 import { mockPoolData } from "../support/poolRpc";
+import { fixturePools, mockRegistry } from "../support/registryRpc";
 import { EVM_QUOTE_DATE_FETCHER_V3_ABI as poolAbi } from "../../src/abis/quoteDataFetcher";
 
 const pair =
@@ -13,7 +14,8 @@ test("pool key changes make one automatic pool read; invalid amounts make no RPC
   const requests: string[] = [];
   await page.route("https://**", (route) => route.abort());
   await mockDeployments(page);
-  await mockPoolData(page);
+  await mockPoolData(page, true);
+  await mockRegistry(page, fixturePools());
   page.on("request", (request) => {
     if (!request.url().startsWith("https://")) return;
     const body = request.postDataJSON();

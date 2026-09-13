@@ -85,6 +85,10 @@ export function calculateDepositQuote(input: Input) {
     [max0, max1],
     input.specified,
   );
+  if (result.liquidity <= 0n)
+    throw new Error(
+      "This range produces no liquidity. Widen the range or enter a larger amount.",
+    );
   return {
     descriptor,
     initialTick: initial,

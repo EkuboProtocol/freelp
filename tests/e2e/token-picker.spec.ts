@@ -109,7 +109,6 @@ test("picker batches balances only on the selected network, caches reads, and su
   for (const [percent, amount] of [
     [25, "3.125"],
     [50, "6.25"],
-    [100, "12.5"],
   ] as const) {
     await page
       .locator(".balance-actions")
@@ -118,5 +117,14 @@ test("picker batches balances only on the selected network, caches reads, and su
       .click();
     await expect(page.getByTestId("deposit-amount-0")).toHaveValue(amount);
   }
+  await expect(
+    page
+      .locator(".balance-actions")
+      .first()
+      .getByRole("button", { name: "100%", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Max available", exact: true }),
+  ).toBeVisible();
   expect([...calls.values()]).toEqual([1]);
 });

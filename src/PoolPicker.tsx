@@ -6,9 +6,16 @@ import type { CreateForm } from "./createForm";
 import { exactFeeFromPercent, percentFromExactFee } from "./fee";
 import { decimalDisplay } from "./decimalFormat";
 import { spacingPercent } from "./pools";
-import { POOL_PRESETS } from "./poolData";
-import type { PoolOptions } from "./poolOptions";
 import { Field } from "./common";
+import { zeroAddress } from "viem";
+import "./identity.css";
+import "./pool-registry.css";
+import { usePoolRegistry } from "./usePoolRegistry";
+import {
+  selectRegisteredPool,
+  isSelectedPool,
+  type RegisteredPool,
+} from "./poolRegistry";
 export function PoolPicker({
   form,
   sourceForm,
@@ -21,7 +28,7 @@ export function PoolPicker({
   const [rawFee, setRawFee] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const { fee, range } = form;
-  const presets = poolPresets(fee, range.spacing, form);
+  const registry = usePoolRegistry(form.a, form.b);
   const exact = form.exactFee || exactFeeFromPercent(fee);
   const onFeeChange = (fee: string, exactFee: string) =>
     setForm((previous) => ({ ...previous, fee, exactFee }));
@@ -40,39 +47,13 @@ export function PoolPicker({
           />
         </label>
       </div>
-      <div className="pool-options" hidden={advanced}>
-        {presets.map((preset) => (
-          <button
-            key={`${preset.exactFee}:${preset.spacing}`}
-            className={
-              preset.exactFee === exact && preset.spacing === range.spacing
-                ? "selected"
-                : ""
-            }
-            onClick={() =>
-              setForm((previous) => ({
-                ...previous,
-                fee: preset.fee,
-                exactFee: preset.custom ? preset.exactFee : "",
-                range: { ...previous.range, spacing: preset.spacing },
-              }))
-            }
-          >
-            <strong>
-              {decimalDisplay(Number(percentFromExactFee(preset.exactFee)))}%
-            </strong>
-            <small>Fee tier</small>
-            {form.kind === "concentrated" ? (
-              <small>
-                Tick spacing {decimalDisplay(spacingPercent(preset.spacing), 3)}
-                %
-              </small>
-            ) : (
-              <small>Stableswap</small>
-            )}
-          </button>
-        ))}
-      </div>
+      <PoolOptions
+        advanced={advanced}
+        form={form}
+        registry={registry}
+        setForm={setForm}
+      />
+      <PoolSummary form={form} exact={exact} />
       <div id="advanced-pool" hidden={!advanced} className="advanced-settings">
         <div className="grid">
           <div>
@@ -130,21 +111,154 @@ export function PoolPicker({
     </section>
   );
 }
-function poolPresets(fee: string, spacing: number, options: PoolOptions) {
-  const presets = POOL_PRESETS.map((preset) => ({
-    ...preset,
-    spacing: options.kind === "stable" ? spacing : preset.spacing,
-    exactFee: exactFeeFromPercent(preset.fee),
-    custom: false,
-  }));
-  const exactFee = options.exactFee || exactFeeFromPercent(fee);
-  return presets.some(
-    (preset) => preset.exactFee === exactFee && preset.spacing === spacing,
-  )
-    ? presets
-    : [...presets, { fee, spacing, exactFee, custom: true }];
+
+function PoolOptions({
+  advanced,
+  form,
+  registry,
+  setForm,
+}: {
+  advanced: boolean;
+  form: CreateForm;
+  registry: ReturnType<typeof usePoolRegistry>;
+  setForm: Dispatch<SetStateAction<CreateForm>>;
+}) {
+  return (
+    <div className="pool-options registry-options" hidden={advanced}>
+      {registry.validPair ? (
+        <RegisteredPools registry={registry} form={form} setForm={setForm} />
+      ) : (
+        <p>Select two tokens to discover registered pools for the pair.</p>
+      )}
+    </div>
+  );
 }
 
+function RegisteredPools({
+  registry,
+  form,
+  setForm,
+}: {
+  registry: ReturnType<typeof usePoolRegistry>;
+  form: CreateForm;
+  setForm: Dispatch<SetStateAction<CreateForm>>;
+}) {
+  return (
+    <div className="registered-pools" aria-label="Registered pools">
+      <p className="registry-note">
+        Registered pools only. This registry does not include every initialized
+        pool. You can configure an unregistered pool in Advanced.
+      </p>
+      <RegistryMessage registry={registry} />
+      <div className="registered-pool-list">
+        {registry.pools.map((pool) => (
+          <RegisteredPoolCard
+            key={pool.id}
+            pool={pool}
+            form={form}
+            setForm={setForm}
+          />
+        ))}
+      </div>
+      <small>
+        Scanned {registry.scanned.toString()} of {registry.total.toString()}{" "}
+        registered entries.
+        {registry.snapshot
+          ? ` Snapshot block ${registry.snapshot.blockNumber}.`
+          : ""}
+      </small>
+      <div className="registry-actions">
+        <button
+          type="button"
+          disabled={registry.loading}
+          onClick={registry.retry}
+        >
+          {registry.error ? "Retry pools" : "Refresh pools"}
+        </button>
+        {registry.hasMore ? (
+          <button
+            type="button"
+            onClick={registry.loadMore}
+            disabled={registry.loading}
+          >
+            Load more registered pools
+          </button>
+        ) : null}
+      </div>
+      {registry.error ? (
+        <p className="registry-error" role="alert">
+          {registry.error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function RegistryMessage({
+  registry,
+}: {
+  registry: ReturnType<typeof usePoolRegistry>;
+}) {
+  if (registry.loading) return <p role="status">Loading registered pools…</p>;
+  if (registry.error || !registry.snapshot || registry.pools.length)
+    return null;
+  return (
+    <p role="status">
+      {registry.hasMore
+        ? "No pair matches in these entries yet. Load more to continue the scan."
+        : "No registered pools found for this pair. Use Advanced to configure a pool."}
+    </p>
+  );
+}
+
+function RegisteredPoolCard({
+  pool,
+  form,
+  setForm,
+}: {
+  pool: RegisteredPool;
+  form: CreateForm;
+  setForm: Dispatch<SetStateAction<CreateForm>>;
+}) {
+  const selected = isSelectedPool(form, pool);
+  return (
+    <button
+      type="button"
+      className={`registered-pool-card ${selected ? "selected" : ""}`}
+      aria-pressed={selected}
+      onClick={() =>
+        setForm((previous) => selectRegisteredPool(previous, pool))
+      }
+    >
+      <strong>
+        {decimalDisplay(Number(percentFromExactFee(pool.fee.toString())))}% fee
+      </strong>
+      <small>
+        {pool.poolType === "concentrated"
+          ? `Concentrated, spacing ${pool.tickSpacing}`
+          : `${pool.poolType === "full_range" ? "Full-range" : "Stableswap"}, center ${pool.stableswapParams?.centerTick}, amplification ${pool.stableswapParams?.amplification}`}
+      </small>
+      <small className="mono">Extension: {pool.extension}</small>
+    </button>
+  );
+}
+
+function PoolSummary({ form, exact }: { form: CreateForm; exact: string }) {
+  const type = form.kind === "stable" ? "Stableswap" : "Concentrated liquidity";
+  const parameter =
+    form.kind === "stable"
+      ? `Center tick: ${form.center}; amplification exponent: ${form.amplification}`
+      : `Tick spacing: ${decimalDisplay(spacingPercent(form.range.spacing), 3)}%`;
+  return (
+    <div className="pool-summary" aria-label="Selected pool configuration">
+      <strong>Current configuration</strong>
+      <span>Type: {type}</span>
+      <span>Fee: {decimalDisplay(Number(percentFromExactFee(exact)))}%</span>
+      <span>{parameter}</span>
+      <span className="mono">Extension: {form.extension || zeroAddress}</span>
+    </div>
+  );
+}
 function displayedFee(form: CreateForm) {
   return form.exactFee ? percentFromExactFee(form.exactFee) : form.fee;
 }

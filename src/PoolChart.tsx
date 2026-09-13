@@ -39,6 +39,7 @@ export function PoolChart({
   return state.sqrtRatio !== 0n ? (
     <LiquidityChart
       data={state}
+      hypothetical={data.state.sqrtRatio === 0n}
       symbols={symbols}
       decimals0={data.decimals[0]}
       decimals1={data.decimals[1]}

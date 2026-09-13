@@ -8,6 +8,8 @@ The application uses only configured RPC endpoints and injected wallets. Core, F
 
 Use black/white styling and system fonts. Retain required license and protocol identifiers.
 
+PoolKeyIndex is also fixed by the build. Discover registered pools for a selected pair with bounded, block-pinned RPC reads; registry coverage is not all initialized Core pools. Native deposits must include refundNativeToken in the same manager multicall. The current manager uses flat write arguments without deadlines. Import compiler AST-derived immutable bindings, verifying both Core and index addresses.
+
 Use plain English JSX and strings for user-facing copy. No translation framework or catalogs.
 
 Run lint, typecheck, unit tests, production build, accessibility checks, and Lighthouse thresholds. Exercise changed transaction flows with the local-chain browser tests. Complexity is capped at 10; simplify functions rather than raising the limit or adding suppressions.

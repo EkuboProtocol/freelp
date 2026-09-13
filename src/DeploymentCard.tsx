@@ -8,6 +8,7 @@ import {
   prepareDeployment,
 } from "./deterministic";
 import { Action, ErrorText } from "./common";
+import { DEFAULT_POOL_KEY_INDEX } from "./deployments";
 
 export function DeploymentCard({ kind }: { kind: ContractKind }) {
   const { settings, send, revision, setStatus } = useSession();
@@ -50,6 +51,11 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
           Core: <code>{settings.core}</code>
         </p>
       ) : null}
+      {kind === "FreeLP" ? (
+        <p>
+          PoolKeyIndex: <code>{DEFAULT_POOL_KEY_INDEX}</code>
+        </p>
+      ) : null}
       <p role="status">
         <DeploymentMessage current={current} />
       </p>
@@ -74,8 +80,9 @@ function deploymentDisabled(current: Check) {
 }
 function DeploymentMessage({ current }: { current: Check }) {
   if (!current) return "Checking code on this network…";
-  if (current.exists) return "Already deployed";
+  if (current.exists)
+    return "Already deployed · code verified against this build";
   if (current.error)
-    return "Unable to read this address. Deployment is disabled.";
+    return "Contract verification failed. Deployment is disabled.";
   return "Not deployed · no code at this address";
 }

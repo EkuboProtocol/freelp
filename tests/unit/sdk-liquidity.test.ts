@@ -5,7 +5,9 @@ import { quoteDeposit } from "../../src/depositQuote";
 import { bucketAmounts } from "../../src/liquidityBuckets";
 import { supportsCalls, depositCalls } from "../../src/walletCalls";
 import { DEFAULT_SETTINGS } from "../../src/config";
-import { zeroAddress } from "viem";
+import { decodeFunctionData, zeroAddress } from "viem";
+import { managerAbi, managerData } from "../../src/contracts";
+import { depositWithRefund } from "../../src/depositTransaction";
 const descriptor = {
   poolKey: {
     token0: zeroAddress,
@@ -93,4 +95,32 @@ test("batch includes zero-reset and exact approval before the deposit", () => {
   const calls = depositCalls([token], [10n], DEFAULT_SETTINGS.manager, deposit);
   expect(calls).toHaveLength(3);
   expect(calls[2]).toEqual(deposit);
+});
+test("native deposits use one manager multicall with an atomic refund", () => {
+  const createData = managerData("createPosition", [
+    descriptor.poolKey,
+    descriptor.tickLower,
+    descriptor.tickUpper,
+    0,
+    10n,
+    20n,
+    3n,
+  ]);
+  const deposit = { to: DEFAULT_SETTINGS.manager, data: createData };
+  const transaction = depositWithRefund(DEFAULT_SETTINGS, createData, 42n);
+  const call = decodeFunctionData({ abi: managerAbi, data: transaction.data });
+  expect(call.functionName).toBe("multicall");
+  expect(call.args).toEqual([[deposit.data, managerData("refundNativeToken")]]);
+  expect(transaction.value).toBe(42n);
+  const create = decodeFunctionData({ abi: managerAbi, data: createData });
+  expect(create.functionName).toBe("createPosition");
+  expect(create.args).toEqual([
+    descriptor.poolKey,
+    descriptor.tickLower,
+    descriptor.tickUpper,
+    0,
+    10n,
+    20n,
+    3n,
+  ]);
 });

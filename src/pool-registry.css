@@ -1,0 +1,50 @@
+.registered-pools {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+}
+.registered-pool-card {
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 130px;
+}
+.pool-options .registered-pool-card.selected {
+  background: #111;
+  color: #fff;
+}
+.pool-options .registered-pool-card.selected small {
+  color: inherit;
+}
+.registered-pool-card small {
+  display: block;
+}
+.registry-note,
+.registry-error {
+  margin: 10px 0;
+}
+.registry-error {
+  color: #111;
+}
+.pool-options.registry-options {
+  display: block;
+}
+.pool-options.registry-options[hidden] {
+  display: none;
+}
+.registered-pool-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 12px;
+}
+.registry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pool-options .registry-actions button {
+  padding: 8px 12px;
+}

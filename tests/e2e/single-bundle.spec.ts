@@ -12,7 +12,7 @@ test("page navigation uses the initial JavaScript bundle", async ({ page }) => {
     page.getByRole("button", { name: "Connect wallet", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Your positions", exact: true }),
+    page.getByRole("heading", { name: "Your FreeLP positions", exact: true }),
   ).toBeVisible();
   expect(scripts).toHaveLength(1);
   await page.getByRole("link", { name: "Terms", exact: true }).click();

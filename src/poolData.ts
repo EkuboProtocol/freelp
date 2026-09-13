@@ -30,10 +30,3 @@ export async function fetchPools(
     return parsed;
   });
 }
-// Fee/spacing presets reused from interface/constants/evm/poolConfigs.ts.
-export const POOL_PRESETS = [
-  { fee: "0.01", spacing: 200 },
-  { fee: "0.05", spacing: 1000 },
-  { fee: "0.3", spacing: 5982 },
-  { fee: "1", spacing: 19802 },
-];

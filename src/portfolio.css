@@ -1,0 +1,59 @@
+.portfolio-intro p {
+  color: #555;
+  margin: 4px 0 0;
+}
+.portfolio-controls,
+.portfolio-detail-toolbar,
+.portfolio-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.portfolio-controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.portfolio-controls select {
+  min-width: 12rem;
+}
+.portfolio-pagination {
+  justify-content: center;
+  margin: 24px 0;
+}
+.portfolio-detail-toolbar {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 12px;
+  color: #555;
+  font-size: 13px;
+}
+.portfolio-detail-toolbar button {
+  font-size: 13px;
+}
+.portfolio-closed-note,
+.portfolio-route-state p {
+  max-width: 70ch;
+}
+.portfolio-route-state {
+  max-width: 680px;
+  margin: 40px auto;
+}
+.portfolio-route-state h2:focus {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+.network-errors button {
+  margin-left: 8px;
+}
+@media (max-width: 540px) {
+  .portfolio-controls > *,
+  .portfolio-controls select {
+    width: 100%;
+  }
+  .portfolio-detail-toolbar {
+    align-items: flex-start;
+  }
+}

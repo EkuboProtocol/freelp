@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
-import { MAINNET_CHAINS, rpcEndpoint } from "./chains";
+import { useEffect, useRef, useState } from "react";
+import { DEFAULT_CHAIN_IDS, MAINNET_CHAINS, rpcEndpoint } from "./chains";
 import { configuredNetwork } from "./networks";
 import { validateSettings } from "./config";
 import { rpc, useSession } from "./session";
 import { errorMessage } from "./errors";
 import type { Settings } from "./types";
+import { storageWarning, subscribeStorageWarnings } from "./storage";
 export function SettingsPage() {
   const {
     networks,
@@ -17,6 +18,7 @@ export function SettingsPage() {
   const [rpcUrl, setRpcUrl] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [storageMessage, setStorageMessage] = useState(storageWarning);
   const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const enabled = new Set(networks.map((network) => network.chainId));
@@ -25,6 +27,7 @@ export function SettingsPage() {
       .toLowerCase()
       .includes(search.trim().toLowerCase()),
   );
+  useEffect(() => subscribeStorageWarnings(setStorageMessage), []);
   function open(id: number) {
     const network = configuredNetwork(id);
     setEditing(network);
@@ -65,10 +68,32 @@ export function SettingsPage() {
       setBusy(false);
     }
   }
+  function restoreDefaults() {
+    for (const id of DEFAULT_CHAIN_IDS) {
+      if (!enabled.has(id)) toggleNetwork(id, true);
+    }
+  }
   return (
     <section className="networks-page">
       <h2>Networks</h2>
-      <p>Choose the networks you use and customize their RPC connections.</p>
+      <p>
+        The catalog lists supported viem mainnets. Enable only the networks you
+        use; RPC availability is checked when you save a custom endpoint.
+      </p>
+      <p>
+        Catalog: {MAINNET_CHAINS.length} mainnets · Enabled: {networks.length} ·
+        RPC: configured per enabled network
+      </p>
+      {storageMessage ? <p role="status">{storageMessage}</p> : null}
+      {!networks.length ? (
+        <button
+          type="button"
+          disabled={transactionBusy}
+          onClick={restoreDefaults}
+        >
+          Restore default networks
+        </button>
+      ) : null}
       <input
         className="network-search"
         aria-label={"Search networks"}
@@ -94,7 +119,9 @@ export function SettingsPage() {
               <span>
                 <strong>{chain.name}</strong>
                 <small>
-                  {chain.id} · {chain.nativeCurrency.symbol}
+                  {chain.id} · {chain.nativeCurrency.symbol} · catalog
+                  {enabled.has(chain.id) ? " · enabled" : " · disabled"} · RPC{" "}
+                  {configuredNetwork(chain.id).rpcUrl ? "custom" : "default"}
                 </small>
               </span>
             </label>

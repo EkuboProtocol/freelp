@@ -1,7 +1,9 @@
 import { errorMessage } from "./errors";
 import { displayAmount } from "./displayAmount";
 import { useEffect, useState } from "react";
-import { formatUnits, getAddress, isAddress } from "viem";
+import { formatUnits, getAddress, isAddress, zeroAddress } from "viem";
+import { NativeMaxButton } from "./NativeMaxButton";
+import type { Transaction } from "./types";
 import { token, type Token } from "./contracts";
 import { networkCurrencies, type Currency } from "./tokens";
 import { useSession } from "./session";
@@ -10,6 +12,8 @@ type Props = {
   address: string;
   fallback: string;
   onAmount: (value: string) => void;
+  disabled?: boolean;
+  nativeCalls?: Transaction[];
 };
 export function TokenBalance(props: Props) {
   const { settings, account } = useSession();
@@ -18,7 +22,7 @@ export function TokenBalance(props: Props) {
     (t) => t.address.toLowerCase() === props.address.toLowerCase(),
   );
   return currency ? (
-    <KnownBalance currency={currency} onAmount={props.onAmount} />
+    <KnownBalance currency={currency} {...props} />
   ) : (
     <UnknownBalance {...props} />
   );
@@ -26,10 +30,11 @@ export function TokenBalance(props: Props) {
 function KnownBalance({
   currency,
   onAmount,
+  disabled,
+  nativeCalls,
 }: {
   currency: Currency;
-  onAmount: Props["onAmount"];
-}) {
+} & Props) {
   const { settings } = useSession();
   const [refresh, setRefresh] = useState(0);
   const state = useTokenBalances([settings], true, refresh).get(
@@ -49,10 +54,18 @@ function KnownBalance({
         balance: state.balances.get(currency.address.toLowerCase()) ?? 0n,
       }}
       onAmount={onAmount}
+      disabled={disabled}
+      nativeCalls={nativeCalls}
     />
   );
 }
-function UnknownBalance({ address, fallback, onAmount }: Props) {
+function UnknownBalance({
+  address,
+  fallback,
+  onAmount,
+  disabled,
+  nativeCalls,
+}: Props) {
   const { settings, account, revision } = useSession();
   const [refresh, setRefresh] = useState(0);
   const scope = JSON.stringify([
@@ -95,7 +108,14 @@ function UnknownBalance({ address, fallback, onAmount }: Props) {
         retry={() => setRefresh((n) => n + 1)}
       />
     );
-  return <BalanceActions value={current.token} onAmount={onAmount} />;
+  return (
+    <BalanceActions
+      value={current.token}
+      onAmount={onAmount}
+      disabled={disabled}
+      nativeCalls={nativeCalls}
+    />
+  );
 }
 function BalanceStatus({
   failed,
@@ -122,9 +142,13 @@ function BalanceStatus({
 function BalanceActions({
   value,
   onAmount,
+  disabled,
+  nativeCalls,
 }: {
   value: Pick<Token, "address" | "symbol" | "decimals" | "balance">;
   onAmount: Props["onAmount"];
+  disabled?: boolean;
+  nativeCalls?: Transaction[];
 }) {
   return (
     <div className="balance-actions">
@@ -132,22 +156,33 @@ function BalanceActions({
         Balance: {displayAmount(value.balance, value.decimals)} {value.symbol}
       </small>
       <div className="row">
-        {[25, 50, 100].map((percent) => (
-          <button
-            key={percent}
-            type="button"
-            onClick={() =>
-              onAmount(
-                formatUnits(
-                  (value.balance * BigInt(percent)) / 100n,
-                  value.decimals,
-                ),
-              )
-            }
-          >
-            {percent}%
-          </button>
-        ))}
+        {(value.address === zeroAddress ? [25, 50] : [25, 50, 100]).map(
+          (percent) => (
+            <button
+              key={percent}
+              type="button"
+              disabled={disabled}
+              onClick={() =>
+                onAmount(
+                  formatUnits(
+                    (value.balance * BigInt(percent)) / 100n,
+                    value.decimals,
+                  ),
+                )
+              }
+            >
+              {percent}%
+            </button>
+          ),
+        )}
+        {value.address === zeroAddress ? (
+          <NativeMaxButton
+            value={value}
+            onAmount={onAmount}
+            disabled={disabled}
+            calls={nativeCalls}
+          />
+        ) : null}
       </div>
     </div>
   );

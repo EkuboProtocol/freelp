@@ -1,7 +1,9 @@
 import { deployment } from "./contractDeployment";
+import { assertContractRuntime } from "./contractIdentity";
 import { concatHex, getCreate2Address, type Address } from "viem";
 import { verifyCode, type ContractKind } from "./contracts";
 import { rpc } from "./rpc";
+import { DEFAULT_POOL_KEY_INDEX } from "./deployments";
 import type { Settings, Transaction } from "./types";
 
 // EkuboProtocol/evm-contracts script/DeployAll.s.sol. Never derive from an account.
@@ -27,6 +29,7 @@ export async function deploymentStatus(settings: Settings, kind: ContractKind) {
   if (chainId !== settings.chainId)
     throw new Error("RPC chain does not match the selected network.");
   if (!code || code === "0x") return { address, exists: false };
+  assertContractRuntime(kind, settings.core, code);
   return { address, exists: true };
 }
 export async function prepareDeployment(
@@ -48,6 +51,8 @@ export async function prepareDeployment(
       "The standard CREATE2 factory is missing or has unexpected code on this network.",
     );
   if (kind !== "Core") await verifyCode(settings, settings.core, "Core");
+  if (kind === "FreeLP")
+    await verifyCode(settings, DEFAULT_POOL_KEY_INDEX, "PoolKeyIndex");
   return {
     to: CREATE2_FACTORY,
     data: concatHex([DEPLOYMENT_SALT, deployment(kind, settings.core)]),
@@ -58,7 +63,12 @@ export async function verifyDeploymentTransaction(
   settings: Settings,
   tx: Transaction,
 ) {
-  const kinds = ["Core", "FreeLP", "FreeLPDataFetcher"] as const;
+  const kinds = [
+    "Core",
+    "PoolKeyIndex",
+    "FreeLP",
+    "FreeLPDataFetcher",
+  ] as const;
   const kind = kinds.find(
     (kind) =>
       concatHex([

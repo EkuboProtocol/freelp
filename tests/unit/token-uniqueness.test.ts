@@ -18,6 +18,9 @@ test("token imports and network saves persist one native token and unique case-i
   });
   try {
     const address = getAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd");
+    const secondAddress = getAddress(
+      "0x1234567890123456789012345678901234567890",
+    );
     const token = { address, name: "Test", symbol: "T", decimals: 6 };
     store.set(
       "freelp:tokens:31337",
@@ -25,6 +28,12 @@ test("token imports and network saves persist one native token and unique case-i
     );
     importCurrency(31337, token);
     importCurrency(31338, { ...token, symbol: "OTHER" });
+    importCurrency(31337, {
+      address: secondAddress,
+      name: "Test",
+      symbol: "T",
+      decimals: 18,
+    });
     const settings = {
       ...DEFAULT_CONTRACTS,
       chainId: 31337,
@@ -41,9 +50,13 @@ test("token imports and network saves persist one native token and unique case-i
     expect(
       saved.filter((t) => t.address.toLowerCase() === address.toLowerCase()),
     ).toHaveLength(1);
+    expect(saved.filter((t) => t.symbol === "T")).toHaveLength(2);
     expect(saved.filter((t) => t.address === zeroAddress)).toEqual([
       { address: zeroAddress, symbol: "GAS", name: "Gas coin", decimals: 6 },
     ]);
+    expect(currencies(31337).find((t) => t.address === address)?.source).toBe(
+      "imported",
+    );
     expect(currencies(31338).find((t) => t.address === address)?.symbol).toBe(
       "OTHER",
     );

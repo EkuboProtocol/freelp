@@ -1,104 +1,119 @@
 import { useBatchSupport } from "./useBatchSupport";
 import { depositCalls } from "./walletCalls";
-import { errorMessage } from "./errors";
 import { usePositionDeposit } from "./usePositionDeposit";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { getAddress, zeroAddress } from "viem";
 import { useSession } from "./session";
-import { token, managerData, type Token } from "./contracts";
+import { managerData, read } from "./contracts";
+import { depositWithRefund } from "./depositTransaction";
 import type { Position } from "./types";
+import { usePositionTokens } from "./usePositionTokens";
+import {
+  minimumLiquidity,
+  slippageFactor,
+  withdrawalReview,
+} from "./positionReview";
 export function usePositionActions(p: Position) {
-  const { settings, account, setStatus, send } = useSession();
-  const [tokens, setTokens] = useState<[Token, Token]>();
+  const { settings, account, send } = useSession();
+  const { tokens, readiness, refreshTokens } = usePositionTokens(p);
   const batchSupported = useBatchSupport();
   const [recipient, setRecipient] = useState(account ?? "");
   const [portion, setPortion] = useState(100);
   const [slippage, setSlippage] = useState(50);
   const deposit = usePositionDeposit(p, tokens);
-  useEffect(() => {
-    let active = true;
-    if (!account) return;
-    Promise.all([
-      token(settings, p.descriptor.poolKey.token0, account),
-      token(settings, p.descriptor.poolKey.token1, account),
-    ])
-      .then(([a, b]) => {
-        if (active) {
-          setTokens([a, b]);
-        }
-      })
-      .catch((e) => {
-        if (active) setStatus(errorMessage(e));
-      });
-    return () => {
-      active = false;
-    };
-  }, [account, settings, p.descriptor, setStatus]);
-  function deadline() {
-    return BigInt(Math.floor(Date.now() / 1000) + 1200);
-  }
-  function factor() {
-    if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
-      throw new Error("Invalid slippage.");
-    return BigInt(10000 - slippage);
-  }
-  async function withdraw(feesOnly: boolean) {
-    if (!Number.isInteger(portion) || portion < 1 || portion > 100)
-      throw new Error("Withdrawal percentage must be 1–100.");
-    const liquidity = feesOnly
-      ? 0n
-      : (p.amounts.liquidity * BigInt(portion)) / 100n;
-    const fraction = feesOnly ? 0n : BigInt(portion);
-    const min0 =
-      (((p.amounts.principal0 * fraction) / 100n + p.amounts.fees0) *
-        factor()) /
-      10000n;
-    const min1 =
-      (((p.amounts.principal1 * fraction) / 100n + p.amounts.fees1) *
-        factor()) /
-      10000n;
+  async function withdraw() {
+    await assertOwner();
+    const review = withdrawalReview(p.amounts, portion, slippage);
     await send({
       to: settings.manager,
       data: managerData("multicall", [
         [
           managerData("withdraw", [
             p.id,
-            liquidity,
+            review.liquidity,
             getAddress(recipient),
-            min0,
-            min1,
-            deadline(),
+            review.minimum0,
+            review.minimum1,
           ]),
         ],
       ]),
     });
   }
-  async function add() {
-    if (!tokens) throw new Error("Token metadata unavailable.");
+  async function claim() {
+    if (!account) throw new Error("Connect a wallet first.");
+    await assertOwner();
+    // Claims have independent intent: cancelled withdrawal settings never apply.
+    const factor = slippageFactor(50);
+    await send({
+      to: settings.manager,
+      data: managerData("multicall", [
+        [
+          managerData("withdraw", [
+            p.id,
+            0n,
+            account,
+            (p.amounts.fees0 * factor) / 10000n,
+            (p.amounts.fees1 * factor) / 10000n,
+          ]),
+        ],
+      ]),
+    });
+  }
+  function addTransaction() {
+    if (
+      !tokens ||
+      !readiness?.every((read) => read.balanceReady && read.allowanceReady)
+    )
+      throw new Error(
+        "Token balances and allowances are still loading. Retry when ready.",
+      );
     if (!deposit.result)
       throw new Error("Wait for the matching deposit amount.");
     const { max0, max1, liquidity } = deposit.result;
-    const transaction = {
-      to: settings.manager,
-      data: managerData("addLiquidity", [
+    return depositWithRefund(
+      settings,
+      managerData("addLiquidity", [
         p.id,
-        {
-          maxAmount0: max0,
-          maxAmount1: max1,
-          minLiquidity: (liquidity * factor()) / 10000n,
-          deadline: deadline(),
-        },
+        max0,
+        max1,
+        minimumLiquidity(liquidity, slippage),
       ]),
-      value: p.descriptor.poolKey.token0 === zeroAddress ? max0 : 0n,
-    };
+      p.descriptor.poolKey.token0 === zeroAddress ? max0 : 0n,
+    );
+  }
+  async function assertOwner() {
+    if (!account) throw new Error("Connect a wallet first.");
+    const owner = await read<string>(settings, "ownerOf", [p.id]);
+    if (owner.toLowerCase() !== account.toLowerCase())
+      throw new Error(
+        "This wallet no longer owns the position. Refresh positions.",
+      );
+  }
+  async function add() {
+    await assertOwner();
+    const transaction = addTransaction();
+    const { max0, max1, liquidity } = deposit.result!;
+    if (minimumLiquidity(liquidity, slippage) <= 0n)
+      throw new Error("Slippage would reduce minimum liquidity to zero.");
     await send(
       batchSupported
-        ? depositCalls(tokens, [max0, max1], settings.manager, transaction)
+        ? depositCalls(tokens!, [max0, max1], settings.manager, transaction)
         : transaction,
     );
   }
+  function gasCalls() {
+    try {
+      const transaction = addTransaction();
+      const { max0, max1 } = deposit.result!;
+      return depositCalls(tokens!, [max0, max1], settings.manager, transaction);
+    } catch {
+      return undefined;
+    }
+  }
   return {
     tokens,
+    readiness,
+    refreshTokens,
     batchSupported,
     recipient,
     setRecipient,
@@ -108,6 +123,8 @@ export function usePositionActions(p: Position) {
     setSlippage,
     deposit,
     withdraw,
+    claim,
     add,
+    nativeCalls: gasCalls(),
   };
 }

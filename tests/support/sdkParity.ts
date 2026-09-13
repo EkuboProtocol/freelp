@@ -3,6 +3,7 @@ import {
   createPublicClient,
   createTestClient,
   createWalletClient,
+  decodeFunctionResult,
   erc20Abi,
   http,
   maxUint256,
@@ -14,8 +15,9 @@ import { toSqrtRatio } from "@ekubo/sdk";
 import { quoteDeposit } from "../../src/depositQuote";
 import { poolConfig } from "../../src/poolOptions";
 import { defaultCreateForm } from "../../src/createForm";
-import { managerAbi } from "../../src/contracts";
+import { managerAbi, managerData } from "../../src/contracts";
 import { DEFAULT_MANAGER } from "../../src/deployments";
+import { depositWithRefund } from "../../src/depositTransaction";
 
 export async function checkSdkParity(tokens: Address[]) {
   const transport = http("http://127.0.0.1:18545");
@@ -58,27 +60,48 @@ export async function checkSdkParity(tokens: Address[]) {
           amounts,
           side,
         );
+        const createData = managerData("createPosition", [
+          descriptor.poolKey,
+          descriptor.tickLower,
+          descriptor.tickUpper,
+          tick,
+          local.max0,
+          local.max1,
+          local.liquidity,
+        ]);
+        const deposit = depositWithRefund(
+          {
+            rpcUrl: "http://127.0.0.1:18545",
+            chainId: 31337,
+            core: zeroAddress,
+            manager: DEFAULT_MANAGER,
+            nativeSymbol: "ETH",
+          },
+          createData,
+          tokens[0] === zeroAddress ? local.max0 : 0n,
+        );
         const simulation = client.simulateContract({
           account,
           address: DEFAULT_MANAGER,
           abi: managerAbi,
-          functionName: "createPosition",
+          functionName: "multicall",
           args: [
-            descriptor,
-            tick,
-            {
-              maxAmount0: local.max0,
-              maxAmount1: local.max1,
-              minLiquidity: local.liquidity,
-              deadline: maxUint256,
-            },
+            [
+              createData,
+              managerData("refundNativeToken"),
+            ],
           ],
-          value: tokens[0] === zeroAddress ? local.max0 : 0n,
+          value: deposit.value,
         });
         if (local.liquidity === 0n) await expect(simulation).rejects.toThrow();
         else {
           const { result } = await simulation;
-          expect((result as bigint[]).slice(1)).toEqual([
+          const created = decodeFunctionResult({
+            abi: managerAbi,
+            functionName: "createPosition",
+            data: (result as `0x${string}`[])[0],
+          }) as [bigint, bigint, bigint, bigint];
+          expect(created.slice(1)).toEqual([
             local.liquidity,
             local.used0,
             local.used1,

@@ -36,7 +36,8 @@ test("CREATE2 addresses are shared across accounts and occupied addresses cannot
   const accounts = await wallets.getAddresses();
   for (const [kind, account] of [
     ["Core", accounts[0]],
-    ["FreeLP", accounts[1]],
+    ["PoolKeyIndex", accounts[1]],
+    ["FreeLP", accounts[2]],
   ] as const) {
     const tx = await prepareDeployment(settings, kind);
     const hash = await wallets.sendTransaction({ ...tx, account });
@@ -45,7 +46,11 @@ test("CREATE2 addresses are shared across accounts and occupied addresses cannot
     );
     const address = deploymentAddress(kind, settings.core);
     expect(address).toBe(
-      kind === "Core" ? DEFAULT_CONTRACTS.core : DEFAULT_CONTRACTS.manager,
+      kind === "Core"
+        ? DEFAULT_CONTRACTS.core
+        : kind === "PoolKeyIndex"
+          ? DEFAULT_CONTRACTS.poolKeyIndex
+          : DEFAULT_CONTRACTS.manager,
     );
     await verifyCode(settings, address, kind);
     await expect(prepareDeployment(settings, kind)).rejects.toThrow(
@@ -54,7 +59,7 @@ test("CREATE2 addresses are shared across accounts and occupied addresses cannot
   }
   await node.setCode({ address: settings.manager, bytecode: "0x6000" });
   await expect(prepareDeployment(settings, "FreeLP")).rejects.toThrow(
-    "already deployed",
+    "incompatible code",
   );
   await node.setCode({ address: CREATE2_FACTORY, bytecode: "0x" });
   await expect(

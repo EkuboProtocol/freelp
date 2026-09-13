@@ -2,11 +2,11 @@
 
 The release workflow runs lint, TypeScript, unit tests, the production build, local-chain browser lifecycles, accessibility and Lighthouse checks, packaged-app checks, and isolated IPFS gateway verification before npm publication.
 
-The application uses fixed Core, FreeLP, and FreeLPDataFetcher addresses from the pinned artifacts in `artifacts/`. Deployment checks require nonempty code at those addresses. Contract source and review history are recorded in `artifacts/source.json`; Solidity changes remain separate from the interface repository.
+The application uses fixed Core, FreeLP, and FreeLPDataFetcher addresses from the pinned artifacts in `artifacts/`. Deployment checks require nonempty code at those addresses. Artifact provenance records the source commit in `artifacts/source.json`; contract review history is maintained with the separate Solidity changes.
 
 Unit coverage includes local deposit math and EVM rounding, amount and range validation, URL snapping, chain settings, token deduplication, wallet batching, and distribution boundaries. Browser tests cover creation, deposits, withdrawals, fee collection, deterministic deployment, network settings, token import, and informational terms without an acceptance gate.
 
-The npm tarball is installed and served through both bunx and npx from outside the source checkout. CI also verifies path and subdomain IPFS gateway layouts. Verified package and CAR files are retained as Actions artifacts; release pages contain notes only.
+The npm tarball is installed and served through both bunx and npx from outside the source checkout. CI also verifies the immutable IPFS CAR through a local gateway. The tested package, CAR, deployment descriptor, and generated UX/accessibility/Lighthouse reports are uploaded as Actions artifacts, including when browser checks fail; release pages contain notes only.
 
 Historical verification:
 

@@ -3,8 +3,11 @@ import type { Page } from "@playwright/test";
 import { padHex, toHex, toFunctionSelector } from "viem";
 import { NETWORKS } from "../../src/networks";
 import { DEFAULT_CONTRACTS } from "../../src/deployments";
+import { expectedRuntime } from "../../src/contractDeployment";
+import { mockRegistry } from "./registryRpc";
 const addresses = {
   Core: DEFAULT_CONTRACTS.core,
+  PoolKeyIndex: DEFAULT_CONTRACTS.poolKeyIndex,
   FreeLP: DEFAULT_CONTRACTS.manager,
   FreeLPDataFetcher: DEFAULT_CONTRACTS.freeLPDataFetcher,
 };
@@ -12,6 +15,7 @@ export async function mockDeployments(
   page: Page,
   missing?: keyof typeof addresses,
 ) {
+  await mockRegistry(page);
   await page.route(
     (url) =>
       NETWORKS.some(
@@ -43,7 +47,10 @@ function deploymentReply(
       (kind) =>
         addresses[kind].toLowerCase() === String(body.params[0]).toLowerCase(),
     );
-    if (kind) return kind === missing ? "0x" : "0x6000";
+    if (kind)
+      return kind === missing
+        ? "0x"
+        : expectedRuntime(kind, DEFAULT_CONTRACTS.core);
   }
   if (
     body.method === "eth_call" &&

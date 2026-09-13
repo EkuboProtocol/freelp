@@ -129,3 +129,63 @@ test("all networks load independently with exactly one portfolio RPC each", asyn
     fullPage: true,
   });
 });
+test("RPC failure never claims an empty portfolio and a targeted retry recovers", async ({
+  page,
+}) => {
+  let healthy = false;
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "freelp:chainPreferences",
+      JSON.stringify({ enabledChainIds: [1], rpcOverrides: {} }),
+    );
+    window.addEventListener("eip6963:requestProvider", () =>
+      window.dispatchEvent(
+        new CustomEvent("eip6963:announceProvider", {
+          detail: {
+            info: { uuid: "portfolio-test", name: "Test wallet" },
+            provider: {
+              request: async () => [
+                "0x1111111111111111111111111111111111111111",
+              ],
+            },
+          },
+        }),
+      ),
+    );
+  });
+  await page.route(
+    (url) => url.protocol === "https:",
+    async (route) => {
+      if (!healthy) return route.abort();
+      const body = route.request().postDataJSON();
+      await route.fulfill({
+        json: {
+          jsonrpc: "2.0",
+          id: body.id,
+          result: encodeFunctionResult({
+            abi: snapshot.abi,
+            functionName: "ownedPositions",
+            result: [1n, true, []],
+          }),
+        },
+      });
+    },
+  );
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Connect wallet", exact: true })
+    .click();
+  await expect(
+    page.getByText(
+      "Positions could not be checked on all enabled networks. Retry the unavailable networks below.",
+    ),
+  ).toBeVisible({ timeout: 15000 });
+  await expect(
+    page.getByText("No FreeLP positions found on the enabled networks."),
+  ).toHaveCount(0);
+  healthy = true;
+  await page.getByRole("button", { name: "Retry", exact: true }).click();
+  await expect(
+    page.getByText("No FreeLP positions found on the enabled networks."),
+  ).toBeVisible();
+});

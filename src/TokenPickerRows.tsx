@@ -4,6 +4,7 @@ import { displayAmount } from "./displayAmount";
 import type { Currency } from "./tokens";
 import type { Settings } from "./types";
 import type { BalanceState } from "./useTokenBalances";
+import "./identity.css";
 export type PickerEntry = { token: Currency; network: Settings };
 export function TokenPickerRows({
   entries,
@@ -31,13 +32,24 @@ export function TokenPickerRows({
           className="token-option"
           key={`${network.chainId}:${token.address}`}
           onClick={() => choose(token, network.chainId)}
+          aria-label={`${token.name}, ${token.symbol}, ${networkName(network.chainId, network.name)}, ${token.address}`}
           title={token.address}
         >
           <span className="token-identity">
-            <strong title={token.name}>{token.symbol}</strong>
+            <strong title={token.name}>{token.name}</strong>
+            <span className="token-symbol">{token.symbol}</span>
             <span className="token-network">
               {networkName(network.chainId, network.name)}
             </span>
+            <span
+              className="token-address"
+              title={`Full address: ${token.address}`}
+            >
+              {shortAddress(token.address)}
+            </span>
+            {token.source === "imported" ? (
+              <span className="token-provenance">Imported metadata</span>
+            ) : null}
           </span>
           <TokenRowBalance
             token={token}
@@ -53,6 +65,10 @@ export function TokenPickerRows({
       ) : null}
     </>
   );
+}
+
+function shortAddress(address: string) {
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 function TokenRowBalance({
   token,

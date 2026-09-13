@@ -2,7 +2,12 @@ import { test, expect } from "@playwright/test";
 import { mockDeployments } from "../support/deploymentRpc";
 import { decodeFunctionData, encodeFunctionResult, erc20Abi } from "viem";
 
-for (const missing of ["Core", "FreeLP", "FreeLPDataFetcher"] as const) {
+for (const missing of [
+  "Core",
+  "PoolKeyIndex",
+  "FreeLP",
+  "FreeLPDataFetcher",
+] as const) {
   test(`creation requires deployed ${missing} and opens deployment on the selected chain`, async ({
     page,
   }) => {
@@ -11,13 +16,16 @@ for (const missing of ["Core", "FreeLP", "FreeLPDataFetcher"] as const) {
     await expect(page.getByRole("alert")).toContainText(missing);
     await expect(
       page.getByRole("button", { name: "Select first token" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Create position", exact: true }),
     ).toHaveCount(0);
     await page.getByRole("link", { name: "Go to Deploy" }).click();
     await expect(page.getByLabel("Deployment network")).toHaveValue("8453");
   });
 }
 
-test("any nonempty code enables a chain-scoped form with visible pool cards", async ({
+test("verified runtime code enables a chain-scoped form without fabricated pool cards", async ({
   page,
 }) => {
   await mockDeployments(page);
@@ -25,7 +33,12 @@ test("any nonempty code enables a chain-scoped form with visible pool cards", as
   await expect(
     page.getByRole("button", { name: "Select first token" }),
   ).toBeEnabled();
-  await expect(page.locator(".pool-options button")).toHaveCount(4);
+  await expect(page.locator(".pool-options button")).toHaveCount(0);
+  await expect(
+    page.getByText(
+      "Select two tokens to discover registered pools for the pair.",
+    ),
+  ).toBeVisible();
   await expect(page.locator(".pool-options")).toBeVisible();
   await expect(
     page.getByLabel("Pool fee (%)", { exact: true }),

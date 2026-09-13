@@ -7,11 +7,13 @@ import type { Position, Settings } from "./types";
 export function PortfolioPosition({
   settings,
   position: p,
-  onSelect,
+  onOpen,
+  stale = false,
 }: {
   settings: Settings;
   position: Position;
-  onSelect: () => void;
+  onOpen: () => void;
+  stale?: boolean;
 }) {
   const tokens = [p.descriptor.poolKey.token0, p.descriptor.poolKey.token1].map(
     (address) =>
@@ -31,6 +33,11 @@ export function PortfolioPosition({
         <span>{networkName(settings.chainId, settings.name)}</span>
       </div>
       <PositionStatus position={p} />
+      {stale ? (
+        <p className="muted">
+          Cached snapshot — refresh this network for current amounts.
+        </p>
+      ) : null}
       <PoolIdentity descriptor={p.descriptor} />
       <p>
         Principal: {amount(p.amounts.principal0, 0)} /{" "}
@@ -47,9 +54,14 @@ export function PortfolioPosition({
           symbols={[tokens[0].symbol, tokens[1].symbol]}
         />
       ) : null}
-      <button aria-label={`Manage position #${p.id}`} onClick={onSelect}>
+      <a
+        className="primary-link"
+        href={`#/positions/${settings.chainId}/${p.id}`}
+        onClick={onOpen}
+        aria-label={`Manage position #${p.id}`}
+      >
         Manage position
-      </button>
+      </a>
     </article>
   );
 }

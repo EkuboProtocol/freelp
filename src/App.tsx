@@ -7,10 +7,22 @@ import { TermsPage } from "./TermsPage";
 import { DeployPage } from "./DeployPage";
 import { CreatePage } from "./CreatePage";
 import { PositionsPage } from "./PositionsPage";
+import { TransactionActivity } from "./TransactionActivity";
+import { DEFAULT_MANAGER, DEFAULT_POOL_KEY_INDEX } from "./deployments";
 function BuildPage() {
   return (
     <section>
       <h2>Build details</h2>
+      <p>
+        FreeLP manager: <code>{DEFAULT_MANAGER}</code>
+      </p>
+      <p>
+        Shared pool index: <code>{DEFAULT_POOL_KEY_INDEX}</code>
+      </p>
+      <p>
+        Positions from earlier contract deployments remain at their original
+        manager. Use a compatible pinned release to manage those NFTs.
+      </p>
       <p>
         Official source repository:{" "}
         <a
@@ -104,6 +116,7 @@ export function App() {
         </div>
       ) : null}
       <div id="main-content" tabIndex={-1}>
+        <TransactionActivity />
         <Page
           key={route.split("?")[0].split("/")[1] || "positions"}
           route={route}
@@ -113,7 +126,7 @@ export function App() {
         <a href="#/terms">Terms</a>
         <a href="#/build">About FreeLP</a>
         <span className="free-forever">
-          No fees, completely free to use, forever
+          No application fees. Network gas costs apply.
         </span>
       </footer>
     </main>
@@ -130,6 +143,12 @@ function MainNavigation({ route }: { route: string }) {
         }
       >
         Positions
+      </a>
+      <a
+        href="#/create"
+        aria-current={route.startsWith("#/create") ? "page" : undefined}
+      >
+        Create
       </a>
       <a
         href="#/networks"

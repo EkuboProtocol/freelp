@@ -26,5 +26,5 @@ export async function readTokenMetadata(
     throw new Error(
       "This token must provide a name, symbol, and valid decimals on chain.",
     );
-  return { address, symbol, name, decimals };
+  return { address, symbol, name, decimals, source: "onchain" };
 }

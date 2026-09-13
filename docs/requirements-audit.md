@@ -1,7 +1,7 @@
 # Requirements audit
 
 - RPC-only EVM LP operations; no swaps, TWAMM, Starknet, hosted metadata or indexers.
-- Per-network configurations for Robinhood Chain, Base, Arbitrum, Ethereum, and custom EVM networks. RPC endpoints are replaceable.
+- Per-network configurations for Robinhood Chain, Base, Arbitrum, Ethereum, and the supported viem catalog. RPC endpoints are replaceable; arbitrary custom EVM networks are not in scope.
 - Bundled token lists and chain-read token imports; local metadata fallback for nonstandard tokens.
 - Pool discovery and current liquidity charts from QuoteDataFetcher using interface tick-liquidity math. No historical prices, USD valuation, or global pool ranking is claimed.
 - Cross-network owned-position listing, creation, deposits, withdrawals, fee collection, transfer and burn. On-chain ownership and metadata remain authoritative.

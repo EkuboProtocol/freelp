@@ -12,6 +12,7 @@ type Props = {
   symbols: string[];
   selection?: { lower: number; upper: number };
   onSelectRange?: (lower: number, upper: number) => void;
+  hypothetical?: boolean;
 };
 export function LiquidityChart({
   data,
@@ -21,13 +22,15 @@ export function LiquidityChart({
   symbols,
   selection,
   onSelectRange,
+  hypothetical = false,
 }: Props) {
   const [zoom, setZoom] = useState(50);
   const [hover, setHover] = useState<number>();
+  const [preview, setPreview] = useState<{ lower: number; upper: number }>();
   const start = useRef<number | undefined>(undefined);
   const { lower, upper, buckets } = useMemo(
-    () => liquidityBuckets(data, spacing, zoom),
-    [data, spacing, zoom],
+    () => liquidityBuckets(data, spacing, zoom, selection),
+    [data, spacing, zoom, selection],
   );
   const price = (tick: number) =>
     decimalDisplay(tickPrice(tick, decimals0, decimals1), 6);
@@ -38,6 +41,7 @@ export function LiquidityChart({
     Number(formatUnits(b.amounts[1], decimals1)),
   ]);
   const max = Math.max(...values.map(([a, b]) => a + b), Number.MIN_VALUE);
+  const shownSelection = preview ?? selection;
   const x = (tick: number) =>
     Math.max(
       0,
@@ -53,6 +57,10 @@ export function LiquidityChart({
           spacing,
       ) * spacing
     );
+  };
+  const cancelSelection = () => {
+    start.current = undefined;
+    setPreview(undefined);
   };
   return (
     <div className="liquidity-chart">
@@ -79,6 +87,10 @@ export function LiquidityChart({
           </button>
         </div>
       </div>
+      <p>
+        {hypothetical ? "Initial" : "Current"} price: {price(data.tick)}{" "}
+        {symbols[1]} per {symbols[0]}
+      </p>
       <svg
         viewBox="0 0 800 210"
         preserveAspectRatio="none"
@@ -86,9 +98,22 @@ export function LiquidityChart({
         aria-label={"Pool token amounts by price"}
         className="depth-chart"
         onPointerLeave={() => setHover(undefined)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") cancelSelection();
+        }}
+        tabIndex={onSelectRange ? 0 : undefined}
         onPointerDown={(event) => {
+          if (!onSelectRange) return;
           start.current = pointerTick(event);
+          setPreview({ lower: start.current, upper: start.current });
           event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          if (start.current !== undefined)
+            setPreview({
+              lower: Math.min(start.current, pointerTick(event)),
+              upper: Math.max(start.current, pointerTick(event)),
+            });
         }}
         onPointerUp={(event) => {
           const end = pointerTick(event),
@@ -96,12 +121,17 @@ export function LiquidityChart({
           start.current = undefined;
           if (from !== undefined && from !== end)
             onSelectRange?.(Math.min(from, end), Math.max(from, end));
+          setPreview(undefined);
         }}
+        onPointerCancel={cancelSelection}
       >
-        {selection ? (
+        {shownSelection ? (
           <rect
-            x={x(selection.lower)}
-            width={Math.max(0, x(selection.upper) - x(selection.lower))}
+            x={x(shownSelection.lower)}
+            width={Math.max(
+              0,
+              x(shownSelection.upper) - x(shownSelection.lower),
+            )}
             height="210"
             fill="#000"
             opacity="0.08"
@@ -168,7 +198,8 @@ export function LiquidityChart({
           </>
         ) : (
           <small>
-            Hover for token amounts. Drag across the chart to select a range.
+            Hover for token amounts. Drag to select a range, or edit its bounds
+            in the fields below. Press Escape to cancel a drag.
           </small>
         )}
       </div>
@@ -179,7 +210,79 @@ export function LiquidityChart({
           <span>{price(selection.upper)}</span>
         </div>
       ) : null}
-      <small>Only the range read from chain is shown.</small>
+      <DepthDescription
+        data={data}
+        hypothetical={hypothetical}
+        lower={lower}
+        upper={upper}
+        selection={selection}
+      />
+      <details className="depth-values">
+        <summary>Read depth values</summary>
+        <div
+          className="depth-values-scroll"
+          tabIndex={0}
+          role="region"
+          aria-label="Exact liquidity depth values"
+        >
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Price range</th>
+                <th scope="col">{symbols[0]}</th>
+                <th scope="col">{symbols[1]}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {buckets.map((bucket) => (
+                <tr key={bucket.lower}>
+                  <th scope="row">
+                    {price(bucket.lower)}–{price(bucket.upper)}
+                  </th>
+                  <td>{formatUnits(bucket.amounts[0], decimals0)}</td>
+                  <td>{formatUnits(bucket.amounts[1], decimals1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  );
+}
+
+function DepthDescription({
+  data,
+  hypothetical,
+  lower,
+  upper,
+  selection,
+}: {
+  data: QuoteDataFetcherResult;
+  hypothetical: boolean;
+  lower: number;
+  upper: number;
+  selection?: Props["selection"];
+}) {
+  const outside =
+    selection && (selection.lower < lower || selection.upper > upper);
+  return (
+    <div className="muted">
+      <small>
+        {hypothetical
+          ? "This is an initial-price preview. The pool has no on-chain liquidity yet."
+          : `Depth coverage: ticks ${data.minTick} to ${data.maxTick}, from the latest RPC read.`}
+      </small>
+      {!hypothetical && data.liquidity === 0n && data.ticks.length === 0 ? (
+        <p>No liquidity was found within this coverage.</p>
+      ) : null}
+      {outside ? (
+        <p>
+          Part of your selected range is outside the displayed depth window. Its
+          bounds remain unchanged; liquidity beyond the read coverage is
+          unknown.
+        </p>
+      ) : null}
     </div>
   );
 }

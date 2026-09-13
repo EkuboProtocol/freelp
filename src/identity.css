@@ -1,0 +1,97 @@
+.token-identity {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.token-identity strong,
+.token-symbol,
+.token-network,
+.token-address,
+.token-provenance {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.token-identity strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.token-symbol,
+.token-network,
+.token-address,
+.token-provenance {
+  color: #555;
+  font-size: 12px;
+}
+
+.token-provenance {
+  color: #333;
+}
+
+.picker-status,
+.metadata-note {
+  color: #555;
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+.pool-summary {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.pool-summary .mono,
+.pool-identity-details .mono {
+  overflow-wrap: anywhere;
+}
+
+.pool-identity details {
+  margin-top: 8px;
+}
+
+.pool-identity-details {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 10px 0 0;
+  font-size: 13px;
+}
+
+.pool-identity-details dt {
+  color: #555;
+}
+
+.pool-identity-details dd {
+  margin: 0;
+}
+
+.new-pool-warning {
+  border-left: 3px solid #111;
+  padding: 10px 12px;
+  margin: 10px 0;
+  background: #f4f4f4;
+}
+
+.new-pool-warning p {
+  margin: 6px 0 0;
+}
+
+@media (max-width: 480px) {
+  .pool-identity-details {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .pool-identity-details dd {
+    margin-bottom: 6px;
+  }
+}

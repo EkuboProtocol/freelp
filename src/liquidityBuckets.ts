@@ -49,14 +49,21 @@ export function liquidityBuckets(
   data: QuoteDataFetcherResult,
   spacing: number,
   zoom: number,
+  selection?: { lower: number; upper: number },
 ) {
   const lower = Math.max(
     data.minTick,
-    Math.floor((data.tick - spacing * zoom) / spacing) * spacing,
+    Math.floor(
+      Math.min(data.tick - spacing * zoom, selection?.lower ?? data.tick) /
+        spacing,
+    ) * spacing,
   );
   const upper = Math.min(
     data.maxTick,
-    Math.ceil((data.tick + spacing * zoom) / spacing) * spacing,
+    Math.ceil(
+      Math.max(data.tick + spacing * zoom, selection?.upper ?? data.tick) /
+        spacing,
+    ) * spacing,
   );
   const step = Math.max(
     spacing,

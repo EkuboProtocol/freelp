@@ -13,9 +13,13 @@ export function usePositionDeposit(
   tokens?: [Token, Token],
 ) {
   const [input, setInput] = useState({ side: 0 as 0 | 1, value: "" });
+  const inactive = [
+    position.sqrtRatio >= toSqrtRatio(position.descriptor.tickUpper, "evm"),
+    position.sqrtRatio <= toSqrtRatio(position.descriptor.tickLower, "evm"),
+  ];
   const current = calculate(position, tokens, input);
   const amounts = [0, 1].map((i) => {
-    if (current?.result?.inactive[i]) return "0";
+    if (inactive[i]) return "0";
     if (i === input.side) return input.value;
     if (!current?.result || !tokens) return "";
     return formatUnits(
@@ -27,6 +31,7 @@ export function usePositionDeposit(
     amounts,
     result: current?.result,
     error: current?.error,
+    inactive,
 
     update: (side: 0 | 1, value: string) => setInput({ side, value }),
   };

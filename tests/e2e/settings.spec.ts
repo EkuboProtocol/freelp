@@ -145,15 +145,17 @@ test("all chains may be disabled without deployment RPC requests or silent re-en
   expect(requests).toEqual([]);
 });
 
-test("positions expose creation while header and app omit removed controls and IPFS", async ({
+test("creation is reachable before wallet connection and deployment omits address overrides", async ({
   page,
 }) => {
   await mockDeployments(page);
   await page.goto("/");
   await expect(
     page.locator("header").getByRole("link", { name: "Create", exact: true }),
-  ).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Connect wallet", exact: true })).toBeVisible();
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Connect wallet", exact: true }),
+  ).toBeVisible();
   await page.goto("/#/create");
   await expect(
     page.getByRole("button", { name: "Select first token" }),

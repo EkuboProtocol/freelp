@@ -9,6 +9,7 @@ export type Settings = {
   nativeName?: string;
   nativeDecimals?: number;
   freeLPDataFetcher?: Address;
+  poolKeyIndex?: Address;
 };
 export type Descriptor = {
   poolKey: { token0: Address; token1: Address; config: Hex };
@@ -35,7 +36,7 @@ export type Provider = {
   removeListener?: (name: string, fn: (...args: unknown[]) => void) => void;
 };
 export type Wallet = {
-  info: { uuid: string; name: string };
+  info: { uuid: string; name: string; rdns?: string };
   provider: Provider;
 };
 export type Transaction = { to?: Address; data: Hex; value?: bigint };

@@ -1,8 +1,8 @@
 name: Verify and deploy to IPFS
 on:
   push:
-    branches: ['**']
-    tags: ['**']
+    branches: ["**"]
+    tags: ["**"]
 permissions:
   contents: read
 jobs:
@@ -32,6 +32,17 @@ jobs:
           bun run preview --port 14177 > /tmp/freelp-preview.log 2>&1 &
           bun scripts/ux-audit.ts http://127.0.0.1:14177/ .cache/ux-audit
           bun scripts/lighthouse.ts http://127.0.0.1:14177/ .cache/ux-audit
+      - name: Retain UX and test reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ux-test-reports
+          path: |
+            .cache/ux-audit
+            test-results
+            playwright-report
+          if-no-files-found: warn
+          retention-days: 90
       - name: Package content-addressed site
         run: |
           bun scripts/package-release.ts
@@ -96,7 +107,7 @@ jobs:
     steps:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
-          node-version: '24'
+          node-version: "24"
           package-manager-cache: false
       - name: Download the verified release package
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0

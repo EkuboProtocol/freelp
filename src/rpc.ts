@@ -6,6 +6,8 @@ export function rpc(settings: Settings) {
     chain: chainDefinition(settings.chainId),
     ccipRead: false,
     transport: http(settings.rpcUrl || undefined, {
+      // A configured RPC cannot redirect application reads to another service.
+      fetchOptions: { redirect: "error" },
       retryCount: 2,
       retryDelay: 1000,
       timeout: 15000,

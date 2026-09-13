@@ -10,6 +10,7 @@ export type SelectedPool = {
   key: string;
   state: Awaited<ReturnType<typeof fetchPools>>[number];
   decimals: [number, number];
+  updatedAt: number;
 };
 export function useSelectedPool(form: CreateForm) {
   const { settings } = useSession();
@@ -54,6 +55,7 @@ export function useSelectedPool(form: CreateForm) {
     return {
       key,
       state,
+      updatedAt: Date.now(),
       decimals: tokens.map((token) => token.decimals) as [number, number],
     };
   });

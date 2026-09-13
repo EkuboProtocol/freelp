@@ -1,4 +1,8 @@
 import { nativeCurrency } from "./nativeCurrency";
+import {
+  assertContractRuntime,
+  ContractIdentityError,
+} from "./contractIdentity";
 import { DEFAULT_POSITION_DATA_FETCHER } from "./deployments";
 import {
   encodeFunctionData,
@@ -12,7 +16,8 @@ import snapshotArtifact from "../artifacts/FreeLPDataFetcher.json" with { type: 
 import managerArtifact from "../artifacts/FreeLP.json" with { type: "json" };
 import { rpc } from "./rpc";
 import type { Position, Settings } from "./types";
-export type ContractKind = "Core" | "FreeLP" | "FreeLPDataFetcher";
+export type ContractKind =
+  "Core" | "PoolKeyIndex" | "FreeLP" | "FreeLPDataFetcher";
 export const managerAbi = managerArtifact.abi as Abi;
 export const managerData = (
   functionName: string,
@@ -46,15 +51,16 @@ export async function positions(
   });
   if (!data || data === "0x")
     throw new Error(
-      "The position data fetcher is not deployed on this network. Deploy it from the Deploy tab.",
+      "The RPC returned no position data. Retry this network or review its RPC URL.",
     );
-  const [chainId, , items] = decodeFunctionResult({
+  const [chainId, managerDeployed, items] = decodeFunctionResult({
     abi: snapshotArtifact.abi,
     functionName: "ownedPositions",
     data,
   }) as [bigint, boolean, Position[]];
   if (chainId !== BigInt(settings.chainId))
     throw new Error("RPC chain does not match the configured network.");
+  if (!managerDeployed) throw new ContractIdentityError("missing", "FreeLP");
   return [...items].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 
@@ -139,6 +145,5 @@ export async function verifyCode(
   kind: ContractKind,
 ) {
   const code = await rpc(settings).getCode({ address });
-  if (!code || code === "0x")
-    throw new Error(`${kind} is not deployed at this address.`);
+  assertContractRuntime(kind, settings.core, code);
 }

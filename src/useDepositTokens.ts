@@ -47,7 +47,8 @@ async function loadTokens(input: TokenInput, revision: number) {
 }
 
 export function useDepositTokens(input: TokenInput, revision: number) {
-  const key = JSON.stringify([input, revision]);
+  const [retry, setRetry] = useState(0);
+  const key = JSON.stringify([input, revision, retry]);
   const [loaded, setLoaded] = useState<{
     key: string;
     tokens?: [Token, Token];
@@ -69,5 +70,12 @@ export function useDepositTokens(input: TokenInput, revision: number) {
       active = false;
     };
   }, [key]);
-  return loaded?.key === key ? loaded : undefined;
+  return loaded?.key === key
+    ? { ...loaded, refresh: () => setRetry((value) => value + 1) }
+    : {
+        key,
+        tokens: undefined,
+        error: undefined,
+        refresh: () => setRetry((value) => value + 1),
+      };
 }

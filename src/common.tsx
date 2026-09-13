@@ -1,6 +1,7 @@
 import { errorMessage } from "./errors";
 import { useState, type ReactNode } from "react";
 import { useSession } from "./session";
+import { unresolvedForScope } from "./transactionJournal";
 export function Field({
   label,
   children,
@@ -24,14 +25,17 @@ export function Action({
   run: () => Promise<unknown>;
   disabled?: boolean;
 }) {
-  const { busy, account, setStatus } = useSession();
+  const { busy, account, settings, activity, setStatus } = useSession();
+  const unresolved =
+    !!account &&
+    unresolvedForScope(activity.entries, settings.chainId, account).length > 0;
   const [running, setRunning] = useState(false);
   async function act() {
     setRunning(true);
     try {
       await run();
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : errorMessage(error));
+      setStatus(errorMessage(error));
     } finally {
       setRunning(false);
     }
@@ -41,7 +45,12 @@ export function Action({
       type="button"
       aria-busy={running}
       className="primary-button"
-      disabled={disabled || busy || running || !account}
+      disabled={disabled || busy || running || !account || unresolved}
+      title={
+        unresolved
+          ? "Check the pending request in transaction activity before sending another."
+          : undefined
+      }
       onClick={() => void act()}
     >
       {children}

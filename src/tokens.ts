@@ -8,12 +8,15 @@ export type Currency = {
   symbol: string;
   name: string;
   decimals: number;
+  /** Where the display metadata came from; optional for persisted pre-provenance imports. */
+  source?: "bundled" | "imported" | "onchain";
 };
 const eth: Currency = {
   address: zeroAddress,
   symbol: "ETH",
   name: "Ether",
   decimals: 18,
+  source: "bundled",
 };
 // Snapshot of EkuboProtocol/default-tokens, stripped of hosted logos and API data.
 // Source and verification details: docs/token-defaults.md.
@@ -25,6 +28,7 @@ const lists: Record<number, Currency[]> = Object.fromEntries(
       ...tokens.map((token) => ({
         ...token,
         address: getAddress(token.address.toLowerCase()),
+        source: "bundled" as const,
       })),
     ],
   ]),
@@ -53,7 +57,10 @@ export function currencies(
       token,
     ]),
   );
-  for (const token of valid)
+  for (const token of valid.map((entry) => ({
+    ...entry,
+    source: "imported" as const,
+  })))
     if (!merged.has(token.address.toLowerCase()))
       merged.set(token.address.toLowerCase(), token);
   return [...merged.values()].map((token) =>
@@ -71,6 +78,7 @@ export function importCurrency(chainId: number, token: Currency) {
     address: getAddress(token.address),
     symbol: token.symbol.trim().slice(0, 32),
     name: token.name.trim().slice(0, 80),
+    source: token.source ?? "imported",
   };
   if (
     !next.symbol ||

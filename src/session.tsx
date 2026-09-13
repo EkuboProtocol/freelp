@@ -17,6 +17,13 @@ import { loadNetworks, updateNetworks, setNetworkEnabled } from "./networks";
 import { loadSettings, validateSettings, DEFAULT_SETTINGS } from "./config";
 import { save } from "./storage";
 import type { Settings, Transaction, Wallet } from "./types";
+import {
+  loadJournal,
+  unresolvedForScope,
+  type JournalEntry,
+} from "./transactionJournal";
+import { useTransactionRecovery } from "./useTransactionRecovery";
+import type { TransactionObserver } from "./transactions";
 function useSessionState() {
   const [networks, setNetworks] = useState(loadNetworks);
   const [settings, setSettings] = useState(
@@ -32,6 +39,18 @@ function useSessionState() {
   const transactionLock = useRef(false);
   const [status, setStatus] = useState("");
   const [revision, setRevision] = useState(0);
+  const activity = useTransactionRecovery(
+    wallet?.provider,
+    account,
+    networks,
+    wallet?.info,
+  );
+  async function checkTransaction(entry: JournalEntry) {
+    if (transactionLock.current)
+      throw new Error("Wait for the active wallet request to finish.");
+    const terminal = await activity.check(entry);
+    if (terminal) setRevision((value) => value + 1);
+  }
   useEffect(() => {
     const listener = (event: Event) => {
       const detail = (event as CustomEvent<Wallet>).detail;
@@ -48,8 +67,26 @@ function useSessionState() {
     };
     window.addEventListener("eip6963:announceProvider", listener);
     window.dispatchEvent(new Event("eip6963:requestProvider"));
-    return () =>
+    const legacyTimer = window.setTimeout(() => {
+      const provider = (window as Window & { ethereum?: Wallet["provider"] })
+        .ethereum;
+      if (typeof provider?.request !== "function") return;
+      setWallets((current) =>
+        current.some((wallet) => wallet.provider === provider)
+          ? current
+          : [
+              ...current,
+              {
+                info: { uuid: "legacy-injected", name: "Injected wallet" },
+                provider,
+              },
+            ],
+      );
+    }, 250);
+    return () => {
+      clearTimeout(legacyTimer);
       window.removeEventListener("eip6963:announceProvider", listener);
+    };
   }, []);
   useEffect(() => {
     if (!wallet) return;
@@ -127,13 +164,29 @@ function useSessionState() {
     if (!wallet || !account) throw new Error("Connect a wallet first.");
     if (transactionLock.current)
       throw new Error("A transaction is already pending.");
+    if (unresolvedForScope(loadJournal(), target.chainId, account).length)
+      throw new Error(
+        "A submitted transaction needs status confirmation before sending another.",
+      );
     transactionLock.current = true;
     setBusy(true);
-    setStatus("Simulating and requesting wallet confirmation…");
+    setStatus("Simulating transaction…");
+    const observer: TransactionObserver = ({ state, hash, batchId }) => {
+      const identifier = hash ?? batchId;
+      setStatus(identifier ? `${state}: ${identifier}` : `${state}…`);
+    };
     try {
       const receipt = await (Array.isArray(tx)
-        ? executeBatch(wallet.provider, account, target, tx)
-        : executeTransaction(wallet.provider, account, target, tx));
+        ? executeBatch(wallet.provider, account, target, tx, observer, {
+            uuid: wallet.info.uuid,
+            name: wallet.info.name,
+            rdns: (wallet.info as { rdns?: string }).rdns,
+          })
+        : executeTransaction(wallet.provider, account, target, tx, observer, {
+            uuid: wallet.info.uuid,
+            name: wallet.info.name,
+            rdns: (wallet.info as { rdns?: string }).rdns,
+          }));
       setStatus(`Confirmed: ${receipt.transactionHash}`);
       return receipt;
     } catch (error) {
@@ -152,6 +205,7 @@ function useSessionState() {
     configure,
     toggleNetwork,
     wallets,
+    wallet,
     provider: wallet?.provider,
     account,
     connect,
@@ -161,6 +215,8 @@ function useSessionState() {
     setStatus,
     send,
     revision,
+    activity,
+    checkTransaction,
   };
 }
 type Session = ReturnType<typeof useSessionState>;

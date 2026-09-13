@@ -26,6 +26,7 @@ export function CurrencySelect({
   const [refresh, setRefresh] = useState(0);
   const searchInput = useRef<HTMLInputElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   const request = useRef(0);
   const [search, setSearch] = useState("");
   const tokens = networkCurrencies(settings);
@@ -73,6 +74,7 @@ export function CurrencySelect({
   return (
     <>
       <button
+        ref={trigger}
         className="currency-select"
         aria-label={label}
         onClick={() => {
@@ -96,7 +98,10 @@ export function CurrencySelect({
         ref={dialog}
         className="currency-dialog"
         aria-labelledby={titleId}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          trigger.current?.focus();
+        }}
         onKeyDown={tokenPickerKeyboard}
       >
         <div className="row spread">
@@ -122,6 +127,7 @@ export function CurrencySelect({
               setBusy(false);
               setSearch(event.target.value);
               setCandidate(undefined);
+              setError("");
             }}
           />
           {account ? (
@@ -134,6 +140,13 @@ export function CurrencySelect({
             </button>
           ) : null}
         </div>
+        <PickerStatus
+          busy={busy}
+          error={error}
+          addressSearch={isAddress(search)}
+          hasCandidate={!!candidate}
+          count={visible.length}
+        />
         <PickerBalanceStatus connected={!!account} balances={balances} />
         <div className="token-list">
           <TokenPickerRows
@@ -163,6 +176,10 @@ export function CurrencySelect({
               {candidate.name} · {candidate.decimals} decimals
             </p>
             <p className="mono">{candidate.address}</p>
+            <p className="metadata-note">
+              Name, symbol, and decimals were read from this token contract.
+              Review them before importing; decimals are never inferred.
+            </p>
             <button
               onClick={() => {
                 const imported = importCurrency(
@@ -179,6 +196,32 @@ export function CurrencySelect({
         <ErrorText error={error} />
       </dialog>
     </>
+  );
+}
+
+function PickerStatus({
+  busy,
+  error,
+  addressSearch,
+  hasCandidate,
+  count,
+}: {
+  busy: boolean;
+  error: string;
+  addressSearch: boolean;
+  hasCandidate: boolean;
+  count: number;
+}) {
+  let message = "No matching tokens.";
+  if (busy) message = "Reading token metadata from the selected network…";
+  else if (error) message = "Token metadata could not be read.";
+  else if (addressSearch && !hasCandidate)
+    message = "Paste an address and choose a network to read its metadata.";
+  else if (count) message = `${count} token${count === 1 ? "" : "s"} found.`;
+  return (
+    <p className="picker-status" role="status" aria-live="polite">
+      {message}
+    </p>
   );
 }
 

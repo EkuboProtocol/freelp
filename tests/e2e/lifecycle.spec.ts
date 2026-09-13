@@ -19,6 +19,8 @@ import { privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
 import coreArtifact from "../../artifacts/Core.json" with { type: "json" };
 import managerArtifact from "../../artifacts/FreeLP.json" with { type: "json" };
+import fetcherArtifact from "../../artifacts/FreeLPDataFetcher.json" with { type: "json" };
+import { DEFAULT_POSITION_DATA_FETCHER } from "../../src/deployments";
 import tokenArtifact from "../../artifacts/TestToken.json" with { type: "json" };
 import {
   CREATE2_FACTORY,
@@ -27,6 +29,11 @@ import {
   prepareDeployment,
 } from "../../src/deterministic";
 const rpcUrl = "http://127.0.0.1:18545";
+function transactionStatus(page: Page) {
+  return page.locator(
+    "dialog[open] .status[role=status], body:not(:has(dialog[open])) .notification-toast .status[role=status]",
+  );
+}
 // Anvil's documented public development key. Never use on a funded chain.
 const account = privateKeyToAccount(
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
@@ -64,10 +71,10 @@ async function approveDeposits(
   batch: boolean,
 ) {
   await expect(page.getByTestId("position-amount-0")).not.toHaveValue("");
-  await expect(
-    page.getByRole("button", { name: "Add liquidity", exact: true }),
-  ).toBeEnabled();
   if (batch) {
+    await expect(
+      page.getByRole("button", { name: "Add liquidity", exact: true }),
+    ).toBeEnabled();
     await expect(
       page.getByRole("button", { name: /^(Reset TT approval|Approve TT)$/ }),
     ).toHaveCount(0);
@@ -111,8 +118,16 @@ async function approveDeposits(
       .filter((amount, index) => amount < required[index])
       .map((amount) => (amount === 0n ? "Approve TT" : "Reset TT approval"));
     await expect(buttons).toHaveText(labels);
-    if (!labels.length) return;
-    const status = page.locator(".status[role=status]");
+    if (!labels.length) {
+      await expect(
+        page.getByRole("button", { name: "Add liquidity", exact: true }),
+      ).toBeEnabled();
+      return;
+    }
+    await expect(
+      page.getByRole("button", { name: "Add liquidity", exact: true }),
+    ).toBeDisabled();
+    const status = transactionStatus(page);
     const previous = (await status.allTextContents()).join("");
     await buttons.first().click();
     await expect(status).not.toHaveText(previous);
@@ -139,7 +154,7 @@ for (const { missingDecimals, native, batch } of [
         ? (BigInt(value) * 10n ** 18n).toString()
         : value.toString();
     const core = "0x00000000000014aA86C5d3c41765bb24e11bd701";
-    const manager = "0xc5cF4536449Bfb49459369fa627d278997B1dA1D";
+    const manager = "0xE7483a2F17A0F77480BDAc3bdb27CB002088BaA1";
     const tokens = [
       native ? zeroAddress : await deploy(tokenArtifact, [account.address]),
       await deploy(tokenArtifact, [account.address]),
@@ -169,13 +184,21 @@ for (const { missingDecimals, native, batch } of [
       );
     page.on("request", (request) => {
       const url = request.url();
+      const parsed = new URL(url);
+      if (parsed.protocol === "data:") return;
       if (
-        !url.startsWith("http://127.0.0.1:14173") &&
-        !url.startsWith(rpcUrl) &&
-        !url.startsWith("data:") &&
-        !NETWORKS.some((network) => url.startsWith(rpcEndpoint(network)))
+        request.method() === "GET" &&
+        parsed.origin === "http://127.0.0.1:14173" &&
+        (parsed.pathname === "/" ||
+          /^\/(assets\/[^/]+\.(js|css)|favicon\.svg)$/.test(parsed.pathname))
       )
-        unexpected.push(url);
+        return;
+      const endpoints = [rpcUrl, ...NETWORKS.map(rpcEndpoint)].map(
+        (endpoint) => new URL(endpoint).href,
+      );
+      if (request.method() === "POST" && endpoints.includes(parsed.href))
+        return;
+      unexpected.push(url);
     });
     await page.route(`${rpcUrl}/`, async (route) => {
       const body = route.request().postDataJSON();
@@ -344,10 +367,9 @@ for (const { missingDecimals, native, batch } of [
     await page
       .getByRole("button", { name: "Deploy Core", exact: true })
       .click();
-    await expect(page.locator(".status[role=status]")).toContainText(
-      "Deployed Core at",
-      { timeout: 30000 },
-    );
+    await expect(transactionStatus(page)).toContainText("Deployed Core at", {
+      timeout: 30000,
+    });
     deployedCore = await page.evaluate(
       () => JSON.parse(localStorage.getItem("freelp:settings")!).core,
     );
@@ -356,17 +378,26 @@ for (const { missingDecimals, native, batch } of [
       page.getByRole("button", { name: "Deploy Core", exact: true }),
     ).toHaveCount(0);
     await page
-      .getByRole("button", { name: "Deploy FreeLP", exact: true })
+      .getByRole("button", { name: "Deploy PoolKeyIndex", exact: true })
       .click();
-    await expect(page.locator(".status[role=status]")).toContainText(
-      "Deployed FreeLP at",
+    await expect(transactionStatus(page)).toContainText(
+      "Deployed PoolKeyIndex at",
       { timeout: 30000 },
     );
+    await expect(
+      page.getByRole("button", { name: "Deploy PoolKeyIndex", exact: true }),
+    ).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "Deploy FreeLP", exact: true })
+      .click();
+    await expect(transactionStatus(page)).toContainText("Deployed FreeLP at", {
+      timeout: 30000,
+    });
     await expect(
       page.getByRole("button", { name: "Deploy FreeLP", exact: true }),
     ).toHaveCount(0);
     expect(deploymentAddress("FreeLP", deployedCore as Hex)).toBe(
-      "0xc5cF4536449Bfb49459369fa627d278997B1dA1D",
+      "0xE7483a2F17A0F77480BDAc3bdb27CB002088BaA1",
     );
     await expect(
       prepareDeployment(
@@ -388,6 +419,7 @@ for (const { missingDecimals, native, batch } of [
     const deployedManager = await page.evaluate(
       () => JSON.parse(localStorage.getItem("freelp:settings")!).manager as Hex,
     );
+    const deployedFetcher = DEFAULT_POSITION_DATA_FETCHER;
     await expect(page.getByText("Pool details", { exact: true })).toHaveCount(
       0,
     );
@@ -427,12 +459,9 @@ for (const { missingDecimals, native, batch } of [
         .getByRole("button", { name: "Approve TT", exact: true })
         .first()
         .click();
-      await expect(page.locator(".status[role=status]")).toContainText(
-        "Confirmed:",
-        {
-          timeout: 30000,
-        },
-      );
+      await expect(transactionStatus(page)).toContainText("Confirmed:", {
+        timeout: 30000,
+      });
       await expect(
         page.getByRole("heading", { name: "Deposit preview" }),
       ).toBeVisible();
@@ -441,7 +470,7 @@ for (const { missingDecimals, native, batch } of [
       .getByRole("button", { name: "Create position", exact: true })
       .click();
     await expect(
-      page.getByRole("button", { name: "Manage position #1", exact: true }),
+      page.getByRole("link", { name: "Manage position #1", exact: true }),
     ).toBeVisible({ timeout: 30000 });
     await page.getByRole("link", { name: "Positions", exact: true }).click();
     await page
@@ -468,7 +497,7 @@ for (const { missingDecimals, native, batch } of [
     await page.getByRole("button", { name: "Connect Local wallet" }).click();
     await page.getByRole("link", { name: "Positions", exact: true }).click();
     await page
-      .getByRole("button", { name: "Manage position #1", exact: true })
+      .getByRole("link", { name: "Manage position #1", exact: true })
       .click();
     await expect(page.locator(".portfolio-positions")).not.toBeVisible();
     await expect(
@@ -487,10 +516,10 @@ for (const { missingDecimals, native, batch } of [
       fullPage: true,
     });
     const before = (await client.readContract({
-      address: deployedManager,
-      abi: managerArtifact.abi as Abi,
+      address: deployedFetcher,
+      abi: fetcherArtifact.abi as Abi,
       functionName: "positionAmounts",
-      args: [1n],
+      args: [deployedManager, 1n],
     })) as { liquidity: bigint };
     if (missingDecimals)
       await expect(
@@ -512,18 +541,17 @@ for (const { missingDecimals, native, batch } of [
     await page
       .getByRole("button", { name: "Add liquidity", exact: true })
       .click();
-    await expect(page.locator(".status[role=status]")).toContainText(
-      "Confirmed:",
-      { timeout: 30000 },
-    );
+    await expect(transactionStatus(page)).toContainText("Confirmed:", {
+      timeout: 30000,
+    });
     await expect
       .poll(
         async () => {
           const result = (await client.readContract({
-            address: deployedManager,
-            abi: managerArtifact.abi as Abi,
+            address: deployedFetcher,
+            abi: fetcherArtifact.abi as Abi,
             functionName: "positionAmounts",
-            args: [1n],
+            args: [deployedManager, 1n],
           })) as { liquidity: bigint };
           return result.liquidity;
         },
@@ -537,7 +565,7 @@ for (const { missingDecimals, native, batch } of [
     await page.getByRole("button", { name: "Connect Local wallet" }).click();
     await page.getByRole("link", { name: "Positions", exact: true }).click();
     await page
-      .getByRole("button", { name: "Manage position #1", exact: true })
+      .getByRole("link", { name: "Manage position #1", exact: true })
       .click();
     await expect(
       page.getByRole("button", { name: "Collect fees", exact: true }),
@@ -551,16 +579,14 @@ for (const { missingDecimals, native, batch } of [
     await page
       .getByRole("button", { name: "Withdraw liquidity and fees" })
       .click();
-    await expect(page.locator(".status[role=status]")).toContainText(
-      "Confirmed:",
-    );
+    await expect(transactionStatus(page)).toContainText("Confirmed:");
     await page.getByRole("button", { name: "Withdraw", exact: true }).click();
     await page.getByLabel("Withdraw percentage").fill("100");
     await page
       .getByRole("button", { name: "Withdraw liquidity and fees" })
       .click();
     await expect(
-      page.getByText("No positions found on the available networks."),
+      page.getByText("No FreeLP positions found on the enabled networks."),
     ).toBeVisible();
     await checkStableCreation(
       page,
@@ -577,7 +603,7 @@ async function deployFetchers(page: Page) {
   await page
     .getByRole("button", { name: "Deploy FreeLPDataFetcher", exact: true })
     .click();
-  await expect(page.locator(".status[role=status]")).toContainText(
+  await expect(transactionStatus(page)).toContainText(
     "Deployed FreeLPDataFetcher at",
     { timeout: 30000 },
   );
@@ -593,7 +619,9 @@ async function checkPoolChart(
     page.getByRole("img", { name: "Pool token amounts by price" }),
   ).toBeVisible({ timeout: 30000 });
   const heights = await page
-    .locator(".liquidity-chart rect")
+    .locator(
+      '.liquidity-chart g rect[fill="#111"], .liquidity-chart g rect[fill="#999"]',
+    )
     .evaluateAll((nodes) =>
       nodes.map((node) => Number(node.getAttribute("height"))),
     );
@@ -725,13 +753,13 @@ async function checkStableCreation(
     .getByRole("button", { name: "Create position", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Manage position #2", exact: true })
+    .getByRole("link", { name: "Manage position #2", exact: true })
     .click();
   const descriptor = (await client.readContract({
-    address: manager,
-    abi: managerArtifact.abi as Abi,
+    address: DEFAULT_POSITION_DATA_FETCHER,
+    abi: fetcherArtifact.abi as Abi,
     functionName: "descriptor",
-    args: [2n],
+    args: [manager, 2n],
   })) as { poolKey: { config: Hex }; tickLower: number; tickUpper: number };
   expect(BigInt(descriptor.poolKey.config)).toBe(
     (123456789n << 32n) | (10n << 24n) | 1n,
@@ -751,7 +779,7 @@ async function checkStableCreation(
   });
   await page.getByRole("link", { name: "Positions", exact: true }).click();
   await page
-    .getByRole("button", { name: "Manage position #2", exact: true })
+    .getByRole("link", { name: "Manage position #2", exact: true })
     .click();
   await page.getByRole("button", { name: "Withdraw", exact: true }).click();
   await page.getByLabel("Withdraw percentage").fill("100");
@@ -759,7 +787,7 @@ async function checkStableCreation(
     .getByRole("button", { name: "Withdraw liquidity and fees" })
     .click();
   await expect(
-    page.getByText("No positions found on the available networks."),
+    page.getByText("No FreeLP positions found on the enabled networks."),
   ).toBeVisible();
 }
 
@@ -768,6 +796,11 @@ function approvalCount(batch: boolean, native: boolean) {
 }
 
 async function capturePosition(page: Page) {
+  await page.getByText("View position NFT", { exact: true }).click();
+  const artwork = page.getByRole("img", { name: /Position NFT artwork/ });
+  await expect(artwork).toBeVisible();
+  await expect(artwork).toHaveJSProperty("naturalWidth", 640);
+  await page.getByText("View position NFT", { exact: true }).click();
   await expect(page.locator(".current-price strong").last()).toBeVisible();
   await expect(
     page.getByRole("button", { name: /Burn|Transfer NFT/ }),

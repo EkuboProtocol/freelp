@@ -1,6 +1,7 @@
 import { describe, test, expect } from "bun:test";
 import { assertWallet } from "../../src/transactions";
 import type { Provider } from "../../src/types";
+import { gasRpcReply } from "../support/gasRpc";
 const account = "0x0000000000000000000000000000000000000001";
 describe("transaction wallet boundary", () => {
   test("rejects account or chain changes", async () => {
@@ -80,11 +81,12 @@ test("a position transaction requests its own network before wallet submission",
         jsonrpc: "2.0",
         id: body.id,
         result:
-          body.method === "eth_chainId"
+          gasRpcReply(body.method) ??
+          (body.method === "eth_chainId"
             ? "0x1"
             : body.method === "eth_estimateGas"
               ? "0x5208"
-              : "0x",
+              : "0x"),
       });
     },
   });
@@ -98,7 +100,9 @@ test("a position transaction requests its own network before wallet submission",
       }
       if (method === "eth_accounts") return [account];
       if (method === "eth_sendTransaction")
-        throw new Error("User declined transaction");
+        throw Object.assign(new Error("User declined transaction"), {
+          code: 4001,
+        });
       return chain;
     },
   };
@@ -116,7 +120,7 @@ test("a position transaction requests its own network before wallet submission",
         },
         { data: "0x00" },
       ),
-    ).rejects.toThrow("User declined transaction");
+    ).rejects.toThrow("rejected in the wallet");
     expect(
       methods.filter((m) => m === "wallet_switchEthereumChain"),
     ).toHaveLength(1);

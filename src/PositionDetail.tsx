@@ -9,30 +9,57 @@ import { Action, Field } from "./common";
 import { usePositionActions } from "./usePositionActions";
 import type { Position } from "./types";
 import type { Token } from "./contracts";
+import { withdrawalReview } from "./positionReview";
+import { isAddress } from "viem";
+import { displayAmount } from "./displayAmount";
+import { TransactionActivity } from "./TransactionActivity";
+import { PositionArtwork } from "./PositionArtwork";
 
-export function PositionDetail({ position: p }: { position: Position }) {
-  const { settings, busy } = useSession();
+export function PositionDetail({
+  position: p,
+  onRefresh,
+  fresh = true,
+}: {
+  position: Position;
+  onRefresh?: () => void | Promise<void>;
+  fresh?: boolean;
+}) {
+  const { settings, account, busy, status, setStatus } = useSession();
+  const controlsDisabled = busy || !fresh;
   const actions = usePositionActions(p);
   const { tokens } = actions;
   const dialog = useRef<HTMLDialogElement>(null);
   const [mode, setMode] = useState<"add" | "withdraw">("add");
   function open(next: typeof mode) {
+    if (busy || !fresh) return;
+    actions.setRecipient(account ?? "");
+    actions.setPortion(100);
+    setStatus("");
     setMode(next);
     dialog.current?.showModal();
+    actions.refreshTokens();
+    void onRefresh?.();
   }
   async function add() {
     await actions.add();
     dialog.current?.close();
+    await onRefresh?.();
   }
   async function withdraw() {
-    await actions.withdraw(false);
+    await actions.withdraw();
     dialog.current?.close();
+    if (actions.portion === 100) window.location.hash = "#/positions";
+    await onRefresh?.();
+  }
+  async function claim() {
+    await actions.claim();
+    await onRefresh?.();
   }
   return (
     <div className="position-detail">
       <div className="position-heading row spread">
         <div>
-          <h2>
+          <h2 tabIndex={-1}>
             {tokens
               ? `${tokens[0].symbol} / ${tokens[1].symbol}`
               : "Manage position"}
@@ -49,11 +76,14 @@ export function PositionDetail({ position: p }: { position: Position }) {
         <div className="row position-actions">
           <button
             onClick={() => open("add")}
+            disabled={controlsDisabled}
             aria-label="Add liquidity to position"
           >
             Add liquidity
           </button>
-          <button onClick={() => open("withdraw")}>Withdraw</button>
+          <button disabled={controlsDisabled} onClick={() => open("withdraw")}>
+            Withdraw
+          </button>
         </div>
       </div>
       <div className="position-summary-grid">
@@ -64,10 +94,7 @@ export function PositionDetail({ position: p }: { position: Position }) {
         <section className="position-summary">
           <div className="row spread">
             <h3>Uncollected fees</h3>
-            <Action
-              run={() => actions.withdraw(true)}
-              disabled={p.amounts.fees0 === 0n && p.amounts.fees1 === 0n}
-            >
+            <Action run={claim} disabled={claimUnavailable(fresh, p)}>
               Collect fees
             </Action>
           </div>
@@ -84,6 +111,7 @@ export function PositionDetail({ position: p }: { position: Position }) {
           />
         ) : null}
       </section>
+      <PositionArtwork metadata={p.metadata} positionId={p.id.toString()} />
       <dialog
         ref={dialog}
         className="position-dialog"
@@ -104,21 +132,34 @@ export function PositionDetail({ position: p }: { position: Position }) {
             ×
           </button>
         </div>
-        {mode === "add" ? (
-          <PositionDepositFields
-            batchSupported={actions.batchSupported}
-            position={p}
-            tokens={tokens}
-            deposit={actions.deposit}
-            add={add}
-          />
-        ) : (
-          <WithdrawalFields
-            position={p}
-            actions={actions}
-            withdraw={withdraw}
-          />
-        )}
+        <fieldset
+          disabled={controlsDisabled}
+          className="position-action-fields"
+        >
+          {mode === "add" ? (
+            <PositionDepositFields
+              batchSupported={actions.batchSupported}
+              position={p}
+              tokens={tokens}
+              deposit={actions.deposit}
+              add={add}
+              slippage={actions.slippage}
+              readiness={actions.readiness}
+              refreshTokens={actions.refreshTokens}
+              nativeCalls={actions.nativeCalls}
+            />
+          ) : (
+            <WithdrawalFields
+              position={p}
+              actions={actions}
+              withdraw={withdraw}
+            />
+          )}
+        </fieldset>
+        <p className="status" role="status" aria-live="polite" aria-busy={busy}>
+          {status}
+        </p>
+        <TransactionActivity />
         <details className="transaction-settings">
           <summary>Advanced</summary>
           {mode === "withdraw" ? (
@@ -141,6 +182,12 @@ export function PositionDetail({ position: p }: { position: Position }) {
         </details>
       </dialog>
     </div>
+  );
+}
+
+function claimUnavailable(fresh: boolean, position: Position) {
+  return (
+    !fresh || (position.amounts.fees0 === 0n && position.amounts.fees1 === 0n)
   );
 }
 
@@ -167,11 +214,16 @@ function PositionAmounts({
               <small>Raw units · decimals unavailable</small>
             ) : null}
           </dt>
-          <dd title={formatUnits(values[i], t.decimals)}>
-            {Number(formatUnits(values[i], t.decimals)).toLocaleString(
-              "en-US",
-              { maximumSignificantDigits: 6 },
-            )}
+          <dd>
+            <span>{displayAmount(values[i], t.decimals)}</span>
+            <details>
+              <summary>Exact amount</summary>
+              <code>
+                {t.metadataMissing
+                  ? values[i].toString()
+                  : formatUnits(values[i], t.decimals)}
+              </code>
+            </details>
           </dd>
         </div>
       ))}
@@ -188,9 +240,6 @@ function WithdrawalFields({
   actions: ReturnType<typeof usePositionActions>;
   withdraw: () => Promise<void>;
 }) {
-  const fraction = BigInt(
-    Math.max(0, Math.min(100, Math.trunc(actions.portion || 0))),
-  );
   return (
     <div className="withdrawal-fields">
       <Field label="Withdraw percentage">
@@ -224,22 +273,143 @@ function WithdrawalFields({
           </button>
         ))}
       </div>
-      <p className="muted">Includes all uncollected fees.</p>
-      <PositionAmounts
-        position={{
-          ...p,
-          amounts: {
-            ...p.amounts,
-            principal0:
-              (p.amounts.principal0 * fraction) / 100n + p.amounts.fees0,
-            principal1:
-              (p.amounts.principal1 * fraction) / 100n + p.amounts.fees1,
-          },
-        }}
-        tokens={actions.tokens}
-        fees={false}
-      />
-      <Action run={withdraw}>Withdraw liquidity and fees</Action>
+      <WithdrawalReview position={p} actions={actions} withdraw={withdraw} />
+    </div>
+  );
+}
+
+function WithdrawalReview({
+  position: p,
+  actions,
+  withdraw,
+}: {
+  position: Position;
+  actions: ReturnType<typeof usePositionActions>;
+  withdraw: () => Promise<void>;
+}) {
+  const { review, error } = getWithdrawalState(
+    p,
+    actions.portion,
+    actions.slippage,
+  );
+  const recipient = actions.recipient || "No recipient selected";
+  return (
+    <>
+      <p className="muted">All uncollected fees are included in the receipt.</p>
+      <dl className="withdrawal-review">
+        <div>
+          <dt>Recipient</dt>
+          <dd>
+            <code>{recipient}</code>
+          </dd>
+        </div>
+        <div>
+          <dt>Liquidity</dt>
+          <dd>{review?.liquidity.toString() ?? "Unavailable"}</dd>
+        </div>
+        <ReviewRow
+          label="Principal"
+          values={review && [review.principal0, review.principal1]}
+          tokens={actions.tokens}
+        />
+        <ReviewRow
+          label="Fees"
+          values={review && [review.fees0, review.fees1]}
+          tokens={actions.tokens}
+        />
+        <ReviewRow
+          label="Total receipt"
+          values={review && [review.total0, review.total1]}
+          tokens={actions.tokens}
+        />
+        <ReviewRow
+          label="Minimum receipt"
+          values={review && [review.minimum0, review.minimum1]}
+          tokens={actions.tokens}
+        />
+      </dl>
+      <FullWithdrawalNotice review={review} />
+      <ReviewError error={error} />
+      <Action run={withdraw} disabled={!canWithdraw(review, actions.recipient)}>
+        Withdraw liquidity and fees
+      </Action>
+    </>
+  );
+}
+
+function FullWithdrawalNotice({
+  review,
+}: {
+  review?: ReturnType<typeof withdrawalReview>;
+}) {
+  return review?.full ? (
+    <p className="muted">
+      100% withdrawal burns the position NFT and closes this position.
+    </p>
+  ) : null;
+}
+
+function ReviewError({ error }: { error: string }) {
+  return error ? (
+    <p className="status" role="alert">
+      {error}
+    </p>
+  ) : null;
+}
+
+function canWithdraw(
+  review: ReturnType<typeof withdrawalReview> | undefined,
+  recipient: string,
+) {
+  return Boolean(review && isRecipient(recipient));
+}
+
+function getWithdrawalState(
+  position: Position,
+  portion: number,
+  slippage: number,
+) {
+  try {
+    return {
+      review: withdrawalReview(position.amounts, portion, slippage),
+      error: "",
+    };
+  } catch (error) {
+    return {
+      review: undefined,
+      error: error instanceof Error ? error.message : "Invalid withdrawal.",
+    };
+  }
+}
+
+function isRecipient(value: string) {
+  return isAddress(value);
+}
+
+function ReviewRow({
+  label,
+  values,
+  tokens,
+}: {
+  label: string;
+  values?: [bigint, bigint];
+  tokens?: [Token, Token];
+}) {
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd>
+        {tokens && values
+          ? values.map((value, i) => (
+              <span key={tokens[i].address}>
+                {tokens[i].symbol}:{" "}
+                {tokens[i].metadataMissing
+                  ? value.toString()
+                  : formatUnits(value, tokens[i].decimals)}
+              </span>
+            ))
+          : "Unavailable"}
+      </dd>
     </div>
   );
 }
