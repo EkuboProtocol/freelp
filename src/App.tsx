@@ -7,7 +7,6 @@ import { TermsPage } from "./TermsPage";
 import { DeployPage } from "./DeployPage";
 import { CreatePage } from "./CreatePage";
 import { PositionsPage } from "./PositionsPage";
-import { TransactionActivity } from "./TransactionActivity";
 import { DEFAULT_MANAGER, DEFAULT_POOL_KEY_INDEX } from "./deployments";
 function BuildPage() {
   return (
@@ -116,7 +115,6 @@ export function App() {
         </div>
       ) : null}
       <div id="main-content" tabIndex={-1}>
-        <TransactionActivity />
         <Page
           key={route.split("?")[0].split("/")[1] || "positions"}
           route={route}

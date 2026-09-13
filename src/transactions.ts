@@ -6,20 +6,16 @@ import { DEFAULT_POOL_KEY_INDEX } from "./deployments";
 import { toHex, isAddressEqual, type Address } from "viem";
 import type { Provider, Settings, Transaction } from "./types";
 import {
-  journalId,
-  upsertJournal,
-  updateJournal,
   walletRejected,
   isTransactionHash,
   type TransactionState,
-} from "./transactionJournal";
+} from "./transactionStatus";
 import { assertNativeFunding, paddedGas } from "./nativeGas";
 export type TransactionObserver = (event: {
   state: TransactionState;
   hash?: string;
   batchId?: string;
 }) => void;
-export type WalletIdentity = { uuid?: string; rdns?: string; name?: string };
 export async function assertWallet(
   provider: Provider,
   account: Address,
@@ -44,7 +40,6 @@ export async function executeTransaction(
   settings: Settings,
   tx: Transaction,
   observer?: TransactionObserver,
-  walletIdentity?: WalletIdentity,
 ) {
   const client = rpc(settings);
   observer?.({ state: "simulation" });
@@ -58,68 +53,31 @@ export async function executeTransaction(
   await assertWallet(provider, account, settings.chainId);
   await assertNativeFunding(settings, account, paddedGas(gas), tx.value ?? 0n);
   await assertWallet(provider, account, settings.chainId);
-  return submitAndObserve(
-    client,
-    provider,
-    account,
-    settings,
-    tx,
-    gas,
-    observer,
-    walletIdentity,
-  );
+  return submitAndObserve(client, provider, account, tx, gas, observer);
 }
 async function submitAndObserve(
   client: ReturnType<typeof rpc>,
   provider: Provider,
   account: Address,
-  settings: Settings,
   tx: Transaction,
   gas: bigint,
   observer?: TransactionObserver,
-  walletIdentity?: WalletIdentity,
 ) {
   observer?.({ state: "awaiting wallet" });
-  const id = journalId();
-  upsertJournal({
-    id,
-    chainId: settings.chainId,
-    account,
-    wallet: walletIdentity,
-    count: 1,
-    state: "awaiting wallet",
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
-  const hash = await requestHash(provider, account, tx, gas, id, observer);
+  const hash = await requestHash(provider, account, tx, gas, observer);
   if (!isTransactionHash(hash)) {
-    updateJournal(id, { state: "unknown" });
     observer?.({ state: "unknown" });
     throw new Error(
       "The wallet returned no valid transaction identifier. Its submission outcome is unknown; check the wallet before retrying.",
     );
   }
-  upsertJournal({
-    id,
-    chainId: settings.chainId,
-    account,
-    wallet: walletIdentity,
-    hash,
-    count: 1,
-    state: "submitted",
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
   observer?.({ state: "submitted", hash });
-  updateJournal(id, { state: "confirming" });
   observer?.({ state: "confirming", hash });
-  const receipt = await observeReceipt(client, hash, id, observer);
+  const receipt = await observeReceipt(client, hash, observer);
   if (receipt.status !== "success") {
-    updateJournal(id, { state: "reverted" });
     observer?.({ state: "reverted", hash });
     throw new Error(`Transaction reverted: ${hash}`);
   }
-  updateJournal(id, { state: "confirmed" });
   observer?.({ state: "confirmed", hash });
   return receipt;
 }
@@ -128,7 +86,6 @@ async function requestHash(
   account: Address,
   tx: Transaction,
   gas: bigint,
-  id: string,
   observer?: TransactionObserver,
 ) {
   try {
@@ -146,14 +103,12 @@ async function requestHash(
     });
   } catch (error) {
     if (walletRejected(error)) {
-      updateJournal(id, { state: "rejected" });
       observer?.({ state: "rejected" });
       throw new Error("Transaction rejected in the wallet.", { cause: error });
     }
-    updateJournal(id, { state: "unknown" });
     observer?.({ state: "unknown" });
     throw new Error(
-      "The wallet request outcome is unknown. Check transaction activity before retrying.",
+      "The wallet request outcome is unknown. Check your wallet for its status.",
       { cause: error },
     );
   }
@@ -185,7 +140,6 @@ async function validateTransaction(
 async function observeReceipt(
   client: ReturnType<typeof rpc>,
   hash: `0x${string}`,
-  id: string,
   observer?: TransactionObserver,
 ) {
   try {
@@ -202,10 +156,9 @@ async function observeReceipt(
       );
     return receipt;
   } catch (error) {
-    updateJournal(id, { state: "unknown" });
     observer?.({ state: "unknown", hash });
     throw new Error(
-      `Transaction ${hash} was submitted, but confirmation is unknown. Check transaction activity before retrying.`,
+      `Transaction ${hash} was submitted, but confirmation is unknown. Check your wallet for its status.`,
       { cause: error },
     );
   }

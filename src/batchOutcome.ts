@@ -1,7 +1,7 @@
 import type { GetCallsStatusReturnType } from "viem";
 import { rpc } from "./rpc";
 import type { Settings } from "./types";
-import { isTransactionHash, type TransactionState } from "./transactionJournal";
+import { isTransactionHash, type TransactionState } from "./transactionStatus";
 
 export async function batchOutcome(
   settings: Settings,

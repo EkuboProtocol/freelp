@@ -506,6 +506,7 @@ for (const { missingDecimals, native, batch } of [
       page.getByText("Existing pool: the initial-price input is ignored."),
     ).toBeVisible();
     await page.getByRole("link", { name: "Positions", exact: true }).click();
+    await seedIncompleteActivity(page);
     await page.reload();
     await page.getByRole("button", { name: "Connect Local wallet" }).click();
     await page.getByRole("link", { name: "Positions", exact: true }).click();
@@ -520,6 +521,12 @@ for (const { missingDecimals, native, batch } of [
     await expect(page.locator(".portfolio-positions")).toBeVisible();
     await page.goForward();
     await capturePosition(page);
+    await expect(
+      page.getByRole("complementary", { name: "Transaction activity" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Collect fees", exact: true }),
+    ).toBeDisabled();
     await page
       .getByRole("button", { name: "Add liquidity to position", exact: true })
       .click();
@@ -617,7 +624,43 @@ for (const { missingDecimals, native, batch } of [
     );
     expect(unexpected).toEqual([]);
     expect(await client.getBalance({ address: deployedManager })).toBe(0n);
+    expect(
+      await page.evaluate(
+        () =>
+          JSON.parse(
+            localStorage.getItem("freelp:transaction-journal")!,
+          ).entries.filter((entry: { id: string }) =>
+            entry.id.startsWith("stale-"),
+          ).length,
+      ),
+    ).toBe(4);
   });
+
+async function seedIncompleteActivity(page: Page) {
+  await page.evaluate((account) => {
+    const key = "freelp:transaction-journal";
+    if (localStorage.getItem(key) !== null)
+      throw new Error("Transactions must not create browser history");
+    const journal = { version: 1, entries: [] as object[] };
+    journal.entries.push(
+      ...["awaiting wallet", "submitted", "confirming", "unknown"].map(
+        (state, index) => ({
+          id: `stale-${index}`,
+          chainId: 31337,
+          account,
+          count: 1,
+          state,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          // Include both lost wallet responses and identifiers without receipts.
+          ...(index === 1 ? { hash: `0x${"12".repeat(32)}` } : {}),
+          ...(index === 2 ? { batchId: "old-wallet-batch" } : {}),
+        }),
+      ),
+    );
+    localStorage.setItem(key, JSON.stringify(journal));
+  }, account.address);
+}
 
 async function deployFetchers(page: Page) {
   await page

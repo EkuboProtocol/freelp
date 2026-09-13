@@ -5,14 +5,8 @@ import {
   assertWallet,
   executeTransaction,
   type TransactionObserver,
-  type WalletIdentity,
 } from "./transactions";
-import {
-  journalId,
-  upsertJournal,
-  updateJournal,
-  walletRejected,
-} from "./transactionJournal";
+import { walletRejected } from "./transactionStatus";
 import { batchOutcome } from "./batchOutcome";
 import { assertNativeFunding, paddedGas } from "./nativeGas";
 import { switchWalletChain } from "./walletNetwork";
@@ -25,17 +19,9 @@ export async function executeBatch(
   settings: Settings,
   calls: Transaction[],
   observer?: TransactionObserver,
-  walletIdentity?: WalletIdentity,
 ) {
   if (calls.length === 1)
-    return executeTransaction(
-      provider,
-      account,
-      settings,
-      calls[0],
-      observer,
-      walletIdentity,
-    );
+    return executeTransaction(provider, account, settings, calls[0], observer);
   const client = rpc(settings);
   observer?.({ state: "simulation" });
   if ((await client.getChainId()) !== settings.chainId)
@@ -77,66 +63,32 @@ export async function executeBatch(
   );
   await assertWallet(provider, account, settings.chainId);
   const wallet = walletClient(provider, account, settings);
-  return submitBatch(
-    wallet,
-    account,
-    settings,
-    calls,
-    batch,
-    observer,
-    walletIdentity,
-  );
+  return submitBatch(wallet, settings, batch, observer);
 }
 async function submitBatch(
   wallet: ReturnType<typeof walletClient>,
-  account: Address,
   settings: Settings,
-  calls: Transaction[],
   batch: { to: Address; data: `0x${string}`; value?: bigint }[],
   observer?: TransactionObserver,
-  walletIdentity?: WalletIdentity,
 ) {
-  const journal = journalId();
-  upsertJournal({
-    id: journal,
-    chainId: settings.chainId,
-    account,
-    wallet: walletIdentity,
-    count: calls.length,
-    state: "awaiting wallet",
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
   observer?.({ state: "awaiting wallet" });
   let id: string;
   try {
     ({ id } = await wallet.sendCalls({ calls: batch }));
   } catch (error) {
     const state = walletRejected(error) ? "rejected" : "unknown";
-    updateJournal(journal, { state });
     observer?.({ state });
     throw new Error(
       state === "rejected"
         ? "Batch rejected in the wallet."
-        : "Wallet batch submission outcome is unknown. Check transaction activity before retrying.",
+        : "Wallet batch submission outcome is unknown. Check your wallet for its status.",
       { cause: error },
     );
   }
-  upsertJournal({
-    id: journal,
-    chainId: settings.chainId,
-    account,
-    wallet: walletIdentity,
-    batchId: id,
-    count: calls.length,
-    state: "submitted",
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
   observer?.({ state: "submitted", batchId: id });
   // Never resubmit a pending or partially completed batch as separate calls.
-  const result = await waitForBatch(wallet, id, journal, observer);
-  return finalizeBatch(settings, result, id, journal, observer);
+  const result = await waitForBatch(wallet, id, observer);
+  return finalizeBatch(settings, result, id, observer);
 }
 type CallsStatus = Awaited<
   ReturnType<ReturnType<typeof walletClient>["waitForCallsStatus"]>
@@ -145,40 +97,34 @@ async function finalizeBatch(
   settings: Settings,
   result: CallsStatus,
   id: string,
-  journal: string,
   observer?: TransactionObserver,
 ) {
-  updateJournal(journal, { state: "confirming" });
   observer?.({ state: "confirming", batchId: id });
   const outcome = await batchOutcome(settings, result).catch((error) => {
-    updateJournal(journal, { state: "unknown" });
     observer?.({ state: "unknown", batchId: id });
     throw new Error(
-      `Batch ${id} was submitted but its receipts cannot be verified. Check status before retrying.`,
+      `Batch ${id} was submitted but its receipts cannot be verified. Check your wallet for its status.`,
       { cause: error },
     );
   });
-  updateJournal(journal, { state: outcome.state });
   observer?.({ state: outcome.state, batchId: id });
   if (outcome.state !== "confirmed" || !outcome.receipt)
     throw new Error(
-      `Batch ${id}: ${outcome.state}. Refresh transaction activity and balances before another action.`,
+      `Batch ${id}: ${outcome.state}. Check your wallet for details and refresh balances.`,
     );
   return outcome.receipt;
 }
 async function waitForBatch(
   wallet: ReturnType<typeof walletClient>,
   id: string,
-  journal: string,
   observer?: TransactionObserver,
 ) {
   try {
     return await wallet.waitForCallsStatus({ id, throwOnFailure: false });
   } catch (error) {
-    updateJournal(journal, { state: "unknown" });
     observer?.({ state: "unknown", batchId: id });
     throw new Error(
-      `Batch ${id} confirmation is unknown. Check transaction activity before retrying.`,
+      `Batch ${id} confirmation is unknown. Check your wallet for its status.`,
       { cause: error },
     );
   }

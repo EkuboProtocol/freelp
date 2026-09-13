@@ -14,7 +14,7 @@ Use plain English JSX and strings for user-facing copy. No translation framework
 
 Run lint, typecheck, unit tests, production build, accessibility checks, and Lighthouse thresholds. Exercise changed transaction flows with the local-chain browser tests. Complexity is capped at 10; simplify functions rather than raising the limit or adding suppressions.
 
-Terms are informational: no acceptance gate, consent storage, or terms version. Preserve wallet confirmation, simulation, chain/account checks, and transaction locking. No executable runtime updates. Preserve reproducible inputs and per-commit IPFS records.
+Terms are informational: no acceptance gate, consent storage, or terms version. Preserve wallet confirmation, simulation, chain/account checks, and an in-memory lock for the active submission. Transaction history belongs to the wallet: do not persist, recover, or display a browser transaction journal, or block actions based on historical requests. Availability comes from current blockchain state. No executable runtime updates. Preserve reproducible inputs and per-commit IPFS records.
 
 Every successful branch/tag build pins on the DigitalOcean node and attaches its gateway URL to the commit status and Actions summary. Keep FREELP_PUBLIC_RELEASE=false until stable IPNS publication is authorized separately.
 

@@ -12,7 +12,6 @@ import type { Token } from "./contracts";
 import { withdrawalReview } from "./positionReview";
 import { isAddress } from "viem";
 import { displayAmount } from "./displayAmount";
-import { TransactionActivity } from "./TransactionActivity";
 import { PositionArtwork } from "./PositionArtwork";
 
 export function PositionDetail({
@@ -159,7 +158,6 @@ export function PositionDetail({
         <p className="status" role="status" aria-live="polite" aria-busy={busy}>
           {status}
         </p>
-        <TransactionActivity />
         <details className="transaction-settings">
           <summary>Advanced</summary>
           {mode === "withdraw" ? (

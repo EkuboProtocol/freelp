@@ -1,9 +1,9 @@
-FreeLP 0.1.10 updates the application for the latest FreeLP contracts and on-chain NFT artwork.
+FreeLP 0.1.11 removes browser-side transaction tracking and history-based locks.
 
-Registered pools are discovered directly by token pair using bounded, block-pinned RPC reads. The Deploy page includes the immutable metadata renderer, and runtime verification checks the manager's Core, registry, and renderer bindings.
+Transaction history belongs to your wallet. FreeLP no longer stores a transaction journal, displays browser activity, or tries to recover past requests after a reload. Old records and missing transaction hashes cannot prevent new actions.
 
-Position creation atomically initializes the pool when needed, deposits liquidity, and refunds excess native currency. Deposits require positive minimum liquidity. Withdrawals and fee collection use the updated contract interface; withdrawal receipts are estimates, with no minimum-output guarantee or withdrawal slippage control.
+Controls use current on-chain balances, allowances, ownership, liquidity, and fees. The current action still performs simulation, verifies the wallet account and network, and temporarily prevents duplicate clicks while submitting. Confirmation errors direct you to your wallet.
 
-The new PoolKeyIndex, FreeLPMetadataRenderer, FreeLP, and FreeLPDataFetcher addresses can be deployed from the Deploy page. Earlier NFTs remain in their original manager and require a release targeting that manager. The new registry has its own registrations; previous registry entries are not automatically migrated.
+Contract artifacts and deployment addresses are unchanged from 0.1.10.
 
 Run `bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest`.
