@@ -8,7 +8,10 @@ import {
   prepareDeployment,
 } from "./deterministic";
 import { Action, ErrorText } from "./common";
-import { DEFAULT_POOL_KEY_INDEX } from "./deployments";
+import {
+  DEFAULT_POOL_KEY_INDEX,
+  DEFAULT_METADATA_RENDERER,
+} from "./deployments";
 
 export function DeploymentCard({ kind }: { kind: ContractKind }) {
   const { settings, send, revision, setStatus } = useSession();
@@ -21,7 +24,7 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
   const scope = JSON.stringify([settings, kind, revision, refresh]);
   const address = deploymentAddress(kind, settings.core);
   const current = checked?.scope === scope ? checked : undefined;
-  const usesCore = kind !== "Core";
+  const usesCore = !["Core", "FreeLPMetadataRenderer"].includes(kind);
   useEffect(() => {
     let active = true;
     deploymentStatus(settings, kind)
@@ -54,6 +57,8 @@ export function DeploymentCard({ kind }: { kind: ContractKind }) {
       {kind === "FreeLP" ? (
         <p>
           PoolKeyIndex: <code>{DEFAULT_POOL_KEY_INDEX}</code>
+          <br />
+          Metadata renderer: <code>{DEFAULT_METADATA_RENDERER}</code>
         </p>
       ) : null}
       <p role="status">

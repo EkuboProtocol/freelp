@@ -8,11 +8,7 @@ import { managerData, read } from "./contracts";
 import { depositWithRefund } from "./depositTransaction";
 import type { Position } from "./types";
 import { usePositionTokens } from "./usePositionTokens";
-import {
-  minimumLiquidity,
-  slippageFactor,
-  withdrawalReview,
-} from "./positionReview";
+import { minimumLiquidity, withdrawalReview } from "./positionReview";
 export function usePositionActions(p: Position) {
   const { settings, account, send } = useSession();
   const { tokens, readiness, refreshTokens } = usePositionTokens(p);
@@ -23,7 +19,7 @@ export function usePositionActions(p: Position) {
   const deposit = usePositionDeposit(p, tokens);
   async function withdraw() {
     await assertOwner();
-    const review = withdrawalReview(p.amounts, portion, slippage);
+    const review = withdrawalReview(p.amounts, portion);
     await send({
       to: settings.manager,
       data: managerData("multicall", [
@@ -32,8 +28,6 @@ export function usePositionActions(p: Position) {
             p.id,
             review.liquidity,
             getAddress(recipient),
-            review.minimum0,
-            review.minimum1,
           ]),
         ],
       ]),
@@ -43,19 +37,10 @@ export function usePositionActions(p: Position) {
     if (!account) throw new Error("Connect a wallet first.");
     await assertOwner();
     // Claims have independent intent: cancelled withdrawal settings never apply.
-    const factor = slippageFactor(50);
     await send({
       to: settings.manager,
       data: managerData("multicall", [
-        [
-          managerData("withdraw", [
-            p.id,
-            0n,
-            account,
-            (p.amounts.fees0 * factor) / 10000n,
-            (p.amounts.fees1 * factor) / 10000n,
-          ]),
-        ],
+        [managerData("withdraw", [p.id, 0n, account])],
       ]),
     });
   }

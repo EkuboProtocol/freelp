@@ -161,8 +161,8 @@ function RegisteredPools({
         ))}
       </div>
       <small>
-        Scanned {registry.scanned.toString()} of {registry.total.toString()}{" "}
-        registered entries.
+        Loaded {registry.scanned.toString()} of {registry.total.toString()}{" "}
+        registered pools for this pair.
         {registry.snapshot
           ? ` Snapshot block ${registry.snapshot.blockNumber}.`
           : ""}
@@ -204,9 +204,7 @@ function RegistryMessage({
     return null;
   return (
     <p role="status">
-      {registry.hasMore
-        ? "No pair matches in these entries yet. Load more to continue the scan."
-        : "No registered pools found for this pair. Use Advanced to configure a pool."}
+      No registered pools found for this pair. Use Advanced to configure a pool.
     </p>
   );
 }

@@ -22,6 +22,7 @@ export function DeployPage() {
       <NetworkSettingSelect />
       <DeploymentCard kind="Core" />
       <DeploymentCard kind="PoolKeyIndex" />
+      <DeploymentCard kind="FreeLPMetadataRenderer" />
       <DeploymentCard kind="FreeLP" />
       <DeploymentCard kind="FreeLPDataFetcher" />
       <details>

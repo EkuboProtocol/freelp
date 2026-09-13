@@ -13,7 +13,10 @@ import {
   deploymentAddress,
   prepareDeployment,
 } from "../../src/deterministic";
-import { DEFAULT_CONTRACTS } from "../../src/deployments";
+import {
+  DEFAULT_CONTRACTS,
+  DEFAULT_METADATA_RENDERER,
+} from "../../src/deployments";
 import { verifyCode } from "../../src/contracts";
 const rpcUrl = "http://127.0.0.1:18545";
 const node = createTestClient({
@@ -37,6 +40,7 @@ test("CREATE2 addresses are shared across accounts and occupied addresses cannot
   for (const [kind, account] of [
     ["Core", accounts[0]],
     ["PoolKeyIndex", accounts[1]],
+    ["FreeLPMetadataRenderer", accounts[1]],
     ["FreeLP", accounts[2]],
   ] as const) {
     const tx = await prepareDeployment(settings, kind);
@@ -50,7 +54,9 @@ test("CREATE2 addresses are shared across accounts and occupied addresses cannot
         ? DEFAULT_CONTRACTS.core
         : kind === "PoolKeyIndex"
           ? DEFAULT_CONTRACTS.poolKeyIndex
-          : DEFAULT_CONTRACTS.manager,
+          : kind === "FreeLPMetadataRenderer"
+            ? DEFAULT_METADATA_RENDERER
+            : DEFAULT_CONTRACTS.manager,
     );
     await verifyCode(settings, address, kind);
     await expect(prepareDeployment(settings, kind)).rejects.toThrow(

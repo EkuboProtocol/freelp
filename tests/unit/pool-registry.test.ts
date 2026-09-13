@@ -31,15 +31,20 @@ function client(ids: Hex[], count: bigint = BigInt(ids.length)) {
       functionName: string;
       args?: readonly unknown[];
     }) => {
-      if (request.functionName === "tokenPoolIdCount") return count;
-      if (request.functionName === "tokenPoolIds")
-        return ids[Number(request.args?.[1])] ?? ids[0];
+      if (request.functionName === "pairPoolIdCount") {
+        expect(request.args).toEqual([tokenA, tokenB]);
+        return count;
+      }
+      if (request.functionName === "pairPoolIds") {
+        expect(request.args?.slice(0, 2)).toEqual([tokenA, tokenB]);
+        return ids[Number(request.args?.[2])] ?? ids[0];
+      }
       return [key.token0, key.token1, key.config];
     },
   } as never;
 }
 
-test("scans the smaller token list and matches pairs in either order", async () => {
+test("reads the exact pair index in either token order", async () => {
   const page = await readRegistryPage(
     chainSettings(1),
     tokenB,
@@ -92,9 +97,9 @@ test("later pages keep the original block, list choice, and total even if the ch
       args: unknown[];
     }) => {
       pinnedReads.push(request.blockNumber);
-      if (request.functionName === "tokenPoolIdCount")
+      if (request.functionName === "pairPoolIdCount")
         throw new Error("Must reuse original count");
-      return request.functionName === "tokenPoolIds"
+      return request.functionName === "pairPoolIds"
         ? id
         : [key.token0, key.token1, key.config];
     },

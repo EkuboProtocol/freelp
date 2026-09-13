@@ -1,6 +1,6 @@
 {
   "repository": "EkuboProtocol/evm-contracts",
-  "commit": "e6da5777296bb470a90e32e9068c0d349c9fa085",
+  "commit": "042418e50d3fe2486635447f51d7e60d7d23f5fe",
   "compiler": "0.8.33",
   "evmVersion": "osaka",
   "optimizerRuns": 9999999,

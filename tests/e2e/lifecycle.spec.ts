@@ -20,7 +20,10 @@ import { foundry } from "viem/chains";
 import coreArtifact from "../../artifacts/Core.json" with { type: "json" };
 import managerArtifact from "../../artifacts/FreeLP.json" with { type: "json" };
 import fetcherArtifact from "../../artifacts/FreeLPDataFetcher.json" with { type: "json" };
-import { DEFAULT_POSITION_DATA_FETCHER } from "../../src/deployments";
+import {
+  DEFAULT_POSITION_DATA_FETCHER,
+  DEFAULT_MANAGER,
+} from "../../src/deployments";
 import tokenArtifact from "../../artifacts/TestToken.json" with { type: "json" };
 import {
   CREATE2_FACTORY,
@@ -154,7 +157,7 @@ for (const { missingDecimals, native, batch } of [
         ? (BigInt(value) * 10n ** 18n).toString()
         : value.toString();
     const core = "0x00000000000014aA86C5d3c41765bb24e11bd701";
-    const manager = "0xE7483a2F17A0F77480BDAc3bdb27CB002088BaA1";
+    const manager = DEFAULT_MANAGER;
     const tokens = [
       native ? zeroAddress : await deploy(tokenArtifact, [account.address]),
       await deploy(tokenArtifact, [account.address]),
@@ -388,6 +391,16 @@ for (const { missingDecimals, native, batch } of [
       page.getByRole("button", { name: "Deploy PoolKeyIndex", exact: true }),
     ).toHaveCount(0);
     await page
+      .getByRole("button", {
+        name: "Deploy FreeLPMetadataRenderer",
+        exact: true,
+      })
+      .click();
+    await expect(transactionStatus(page)).toContainText(
+      "Deployed FreeLPMetadataRenderer at",
+      { timeout: 30000 },
+    );
+    await page
       .getByRole("button", { name: "Deploy FreeLP", exact: true })
       .click();
     await expect(transactionStatus(page)).toContainText("Deployed FreeLP at", {
@@ -397,7 +410,7 @@ for (const { missingDecimals, native, batch } of [
       page.getByRole("button", { name: "Deploy FreeLP", exact: true }),
     ).toHaveCount(0);
     expect(deploymentAddress("FreeLP", deployedCore as Hex)).toBe(
-      "0xE7483a2F17A0F77480BDAc3bdb27CB002088BaA1",
+      DEFAULT_MANAGER,
     );
     await expect(
       prepareDeployment(
@@ -576,6 +589,13 @@ for (const { missingDecimals, native, batch } of [
     expect(accessibility.violations).toEqual([]);
     await page.getByRole("button", { name: "Withdraw", exact: true }).click();
     await page.getByLabel("Withdraw percentage").fill("50");
+    await expect(
+      page.getByText("Estimated receipt", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Minimum receipt", { exact: true }),
+    ).toHaveCount(0);
+    await expect(page.getByLabel("Slippage (basis points)")).toHaveCount(0);
     await page
       .getByRole("button", { name: "Withdraw liquidity and fees" })
       .click();

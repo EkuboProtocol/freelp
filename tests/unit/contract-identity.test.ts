@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { padHex, type Hex } from "viem";
+import { padHex, type Hex, type Address } from "viem";
 import { expectedRuntime } from "../../src/contractDeployment";
 import {
   assertContractRuntime,
@@ -7,11 +7,15 @@ import {
 } from "../../src/contractIdentity";
 import { DEFAULT_SETTINGS } from "../../src/config";
 import manager from "../../artifacts/FreeLP.json";
-import { DEFAULT_POOL_KEY_INDEX } from "../../src/deployments";
+import {
+  DEFAULT_POOL_KEY_INDEX,
+  DEFAULT_METADATA_RENDERER,
+} from "../../src/deployments";
 
 for (const kind of [
   "Core",
   "PoolKeyIndex",
+  "FreeLPMetadataRenderer",
   "FreeLP",
   "FreeLPDataFetcher",
 ] as const) {
@@ -37,8 +41,14 @@ test("manager immutables are bound to their exact protocol addresses", () => {
   const core = DEFAULT_SETTINGS.core;
   const expected = expectedRuntime("FreeLP", core);
   for (const [id, slots] of Object.entries(manager.immutableReferences)) {
-    const binding = manager.immutableBindings[id as keyof typeof manager.immutableBindings];
-    const address = binding === "core" ? core : DEFAULT_POOL_KEY_INDEX;
+    const binding =
+      manager.immutableBindings[id as keyof typeof manager.immutableBindings];
+    const addresses: Record<string, Address> = {
+      core,
+      poolKeyIndex: DEFAULT_POOL_KEY_INDEX,
+      metadataRenderer: DEFAULT_METADATA_RENDERER,
+    };
+    const address = addresses[binding]!;
     for (const { start, length } of slots) {
       expect(expected.slice(2 + start * 2, 2 + (start + length) * 2)).toBe(
         padHex(address, { size: 32 }).slice(2).toLowerCase(),

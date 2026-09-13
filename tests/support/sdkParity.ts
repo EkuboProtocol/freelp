@@ -64,7 +64,6 @@ export async function checkSdkParity(tokens: Address[]) {
           descriptor.poolKey,
           descriptor.tickLower,
           descriptor.tickUpper,
-          tick,
           local.max0,
           local.max1,
           local.liquidity,
@@ -79,6 +78,7 @@ export async function checkSdkParity(tokens: Address[]) {
           },
           createData,
           tokens[0] === zeroAddress ? local.max0 : 0n,
+          [managerData("maybeInitializePool", [descriptor.poolKey, tick])],
         );
         const simulation = client.simulateContract({
           account,
@@ -87,6 +87,7 @@ export async function checkSdkParity(tokens: Address[]) {
           functionName: "multicall",
           args: [
             [
+              managerData("maybeInitializePool", [descriptor.poolKey, tick]),
               createData,
               managerData("refundNativeToken"),
             ],
@@ -99,7 +100,7 @@ export async function checkSdkParity(tokens: Address[]) {
           const created = decodeFunctionResult({
             abi: managerAbi,
             functionName: "createPosition",
-            data: (result as `0x${string}`[])[0],
+            data: (result as `0x${string}`[])[1],
           }) as [bigint, bigint, bigint, bigint];
           expect(created.slice(1)).toEqual([
             local.liquidity,

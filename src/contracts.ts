@@ -17,7 +17,11 @@ import managerArtifact from "../artifacts/FreeLP.json" with { type: "json" };
 import { rpc } from "./rpc";
 import type { Position, Settings } from "./types";
 export type ContractKind =
-  "Core" | "PoolKeyIndex" | "FreeLP" | "FreeLPDataFetcher";
+  | "Core"
+  | "PoolKeyIndex"
+  | "FreeLPMetadataRenderer"
+  | "FreeLP"
+  | "FreeLPDataFetcher";
 export const managerAbi = managerArtifact.abi as Abi;
 export const managerData = (
   functionName: string,

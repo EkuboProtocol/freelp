@@ -5,6 +5,7 @@ import { decodeFunctionData, encodeFunctionResult, erc20Abi } from "viem";
 for (const missing of [
   "Core",
   "PoolKeyIndex",
+  "FreeLPMetadataRenderer",
   "FreeLP",
   "FreeLPDataFetcher",
 ] as const) {

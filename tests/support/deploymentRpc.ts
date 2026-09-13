@@ -2,12 +2,16 @@ import { rpcEndpoint } from "../../src/chains";
 import type { Page } from "@playwright/test";
 import { padHex, toHex, toFunctionSelector } from "viem";
 import { NETWORKS } from "../../src/networks";
-import { DEFAULT_CONTRACTS } from "../../src/deployments";
+import {
+  DEFAULT_CONTRACTS,
+  DEFAULT_METADATA_RENDERER,
+} from "../../src/deployments";
 import { expectedRuntime } from "../../src/contractDeployment";
 import { mockRegistry } from "./registryRpc";
 const addresses = {
   Core: DEFAULT_CONTRACTS.core,
   PoolKeyIndex: DEFAULT_CONTRACTS.poolKeyIndex,
+  FreeLPMetadataRenderer: DEFAULT_METADATA_RENDERER,
   FreeLP: DEFAULT_CONTRACTS.manager,
   FreeLPDataFetcher: DEFAULT_CONTRACTS.freeLPDataFetcher,
 };

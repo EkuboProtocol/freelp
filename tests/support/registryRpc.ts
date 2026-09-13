@@ -84,13 +84,17 @@ function registryResult(name: string, args: unknown[], keys: EvmPoolKey[]) {
     );
     return key ? [key.token0, key.token1, key.config] : undefined;
   }
-  const token = String(args[0]).toLowerCase();
+  const [token0, token1] = args
+    .slice(0, 2)
+    .map((token) => String(token).toLowerCase())
+    .sort();
   const matches = keys.filter(
     (key) =>
-      key.token0.toLowerCase() === token || key.token1.toLowerCase() === token,
+      key.token0.toLowerCase() === token0 &&
+      key.token1.toLowerCase() === token1,
   );
-  if (name === "tokenPoolIdCount") return BigInt(matches.length);
-  if (name === "tokenPoolIds")
-    return deriveEvmPoolId(matches[Number(args[1])], keccak256) as Hex;
+  if (name === "pairPoolIdCount") return BigInt(matches.length);
+  if (name === "pairPoolIds")
+    return deriveEvmPoolId(matches[Number(args[2])], keccak256) as Hex;
   return undefined;
 }

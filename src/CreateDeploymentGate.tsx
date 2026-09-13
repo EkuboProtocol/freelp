@@ -5,6 +5,7 @@ import { ContractIdentityError } from "./contractIdentity";
 import {
   DEFAULT_POSITION_DATA_FETCHER,
   DEFAULT_POOL_KEY_INDEX,
+  DEFAULT_METADATA_RENDERER,
 } from "./deployments";
 import { errorMessage } from "./errors";
 import type { Settings } from "./types";
@@ -15,6 +16,7 @@ export async function checkCreateDeployment(settings: Settings) {
   const required = [
     ["Core", settings.core],
     ["PoolKeyIndex", DEFAULT_POOL_KEY_INDEX],
+    ["FreeLPMetadataRenderer", DEFAULT_METADATA_RENDERER],
     ["FreeLP", settings.manager],
     [
       "FreeLPDataFetcher",
@@ -68,8 +70,9 @@ export function CreateDeploymentGate({ children }: { children: ReactNode }) {
           : "Unable to verify this network"}
       </h3>
       <p>
-        Core, PoolKeyIndex, FreeLPDataFetcher, and the position manager must
-        match this build before you can create a position on this network.
+        Core, PoolKeyIndex, the metadata renderer, FreeLPDataFetcher, and the
+        position manager must match this build before you can create a position
+        on this network.
       </p>
       <ul>
         {current.errors.map((error) => (

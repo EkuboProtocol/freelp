@@ -20,12 +20,17 @@ export function createDepositTransaction(
       quote.descriptor.poolKey,
       quote.descriptor.tickLower,
       quote.descriptor.tickUpper,
-      quote.initialTick,
       quote.max0,
       quote.max1,
       minLiquidity,
     ]),
     quote.descriptor.poolKey.token0 === zeroAddress ? quote.max0 : 0n,
+    [
+      managerData("maybeInitializePool", [
+        quote.descriptor.poolKey,
+        quote.initialTick,
+      ]),
+    ],
   );
 }
 
@@ -35,11 +40,12 @@ export function depositWithRefund(
   settings: Settings,
   deposit: Hex,
   value = 0n,
+  before: Hex[] = [],
 ): Transaction {
   return {
     to: settings.manager,
     data: managerData("multicall", [
-      [deposit, managerData("refundNativeToken")],
+      [...before, deposit, managerData("refundNativeToken")],
     ]),
     value,
   };

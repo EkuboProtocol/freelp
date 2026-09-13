@@ -85,7 +85,7 @@ test("registered pools remain browsable before this manager is deployed", async 
   ).toHaveCount(0);
 });
 
-test("partial scans expose Load more and do not pretend to be complete pair discovery", async ({
+test("pair pagination excludes unrelated pools and exposes Load more until complete", async ({
   page,
 }) => {
   const config = encodeEvmConcentratedPoolConfig({
@@ -100,7 +100,14 @@ test("partial scans expose Load more and do not pretend to be complete pair disc
   const keys: EvmPoolKey[] = [
     ...others.map((token1) => ({ token0: zeroAddress, token1, config })),
     ...others.map((token0) => ({ token0, token1: BASE_PAIR.token1, config })),
-    { ...BASE_PAIR, config },
+    ...Array.from({ length: 17 }, (_, fee) => ({
+      ...BASE_PAIR,
+      config: encodeEvmConcentratedPoolConfig({
+        fee: BigInt(fee),
+        tickSpacing: 100,
+        extension: zeroAddress,
+      }),
+    })),
   ];
   await page.route(
     (url) => url.protocol === "https:",
@@ -110,16 +117,13 @@ test("partial scans expose Load more and do not pretend to be complete pair disc
   await mockPoolData(page, true);
   await mockRegistry(page, keys);
   await page.goto(url);
-  await expect(
-    page.getByText(
-      "No pair matches in these entries yet. Load more to continue the scan.",
-    ),
-  ).toBeVisible();
+  await expect(page.locator(".registered-pool-card")).toHaveCount(16);
+  await expect(page.getByText(/Loaded 16 of 17/)).toBeVisible();
   await page
     .getByRole("button", { name: "Load more registered pools" })
     .click();
-  await expect(page.locator(".registered-pool-card")).toHaveCount(1);
-  await expect(page.getByText(/Scanned 17 of 17/)).toBeVisible();
+  await expect(page.locator(".registered-pool-card")).toHaveCount(17);
+  await expect(page.getByText(/Loaded 17 of 17/)).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Load more registered pools" }),
   ).toHaveCount(0);

@@ -8,7 +8,7 @@ The application uses only configured RPC endpoints and injected wallets. Core, F
 
 Use black/white styling and system fonts. Retain required license and protocol identifiers.
 
-PoolKeyIndex is also fixed by the build. Discover registered pools for a selected pair with bounded, block-pinned RPC reads; registry coverage is not all initialized Core pools. Native deposits must include refundNativeToken in the same manager multicall. The current manager uses flat write arguments without deadlines. Import compiler AST-derived immutable bindings, verifying both Core and index addresses.
+PoolKeyIndex and FreeLPMetadataRenderer are also fixed by the build. Discover registered pools with bounded, block-pinned pairPoolIdCount/pairPoolIds reads; registry coverage is not all initialized Core pools. Creation prepends maybeInitializePool; deposits require positive minimum liquidity and include refundNativeToken in the same manager multicall. Withdrawals have no minimum-output arguments. Import compiler AST-derived immutable bindings, verifying Core, index, and renderer addresses.
 
 Use plain English JSX and strings for user-facing copy. No translation framework or catalogs.
 

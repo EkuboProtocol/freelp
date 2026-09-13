@@ -18,6 +18,7 @@ export function bindImmutables(
       const name = names.get(id);
       if (name === "CORE" || name === "ACCOUNTANT") return [id, "core"];
       if (name === "POOL_KEY_INDEX") return [id, "poolKeyIndex"];
+      if (name === "METADATA_RENDERER") return [id, "metadataRenderer"];
       throw new Error(
         `Unreviewed immutable ${id} (${name ?? "AST unavailable"}). Build with --ast and review its constructor binding.`,
       );

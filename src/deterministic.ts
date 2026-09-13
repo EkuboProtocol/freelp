@@ -3,7 +3,10 @@ import { assertContractRuntime } from "./contractIdentity";
 import { concatHex, getCreate2Address, type Address } from "viem";
 import { verifyCode, type ContractKind } from "./contracts";
 import { rpc } from "./rpc";
-import { DEFAULT_POOL_KEY_INDEX } from "./deployments";
+import {
+  DEFAULT_POOL_KEY_INDEX,
+  DEFAULT_METADATA_RENDERER,
+} from "./deployments";
 import type { Settings, Transaction } from "./types";
 
 // EkuboProtocol/evm-contracts script/DeployAll.s.sol. Never derive from an account.
@@ -50,13 +53,21 @@ export async function prepareDeployment(
     throw new Error(
       "The standard CREATE2 factory is missing or has unexpected code on this network.",
     );
-  if (kind !== "Core") await verifyCode(settings, settings.core, "Core");
-  if (kind === "FreeLP")
-    await verifyCode(settings, DEFAULT_POOL_KEY_INDEX, "PoolKeyIndex");
+  await verifyDependencies(settings, kind);
   return {
     to: CREATE2_FACTORY,
     data: concatHex([DEPLOYMENT_SALT, deployment(kind, settings.core)]),
   };
+}
+
+async function verifyDependencies(settings: Settings, kind: ContractKind) {
+  if (kind !== "Core" && kind !== "FreeLPMetadataRenderer")
+    await verifyCode(settings, settings.core, "Core");
+  if (kind === "FreeLP")
+    await Promise.all([
+      verifyCode(settings, DEFAULT_POOL_KEY_INDEX, "PoolKeyIndex"),
+      verifyCode(settings, DEFAULT_METADATA_RENDERER, "FreeLPMetadataRenderer"),
+    ]);
 }
 
 export async function verifyDeploymentTransaction(
@@ -66,6 +77,7 @@ export async function verifyDeploymentTransaction(
   const kinds = [
     "Core",
     "PoolKeyIndex",
+    "FreeLPMetadataRenderer",
     "FreeLP",
     "FreeLPDataFetcher",
   ] as const;

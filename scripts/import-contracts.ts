@@ -27,6 +27,7 @@ const outputs: { name: string; output: unknown }[] = [];
 for (const name of [
   "Core",
   "FreeLP",
+  "FreeLPMetadataRenderer",
   "TestToken",
   "FreeLPDataFetcher",
   "PoolKeyIndex",

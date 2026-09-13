@@ -170,15 +170,17 @@ export function PositionDetail({
               />
             </Field>
           ) : null}
-          <Field label="Slippage (basis points)">
-            <input
-              type="number"
-              min={0}
-              max={1000}
-              value={actions.slippage}
-              onChange={(e) => actions.setSlippage(Number(e.target.value))}
-            />
-          </Field>
+          {mode === "add" ? (
+            <Field label="Slippage (basis points)">
+              <input
+                type="number"
+                min={0}
+                max={1000}
+                value={actions.slippage}
+                onChange={(e) => actions.setSlippage(Number(e.target.value))}
+              />
+            </Field>
+          ) : null}
         </details>
       </dialog>
     </div>
@@ -287,15 +289,14 @@ function WithdrawalReview({
   actions: ReturnType<typeof usePositionActions>;
   withdraw: () => Promise<void>;
 }) {
-  const { review, error } = getWithdrawalState(
-    p,
-    actions.portion,
-    actions.slippage,
-  );
+  const { review, error } = getWithdrawalState(p, actions.portion);
   const recipient = actions.recipient || "No recipient selected";
   return (
     <>
-      <p className="muted">All uncollected fees are included in the receipt.</p>
+      <p className="muted">
+        Estimated amounts include all uncollected fees. Actual amounts may
+        change before execution; withdrawals have no minimum-output limit.
+      </p>
       <dl className="withdrawal-review">
         <div>
           <dt>Recipient</dt>
@@ -318,13 +319,8 @@ function WithdrawalReview({
           tokens={actions.tokens}
         />
         <ReviewRow
-          label="Total receipt"
+          label="Estimated receipt"
           values={review && [review.total0, review.total1]}
-          tokens={actions.tokens}
-        />
-        <ReviewRow
-          label="Minimum receipt"
-          values={review && [review.minimum0, review.minimum1]}
           tokens={actions.tokens}
         />
       </dl>
@@ -364,14 +360,10 @@ function canWithdraw(
   return Boolean(review && isRecipient(recipient));
 }
 
-function getWithdrawalState(
-  position: Position,
-  portion: number,
-  slippage: number,
-) {
+function getWithdrawalState(position: Position, portion: number) {
   try {
     return {
-      review: withdrawalReview(position.amounts, portion, slippage),
+      review: withdrawalReview(position.amounts, portion),
       error: "",
     };
   } catch (error) {

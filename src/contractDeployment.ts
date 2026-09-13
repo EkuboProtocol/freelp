@@ -9,13 +9,18 @@ import coreArtifact from "../artifacts/Core.json" with { type: "json" };
 import managerArtifact from "../artifacts/FreeLP.json" with { type: "json" };
 import snapshotArtifact from "../artifacts/FreeLPDataFetcher.json" with { type: "json" };
 import indexArtifact from "../artifacts/PoolKeyIndex.json" with { type: "json" };
-import { DEFAULT_POOL_KEY_INDEX } from "./deployments";
+import rendererArtifact from "../artifacts/FreeLPMetadataRenderer.json" with { type: "json" };
+import {
+  DEFAULT_POOL_KEY_INDEX,
+  DEFAULT_METADATA_RENDERER,
+} from "./deployments";
 import type { ContractKind } from "./contracts";
 const CONTRACT_ARTIFACTS = {
   Core: coreArtifact,
   FreeLP: managerArtifact,
   FreeLPDataFetcher: snapshotArtifact,
   PoolKeyIndex: indexArtifact,
+  FreeLPMetadataRenderer: rendererArtifact,
 };
 export function deployment(kind: ContractKind, core: Address) {
   const artifact = CONTRACT_ARTIFACTS[kind];
@@ -27,8 +32,10 @@ export function deployment(kind: ContractKind, core: Address) {
 }
 
 function constructorArgs(kind: ContractKind, core: Address) {
-  if (kind === "Core") return [];
-  return kind === "FreeLP" ? [core, DEFAULT_POOL_KEY_INDEX] : [core];
+  if (kind === "Core" || kind === "FreeLPMetadataRenderer") return [];
+  return kind === "FreeLP"
+    ? [core, DEFAULT_POOL_KEY_INDEX, DEFAULT_METADATA_RENDERER]
+    : [core];
 }
 
 /** Bind AST-identified immutable roles, including the shared registry. */
@@ -53,9 +60,14 @@ export function expectedRuntime(kind: ContractKind, core: Address): Hex {
 }
 
 function immutableValue(binding: string, core: Address) {
-  if (binding !== "core" && binding !== "poolKeyIndex")
+  const values: Record<string, Address> = {
+    core,
+    poolKeyIndex: DEFAULT_POOL_KEY_INDEX,
+    metadataRenderer: DEFAULT_METADATA_RENDERER,
+  };
+  if (!Object.hasOwn(values, binding))
     throw new Error("Unrecognized immutable binding in bundled artifact.");
-  return padHex(binding === "core" ? core : DEFAULT_POOL_KEY_INDEX, {
+  return padHex(values[binding], {
     size: 32,
   })
     .slice(2)

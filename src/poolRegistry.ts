@@ -39,7 +39,6 @@ export type RegistrySnapshot = {
   chainId: number;
   token0: Address;
   token1: Address;
-  scanToken: Address;
   total: bigint;
 };
 export type RegistryPage = {
@@ -71,27 +70,21 @@ async function captureSnapshot(
   ]);
   if (chainId !== settings.chainId)
     throw new Error("RPC chain does not match the selected network.");
-  const [a, b] = await Promise.all(
-    tokens.map(async (token) => {
-      const count = await client.readContract({
-        address: registryAddress(),
-        abi,
-        functionName: "tokenPoolIdCount",
-        args: [token],
-        blockNumber,
-      });
-      if (typeof count !== "bigint" || count < 0n)
-        throw new Error("Invalid pool count returned by the registry.");
-      return count;
-    }),
-  );
+  const count = await client.readContract({
+    address: registryAddress(),
+    abi,
+    functionName: "pairPoolIdCount",
+    args: tokens,
+    blockNumber,
+  });
+  if (typeof count !== "bigint" || count < 0n)
+    throw new Error("Invalid pool count returned by the registry.");
   return {
     chainId,
     blockNumber,
     token0: tokens[0],
     token1: tokens[1],
-    scanToken: a <= b ? tokens[0] : tokens[1],
-    total: a <= b ? a : b,
+    total: count,
   };
 }
 
@@ -145,8 +138,8 @@ export async function readRegistryPage(
       (await client.readContract({
         address: registryAddress(),
         abi,
-        functionName: "tokenPoolIds",
-        args: [snapshot.scanToken, index],
+        functionName: "pairPoolIds",
+        args: [snapshot.token0, snapshot.token1, index],
         blockNumber: snapshot.blockNumber,
       })) as Hex,
   );
@@ -164,13 +157,17 @@ export async function readRegistryPage(
       config: value[2],
     });
   });
-  const matches = pools.filter(
+  const matches = pools.every(
     (pool) =>
       pool.key.token0.toLowerCase() === tokens[0].toLowerCase() &&
       pool.key.token1.toLowerCase() === tokens[1].toLowerCase(),
   );
+  if (!matches)
+    throw new Error(
+      "Registry returned a pool for a different pair. Check the RPC and retry.",
+    );
   return {
-    pools: matches,
+    pools,
     scanned: end,
     total: snapshot.total,
     hasMore: end < snapshot.total,
