@@ -47,25 +47,27 @@ export function RangeFields({
   }
   return (
     <div className="range-controls">
-      <RangeModeControls
-        stable={stable}
-        range={range}
-        decimals={decimals}
-        setRange={setRange}
-      />
-      {!stable ? (
-        <div className="row range-presets">
-          {[4, 16, 64, 256].map((n) => (
-            <button
-              key={n}
-              disabled={!Number(range.prices[2])}
-              onClick={() => select(n)}
-            >
-              ±{decimalDisplay(spacingPercent(n * range.spacing), 3)}%
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <div className="range-toolbar">
+        <RangeModeControls
+          stable={stable}
+          range={range}
+          decimals={decimals}
+          setRange={setRange}
+        />
+        {!stable ? (
+          <div className="row range-presets">
+            {[4, 16, 64, 256].map((n) => (
+              <button
+                key={n}
+                disabled={!Number(range.prices[2])}
+                onClick={() => select(n)}
+              >
+                ±{decimalDisplay(spacingPercent(n * range.spacing), 3)}%
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
       <small>
         Prices in {symbols[1]} per {symbols[0]}.
       </small>

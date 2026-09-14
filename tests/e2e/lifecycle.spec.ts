@@ -502,6 +502,7 @@ for (const { missingDecimals, native, batch } of [
     await page.getByTestId("deposit-amount-0").fill(amount(1));
     await page.getByTestId("deposit-amount-1").fill(amount(1));
     await expect(page.getByLabel("Initial price")).toHaveCount(0);
+    await page.getByText("Price and pool details", { exact: true }).click();
     await expect(
       page.getByText("Existing pool: the initial-price input is ignored."),
     ).toBeVisible();

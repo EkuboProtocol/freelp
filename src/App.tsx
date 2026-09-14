@@ -143,12 +143,6 @@ function MainNavigation({ route }: { route: string }) {
         Positions
       </a>
       <a
-        href="#/create"
-        aria-current={route.startsWith("#/create") ? "page" : undefined}
-      >
-        Create
-      </a>
-      <a
         href="#/networks"
         aria-current={
           route.startsWith("#/networks") || route.startsWith("#/settings")

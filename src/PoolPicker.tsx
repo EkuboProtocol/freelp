@@ -146,8 +146,8 @@ function RegisteredPools({
   return (
     <div className="registered-pools" aria-label="Registered pools">
       <p className="registry-note">
-        Registered pools only. This registry does not include every initialized
-        pool. You can configure an unregistered pool in Advanced.
+        Registered pools for this pair. Use Advanced to configure a pool not
+        listed here.
       </p>
       <RegistryMessage registry={registry} />
       <div className="registered-pool-list">
@@ -160,30 +160,32 @@ function RegisteredPools({
           />
         ))}
       </div>
-      <small>
-        Loaded {registry.scanned.toString()} of {registry.total.toString()}{" "}
-        registered pools for this pair.
-        {registry.snapshot
-          ? ` Snapshot block ${registry.snapshot.blockNumber}.`
-          : ""}
-      </small>
-      <div className="registry-actions">
-        <button
-          type="button"
-          disabled={registry.loading}
-          onClick={registry.retry}
-        >
-          {registry.error ? "Retry pools" : "Refresh pools"}
-        </button>
-        {registry.hasMore ? (
+      <div className="registry-footer">
+        <small>
+          Loaded {registry.scanned.toString()} of {registry.total.toString()}{" "}
+          registered pools for this pair.
+          {registry.snapshot
+            ? ` Snapshot block ${registry.snapshot.blockNumber}.`
+            : ""}
+        </small>
+        <div className="registry-actions">
           <button
             type="button"
-            onClick={registry.loadMore}
             disabled={registry.loading}
+            onClick={registry.retry}
           >
-            Load more registered pools
+            {registry.error ? "Retry pools" : "Refresh pools"}
           </button>
-        ) : null}
+          {registry.hasMore ? (
+            <button
+              type="button"
+              onClick={registry.loadMore}
+              disabled={registry.loading}
+            >
+              Load more registered pools
+            </button>
+          ) : null}
+        </div>
       </div>
       {registry.error ? (
         <p className="registry-error" role="alert">
@@ -236,7 +238,11 @@ function RegisteredPoolCard({
           ? `Concentrated, spacing ${pool.tickSpacing}`
           : `${pool.poolType === "full_range" ? "Full-range" : "Stableswap"}, center ${pool.stableswapParams?.centerTick}, amplification ${pool.stableswapParams?.amplification}`}
       </small>
-      <small className="mono">Extension: {pool.extension}</small>
+      <small>
+        {pool.extension === zeroAddress
+          ? "No extension"
+          : `Extension: ${pool.extension}`}
+      </small>
     </button>
   );
 }
@@ -248,13 +254,15 @@ function PoolSummary({ form, exact }: { form: CreateForm; exact: string }) {
       ? `Center tick: ${form.center}; amplification exponent: ${form.amplification}`
       : `Tick spacing: ${decimalDisplay(spacingPercent(form.range.spacing), 3)}%`;
   return (
-    <div className="pool-summary" aria-label="Selected pool configuration">
-      <strong>Current configuration</strong>
-      <span>Type: {type}</span>
-      <span>Fee: {decimalDisplay(Number(percentFromExactFee(exact)))}%</span>
-      <span>{parameter}</span>
-      <span className="mono">Extension: {form.extension || zeroAddress}</span>
-    </div>
+    <details className="pool-summary" aria-label="Selected pool configuration">
+      <summary>Selected pool details</summary>
+      <div className="pool-summary-values">
+        <span>Type: {type}</span>
+        <span>Fee: {decimalDisplay(Number(percentFromExactFee(exact)))}%</span>
+        <span>{parameter}</span>
+        <span className="mono">Extension: {form.extension || zeroAddress}</span>
+      </div>
+    </details>
   );
 }
 function displayedFee(form: CreateForm) {

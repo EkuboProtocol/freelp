@@ -269,6 +269,7 @@ function PortfolioList({
         </div>
         <div className="positions-empty">
           <WalletConnectButton />
+          <a href="#/create">Create position</a>
         </div>
       </section>
     );

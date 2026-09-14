@@ -582,10 +582,6 @@ header { flex-wrap: wrap; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
-.create-position {
-  max-width: 920px;
-  margin: auto;
-}
 .currency-pair {
   margin: 20px 0;
 }

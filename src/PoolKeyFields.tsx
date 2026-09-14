@@ -25,13 +25,15 @@ export function PoolKeyFields({
           <option value="stable">Stableswap</option>
         </select>
       </Field>
-      <Field label={"Extension address"}>
-        <input
-          value={form.extension}
-          onChange={(e) => update("extension", e.target.value)}
-          spellCheck={false}
-        />
-      </Field>
+      <div className="pool-extension-field">
+        <Field label={"Extension address"}>
+          <input
+            value={form.extension}
+            onChange={(e) => update("extension", e.target.value)}
+            spellCheck={false}
+          />
+        </Field>
+      </div>
       {form.kind === "stable" ? (
         <>
           <Field label={"Amplification exponent"}>

@@ -28,6 +28,7 @@ import { NetworkScope, useSession } from "./session";
 import { Action, Field, ErrorText } from "./common";
 import type { Settings } from "./types";
 import { WalletConnectButton } from "./WalletConnectButton";
+import "./create-position.css";
 export function CreatePage() {
   const { settings, networks, selectNetwork, busy } = useSession();
   const [sourceForm, setForm] = useCreateForm(settings.chainId);
@@ -42,25 +43,35 @@ export function CreatePage() {
   return (
     <NetworkScope settings={network}>
       <section className="create-position">
-        <h2>Create position</h2>
-        <Field label={"Network"}>
-          <select
-            aria-label={"Network"}
-            disabled={busy}
-            value={form.chain}
-            onChange={(event) => {
-              const chain = Number(event.target.value);
-              selectNetwork(chain);
-              setForm(defaultCreateForm(chain));
-            }}
-          >
-            {networks.map((n) => (
-              <option key={n.chainId} value={n.chainId}>
-                {networkName(n.chainId, n.name)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <a className="create-back" href="#/positions">
+          All positions
+        </a>
+        <div className="create-heading">
+          <div>
+            <h2>Create position</h2>
+            <p>Choose a pool, set your range, and fund the position.</p>
+          </div>
+          <div className="create-network">
+            <Field label={"Network"}>
+              <select
+                aria-label={"Network"}
+                disabled={busy}
+                value={form.chain}
+                onChange={(event) => {
+                  const chain = Number(event.target.value);
+                  selectNetwork(chain);
+                  setForm(defaultCreateForm(chain));
+                }}
+              >
+                {networks.map((n) => (
+                  <option key={n.chainId} value={n.chainId}>
+                    {networkName(n.chainId, n.name)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+        </div>
         <CreatePositionForm
           key={network.chainId}
           form={snapCreateForm(form, networkCurrencies(network))}
@@ -142,11 +153,7 @@ function CreatePositionForm({
   const nativeCalls = createGasCalls(settings, current, slippage);
   const minLiquidity = createMinimum(current?.liquidity, slippage);
   return (
-    <div>
-      <p>
-        Choose your tokens and pool, set a price range, and enter either deposit
-        amount. The matching amount and preview update automatically.
-      </p>
+    <div className="create-form">
       <div className="grid currency-pair">
         <CurrencySelect
           value={a}
@@ -163,7 +170,7 @@ function CreatePositionForm({
       <CreateDeploymentGate>
         <PoolLoadStatus pool={pool} refreshBalances={refresh} />
         {pool.data ? (
-          <>
+          <div className="create-workbench">
             <section className="range-section">
               <h3>Price range and liquidity</h3>
               {pool.data.state.sqrtRatio === 0n ? (
@@ -191,149 +198,190 @@ function CreatePositionForm({
                 initialized={pool.data.state.sqrtRatio !== 0n}
               />
             </section>
-            <h3>Deposit amounts</h3>
-            <div className="grid deposit-inputs">
-              <div className="deposit-input">
-                <strong className="deposit-token">{symbols[0]}</strong>
-                <SnappedInput
-                  snapped={maxA}
-                  aria-label={`${symbols[0]} amount`}
-                  inputMode="decimal"
-                  placeholder="0"
-                  disabled={inactive[0]}
-                  data-testid="deposit-amount-0"
-                  value={sourceForm.maxA}
-                  onChange={(e) => {
-                    setForm((previous) =>
-                      changeCreateAmount(previous, 0, e.target.value),
-                    );
-                  }}
-                />
-                <TokenBalance
-                  address={a}
-                  fallback=""
-                  disabled={inactive[0]}
-                  nativeCalls={nativeCalls}
-                  onAmount={(value) => {
-                    setForm((previous) =>
-                      changeCreateAmount(previous, 0, value),
-                    );
-                  }}
-                />
+            <section
+              className="create-deposit"
+              aria-labelledby="deposit-heading"
+            >
+              <div className="create-deposit-heading">
+                <h3 id="deposit-heading">Deposit amounts</h3>
+                <p>Enter either amount. The other follows your range.</p>
               </div>
-              <div className="deposit-input">
-                <strong className="deposit-token">{symbols[1]}</strong>
-                <SnappedInput
-                  snapped={maxB}
-                  aria-label={`${symbols[1]} amount`}
-                  inputMode="decimal"
-                  placeholder="0"
-                  disabled={inactive[1]}
-                  data-testid="deposit-amount-1"
-                  value={sourceForm.maxB}
-                  onChange={(e) => {
-                    setForm((previous) =>
-                      changeCreateAmount(previous, 1, e.target.value),
-                    );
-                  }}
-                />
-                <TokenBalance
-                  address={b}
-                  fallback=""
-                  disabled={inactive[1]}
-                  nativeCalls={nativeCalls}
-                  onAmount={(value) => {
-                    setForm((previous) =>
-                      changeCreateAmount(previous, 1, value),
-                    );
-                  }}
-                />
-              </div>
-            </div>
-            <div className="slippage-control">
-              <Field label={"Slippage (basis points)"}>
-                <SnappedInput
-                  aria-label={"Slippage (basis points)"}
-                  snapped={slippage}
-                  type="number"
-                  min={0}
-                  max={1000}
-                  value={sourceForm.slippage}
-                  onChange={(e) => setSlippage(Number(e.target.value))}
-                />
-              </Field>
-            </div>
-            <ErrorText error={previewError} />
-            {current ? (
-              <div className="panel">
-                <h3>Deposit preview</h3>
-                <PricePreview {...current} />
-                {current.tokens.map((t, i) => (
-                  <p key={t.address}>
-                    {t.symbol}:{" "}
-                    {formatUnits(
-                      i === 0 ? current.used0 : current.used1,
-                      t.decimals,
-                    )}{" "}
-                    {ready &&
-                    t.balance < (i === 0 ? current.max0 : current.max1) ? (
-                      <strong>Insufficient {t.symbol} balance</strong>
-                    ) : null}
-                    {current.inactive[i] ? (
-                      <small>
-                        This token is not needed for the selected range.
-                      </small>
-                    ) : null}
-                  </p>
-                ))}
-                <p>
-                  Estimated liquidity: {current.liquidity.toString()}. Minimum
-                  received after liquidity slippage: {minLiquidity.toString()}.
-                </p>
-                <CreationPrerequisites
-                  account={account}
-                  ready={ready}
-                  minLiquidity={minLiquidity}
-                />
-                <div className="row">
-                  {(ready && batchSupported === false
-                    ? current.tokens
-                    : []
-                  ).map((t, i) => (
-                    <ApprovalButton
-                      key={t.address}
-                      token={t}
-                      amount={formatUnits(
-                        i === 0 ? current.max0 : current.max1,
-                        t.decimals,
-                      )}
-                    />
-                  ))}
-                  <Action
-                    disabled={
-                      batchSupported === undefined ||
-                      !ready ||
-                      minLiquidity === 0n ||
-                      current.tokens.some(
-                        (t, i) =>
-                          (!batchSupported &&
-                            t.allowance <
-                              (i === 0 ? current.max0 : current.max1)) ||
-                          t.balance < (i === 0 ? current.max0 : current.max1),
-                      )
-                    }
-                    run={create}
-                  >
-                    Create position
-                  </Action>
+              <div className="grid deposit-inputs">
+                <div className="deposit-input">
+                  <strong className="deposit-token">{symbols[0]}</strong>
+                  <SnappedInput
+                    snapped={maxA}
+                    aria-label={`${symbols[0]} amount`}
+                    inputMode="decimal"
+                    placeholder="0"
+                    disabled={inactive[0]}
+                    data-testid="deposit-amount-0"
+                    value={sourceForm.maxA}
+                    onChange={(e) => {
+                      setForm((previous) =>
+                        changeCreateAmount(previous, 0, e.target.value),
+                      );
+                    }}
+                  />
+                  <TokenBalance
+                    address={a}
+                    fallback=""
+                    disabled={inactive[0]}
+                    nativeCalls={nativeCalls}
+                    onAmount={(value) => {
+                      setForm((previous) =>
+                        changeCreateAmount(previous, 0, value),
+                      );
+                    }}
+                  />
+                </div>
+                <div className="deposit-input">
+                  <strong className="deposit-token">{symbols[1]}</strong>
+                  <SnappedInput
+                    snapped={maxB}
+                    aria-label={`${symbols[1]} amount`}
+                    inputMode="decimal"
+                    placeholder="0"
+                    disabled={inactive[1]}
+                    data-testid="deposit-amount-1"
+                    value={sourceForm.maxB}
+                    onChange={(e) => {
+                      setForm((previous) =>
+                        changeCreateAmount(previous, 1, e.target.value),
+                      );
+                    }}
+                  />
+                  <TokenBalance
+                    address={b}
+                    fallback=""
+                    disabled={inactive[1]}
+                    nativeCalls={nativeCalls}
+                    onAmount={(value) => {
+                      setForm((previous) =>
+                        changeCreateAmount(previous, 1, value),
+                      );
+                    }}
+                  />
                 </div>
               </div>
-            ) : null}
-          </>
+              <div className="slippage-control">
+                <Field label={"Slippage (basis points)"}>
+                  <SnappedInput
+                    aria-label={"Slippage (basis points)"}
+                    snapped={slippage}
+                    type="number"
+                    min={0}
+                    max={1000}
+                    value={sourceForm.slippage}
+                    onChange={(e) => setSlippage(Number(e.target.value))}
+                  />
+                </Field>
+              </div>
+              <ErrorText error={previewError} />
+              {current ? (
+                <div className="create-preview">
+                  <h3>Deposit preview</h3>
+                  <details className="create-details">
+                    <summary>Price and pool details</summary>
+                    <PricePreview
+                      descriptor={current.descriptor}
+                      initialTick={current.initialTick}
+                      sqrtRatio={current.sqrtRatio}
+                      tokens={current.tokens}
+                    />
+                  </details>
+                  <dl className="create-receipt">
+                    {current.tokens.map((t, i) => (
+                      <div key={t.address}>
+                        <dt>{t.symbol}</dt>
+                        <dd>
+                          {formatUnits(
+                            i === 0 ? current.used0 : current.used1,
+                            t.decimals,
+                          )}{" "}
+                          {ready &&
+                          t.balance <
+                            (i === 0 ? current.max0 : current.max1) ? (
+                            <strong>Insufficient {t.symbol} balance</strong>
+                          ) : null}
+                          {current.inactive[i] ? (
+                            <small>
+                              This token is not needed for the selected range.
+                            </small>
+                          ) : null}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <details className="create-details create-liquidity-details">
+                    <summary>Liquidity limits</summary>
+                    <dl className="create-receipt">
+                      <div>
+                        <dt>Estimated liquidity</dt>
+                        <dd>{current.liquidity.toString()}</dd>
+                      </div>
+                      <div>
+                        <dt>Minimum liquidity</dt>
+                        <dd>{minLiquidity.toString()}</dd>
+                      </div>
+                    </dl>
+                  </details>
+                  <CreationPrerequisites
+                    account={account}
+                    ready={ready}
+                    minLiquidity={minLiquidity}
+                  />
+                  <div className="create-submit">
+                    {(ready && batchSupported === false
+                      ? current.tokens
+                      : []
+                    ).map((t, i) => (
+                      <ApprovalButton
+                        key={t.address}
+                        token={t}
+                        amount={formatUnits(
+                          i === 0 ? current.max0 : current.max1,
+                          t.decimals,
+                        )}
+                      />
+                    ))}
+                    <CreateAction
+                      account={account}
+                      disabled={
+                        batchSupported === undefined ||
+                        !ready ||
+                        minLiquidity === 0n ||
+                        current.tokens.some(
+                          (t, i) =>
+                            (!batchSupported &&
+                              t.allowance <
+                                (i === 0 ? current.max0 : current.max1)) ||
+                            t.balance < (i === 0 ? current.max0 : current.max1),
+                        )
+                      }
+                      run={create}
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          </div>
         ) : null}
       </CreateDeploymentGate>
     </div>
   );
+}
+
+function CreateAction({
+  account,
+  ...props
+}: {
+  account?: string;
+  disabled: boolean;
+  run: () => Promise<void>;
+}) {
+  if (!account) return null;
+  return <Action {...props}>Create position</Action>;
 }
 
 function CreationPrerequisites({
@@ -397,14 +445,17 @@ function PoolLoadStatus({
   refreshBalances: () => void;
 }) {
   return (
-    <>
-      {pool.loading ? <p role="status">Loading pool…</p> : null}
-      {pool.data ? (
-        <p className="muted">
-          Pool updated at {new Date(pool.data.updatedAt).toLocaleTimeString()}.
-        </p>
-      ) : null}
-      <ErrorText error={pool.error || ""} />
+    <div className="create-pool-status">
+      <div>
+        {pool.loading ? <p role="status">Loading pool…</p> : null}
+        {pool.data ? (
+          <p className="muted">
+            Pool updated at {new Date(pool.data.updatedAt).toLocaleTimeString()}
+            .
+          </p>
+        ) : null}
+        <ErrorText error={pool.error || ""} />
+      </div>
       <button
         type="button"
         onClick={() => {
@@ -412,9 +463,9 @@ function PoolLoadStatus({
           refreshBalances();
         }}
       >
-        Refresh pool, balances, and allowances
+        Refresh pool and balances
       </button>
-    </>
+    </div>
   );
 }
 
