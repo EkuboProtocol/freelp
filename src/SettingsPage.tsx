@@ -6,6 +6,12 @@ import { rpc, useSession } from "./session";
 import { errorMessage } from "./errors";
 import type { Settings } from "./types";
 import { storageWarning, subscribeStorageWarnings } from "./storage";
+import { deployPath } from "./routes";
+import {
+  EnableBlockedDialog,
+  ROW_LABELS,
+  useEnableGate,
+} from "./NetworkEnableGate";
 export function SettingsPage() {
   const {
     networks,
@@ -21,6 +27,7 @@ export function SettingsPage() {
   const [storageMessage, setStorageMessage] = useState(storageWarning);
   const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
+  const gate = useEnableGate((id) => toggleNetwork(id, true));
   const enabled = new Set(networks.map((network) => network.chainId));
   const matches = MAINNET_CHAINS.filter((chain) =>
     `${chain.name} ${chain.id}`
@@ -78,7 +85,8 @@ export function SettingsPage() {
       <h2>Networks</h2>
       <p>
         The catalog lists supported viem mainnets. Enable only the networks you
-        use; RPC availability is checked when you save a custom endpoint.
+        use. Enabling a network checks that its RPC answers and that this
+        build's contracts are deployed there; listing makes no RPC requests.
       </p>
       <p>
         Catalog: {MAINNET_CHAINS.length} mainnets · Enabled: {networks.length} ·
@@ -110,10 +118,13 @@ export function SettingsPage() {
               <input
                 type="checkbox"
                 aria-label={`Enable ${chain.name}`}
+                aria-busy={gate.checking === chain.id}
                 checked={enabled.has(chain.id)}
-                disabled={transactionBusy}
+                disabled={transactionBusy || gate.checking !== undefined}
                 onChange={(event) =>
-                  toggleNetwork(chain.id, event.target.checked)
+                  event.target.checked
+                    ? void gate.enable(chain.id)
+                    : toggleNetwork(chain.id, false)
                 }
               />
               <span>
@@ -121,21 +132,38 @@ export function SettingsPage() {
                 <small>
                   {chain.id} · {chain.nativeCurrency.symbol} · catalog
                   {enabled.has(chain.id) ? " · enabled" : " · disabled"} · RPC{" "}
-                  {configuredNetwork(chain.id).rpcUrl ? "custom" : "default"}
+                  {configuredNetwork(chain.id).rpcUrl ? "custom" : "default"} ·{" "}
+                  {gate.checking === chain.id
+                    ? "Checking…"
+                    : ROW_LABELS[gate.rowState(chain.id)]}
                 </small>
               </span>
             </label>
-            <button
-              aria-label={`Edit ${chain.name} RPC`}
-              disabled={transactionBusy}
-              onClick={() => open(chain.id)}
-            >
-              RPC settings
-            </button>
+            <span className="row">
+              <a
+                aria-label={`Deploy contracts on ${chain.name}`}
+                href={deployPath(chain.id)}
+              >
+                Deploy contracts
+              </a>
+              <button
+                aria-label={`Edit ${chain.name} RPC`}
+                disabled={transactionBusy}
+                onClick={() => open(chain.id)}
+              >
+                RPC settings
+              </button>
+            </span>
           </div>
         ))}
       </div>
       {!matches.length ? <p>No matching networks.</p> : null}
+      <EnableBlockedDialog
+        blocked={gate.blocked}
+        checking={gate.checking !== undefined}
+        onRetry={() => void gate.enable(gate.blocked!.chainId)}
+        onCancel={gate.dismiss}
+      />
       <dialog
         ref={dialog}
         className="network-dialog"

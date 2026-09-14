@@ -1,4 +1,4 @@
-import { rpcEndpoint } from "../../src/chains";
+import { chainSettings, rpcEndpoint } from "../../src/chains";
 import type { Page } from "@playwright/test";
 import { padHex, toHex, toFunctionSelector } from "viem";
 import { NETWORKS } from "../../src/networks";
@@ -18,18 +18,23 @@ const addresses = {
 export async function mockDeployments(
   page: Page,
   missing?: keyof typeof addresses,
+  extraChainIds: number[] = [],
 ) {
+  const networks = [
+    ...NETWORKS,
+    ...extraChainIds.map((id) => chainSettings(id)),
+  ];
   await mockRegistry(page);
   await page.route(
     (url) =>
-      NETWORKS.some(
+      networks.some(
         (network) =>
           rpcEndpoint(network).replace(/\/$/, "") ===
           url.href.replace(/\/$/, ""),
       ),
     async (route) => {
       const body = route.request().postDataJSON();
-      const network = NETWORKS.find(
+      const network = networks.find(
         (network) =>
           rpcEndpoint(network).replace(/\/$/, "") ===
           route.request().url().replace(/\/$/, ""),

@@ -10,6 +10,7 @@ import { useDepositTokens } from "./useDepositTokens";
 import { calculateDepositQuote } from "./calculateDepositQuote";
 import { errorMessage } from "./errors";
 import { poolRange } from "./poolOptions";
+import { poolInitialized } from "./poolData";
 import type { CreateForm } from "./createForm";
 import type { useSelectedPool } from "./useSelectedPool";
 
@@ -109,7 +110,7 @@ function previewFor({
     range: form.range,
     specified: form.specified,
     options: form,
-    initialized: data.state.sqrtRatio !== 0n,
+    initialized: poolInitialized(data.state),
     state: data.state,
     tokens: walletTokens.tokens,
   });

@@ -30,3 +30,12 @@ export async function fetchPools(
     return parsed;
   });
 }
+
+/**
+ * Initialization comes from the live Core state only. Registration in
+ * PoolKeyIndex is a discovery hint: pools can be initialized outside this
+ * interface, and unregistered pools may already be initialized.
+ */
+export function poolInitialized(state: { sqrtRatio: bigint }) {
+  return state.sqrtRatio !== 0n;
+}

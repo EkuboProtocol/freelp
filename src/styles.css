@@ -570,10 +570,13 @@ header { flex-wrap: wrap; }
 .network-row label > span { min-width: 0; }
 .network-row strong { display: block; overflow-wrap: anywhere; }
 .network-row small { display: block; color: #555; }
-.network-row > button { flex-shrink: 0; }
+.network-row > .row { flex-shrink: 0; gap: 12px; align-items: center; }
+.network-row > .row > a { font-size: 14px; }
 .network-rpc { display: block; font-size: 13px; color: #555; overflow-wrap: anywhere; }
 .network-dialog { width: min(460px, calc(100vw - 32px)); padding: 24px; border: 1px solid #bbb; border-radius: 16px; }
 .network-dialog h2 { margin: 0; }
+.network-dialog .row.spread { flex-wrap: nowrap; align-items: flex-start; }
+.network-dialog .row.spread h2 { flex: 1; min-width: 0; }
 .network-dialog input { width: 100%; border-radius: 8px; }
 .network-dialog label { display: block; margin-top: 20px; }
 .network-hint { font-size: 13px; color: #555; }

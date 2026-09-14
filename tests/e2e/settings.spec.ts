@@ -11,6 +11,7 @@ import AxeBuilder from "@axe-core/playwright";
 test("viem mainnet catalog enables only the chosen 11 by default and persists toggles", async ({
   page,
 }) => {
+  await mockDeployments(page, undefined, [43114]);
   await page.goto("/#/settings");
   await expect(page.locator(".network-row")).toHaveCount(MAINNET_CHAINS.length);
   await expect(
@@ -27,7 +28,8 @@ test("viem mainnet catalog enables only the chosen 11 by default and persists to
     exact: true,
   });
   await expect(avalanche).not.toBeChecked();
-  await avalanche.check();
+  await avalanche.click();
+  await expect(avalanche).toBeChecked();
   let preferences = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("freelp:chainPreferences")!),
   );
@@ -136,7 +138,7 @@ test("all chains may be disabled without deployment RPC requests or silent re-en
   await expect(page.getByRole("checkbox", { checked: true })).toHaveCount(0);
   await page.goto("/#/deploy");
   await expect(
-    page.getByText("Enable a network in Networks to deploy contracts."),
+    page.getByText("Choose a network in Networks to deploy contracts."),
   ).toBeVisible();
   await page.goto("/#/create");
   await expect(
@@ -156,13 +158,16 @@ test("creation is reachable before wallet connection and deployment omits addres
   await expect(
     page.getByRole("button", { name: "Connect wallet", exact: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Create position", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Create position", exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: "Select first token" }),
   ).toBeVisible();
   await page.goto("/#/build");
   await expect(page.locator("body")).not.toContainText(/IPFS|IPNS/);
   await page.goto("/#/deploy");
+  await expect(page).toHaveURL(/#\/deploy\/1$/);
   await expect(
     page.getByRole("button", { name: /In use|Use this address/ }),
   ).toHaveCount(0);

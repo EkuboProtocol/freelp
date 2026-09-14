@@ -22,7 +22,10 @@ for (const missing of [
       page.getByRole("button", { name: "Create position", exact: true }),
     ).toHaveCount(0);
     await page.getByRole("link", { name: "Go to Deploy" }).click();
-    await expect(page.getByLabel("Deployment network")).toHaveValue("8453");
+    await expect(page).toHaveURL(/#\/deploy\/8453$/);
+    await expect(page.locator("p", { hasText: "Network:" })).toContainText(
+      "Base",
+    );
   });
 }
 

@@ -350,7 +350,7 @@ for (const { missingDecimals, native, batch } of [
     );
     await page.goto("/");
     await page.getByRole("button", { name: "Connect Local wallet" }).click();
-    await page.getByRole("link", { name: "Deploy", exact: true }).click();
+    await openDeployPage(page, batch);
     if (missingDecimals) {
       verificationFailure = "core";
       await page.reload();
@@ -380,6 +380,11 @@ for (const { missingDecimals, native, batch } of [
       await expect(
         page.getByRole("button", { name: "Deploy all", exact: true }),
       ).toBeDisabled();
+      await expect(
+        page.getByText(
+          "All contracts are deployed. Now enable this network in Networks.",
+        ),
+      ).toBeVisible();
       deployedCore = core;
     } else {
       await expect(
@@ -450,6 +455,7 @@ for (const { missingDecimals, native, batch } of [
     await expect(
       page.getByRole("button", { name: "Refresh status" }),
     ).toHaveCount(0);
+    await enableAnvil(page, batch);
     await checkSdkParity(tokens);
     const deployedManager = await page.evaluate(
       () => JSON.parse(localStorage.getItem("freelp:settings")!).manager as Hex,
@@ -463,6 +469,7 @@ for (const { missingDecimals, native, batch } of [
     await page
       .getByRole("link", { name: "Create position", exact: true })
       .click();
+    await selectAnvil(page, batch);
     await checkTokenImports(page, tokens, missingDecimals, native);
     await page.getByLabel("Initial price").fill("1");
     if (!missingDecimals && !native) {
@@ -704,6 +711,52 @@ function assertReadOnlyRpc(
     "withdraw",
     "multicall",
   ]).not.toContain(functionName);
+}
+
+/** Deployment never enables a network: batch runs disable Anvil first. */
+async function openDeployPage(page: Page, batch: boolean) {
+  if (batch) {
+    await page.getByRole("link", { name: "Networks", exact: true }).click();
+    await page.getByLabel("Search networks").fill("Anvil");
+    await page
+      .getByRole("checkbox", { name: "Enable Anvil", exact: true })
+      .uncheck();
+    await page
+      .getByRole("link", { name: "Deploy contracts on Anvil" })
+      .click();
+  } else {
+    await page.evaluate(() => {
+      location.hash = "#/deploy/31337";
+    });
+  }
+  await expect(page.locator("p", { hasText: "Network:" })).toContainText(
+    batch ? "Anvil (31337) · not enabled" : "Anvil (31337) · enabled",
+  );
+}
+
+/** Explicit enable after Deploy all re-verifies the chain code. */
+async function enableAnvil(page: Page, batch: boolean) {
+  if (!batch) return;
+  await page
+    .getByRole("link", { name: "Networks", exact: true })
+    .first()
+    .click();
+  await page.getByLabel("Search networks").fill("Anvil");
+  const foundry = page.getByRole("checkbox", {
+    name: "Enable Anvil",
+    exact: true,
+  });
+  await expect(foundry).not.toBeChecked();
+  await foundry.click();
+  await expect(foundry).toBeChecked();
+  await expect(
+    page.locator(".network-row", { hasText: "Anvil" }),
+  ).toContainText("Ready");
+}
+
+async function selectAnvil(page: Page, batch: boolean) {
+  if (batch)
+    await page.getByLabel("Network", { exact: true }).selectOption("31337");
 }
 
 async function deployFetchers(page: Page, alreadyDeployed: boolean) {

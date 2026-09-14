@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useSession } from "./session";
 import { SettingsPage } from "./SettingsPage";
 import { TermsPage } from "./TermsPage";
-import { DeployPage } from "./DeployPage";
+import { DeployPage, DeployRedirect, InvalidDeployLink } from "./DeployPage";
+import {
+  parseDeployRoute,
+  type DeployRoute as DeployRouteTarget,
+} from "./routes";
 import { CreatePage } from "./CreatePage";
 import { PositionsPage } from "./PositionsPage";
 import { DEFAULT_MANAGER, DEFAULT_POOL_KEY_INDEX } from "./deployments";
@@ -58,15 +62,20 @@ function BuildPage() {
     </section>
   );
 }
+function DeployRoute({ target }: { target: DeployRouteTarget }) {
+  if (target.kind === "chain") return <DeployPage chainId={target.chainId} />;
+  if (target.kind === "active") return <DeployRedirect />;
+  return <InvalidDeployLink />;
+}
 function Page({ route }: { route: string }) {
+  const deploy = parseDeployRoute(route);
+  if (deploy) return <DeployRoute target={deploy} />;
   switch (route.split("?")[0]) {
     case "#/settings":
     case "#/networks":
       return <SettingsPage />;
     case "#/terms":
       return <TermsPage />;
-    case "#/deploy":
-      return <DeployPage />;
     case "#/create":
       return <CreatePage />;
     case "#/build":
@@ -151,12 +160,6 @@ function MainNavigation({ route }: { route: string }) {
         }
       >
         Networks
-      </a>
-      <a
-        href="#/deploy"
-        aria-current={route.startsWith("#/deploy") ? "page" : undefined}
-      >
-        Deploy
       </a>
     </nav>
   );

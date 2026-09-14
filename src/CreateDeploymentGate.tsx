@@ -1,67 +1,28 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useSession, rpc } from "./session";
-import { verifyCode } from "./contracts";
-import { ContractIdentityError } from "./contractIdentity";
+import { useSession } from "./session";
+import { deployPath } from "./routes";
 import {
-  DEFAULT_POSITION_DATA_FETCHER,
-  DEFAULT_POOL_KEY_INDEX,
-  DEFAULT_METADATA_RENDERER,
-} from "./deployments";
-import { errorMessage } from "./errors";
-import type { Settings } from "./types";
-type DeploymentIssue = { message: string; missing: boolean };
-export async function checkCreateDeployment(settings: Settings) {
-  if ((await rpc(settings).getChainId()) !== settings.chainId)
-    throw new Error("RPC chain ID does not match this network.");
-  const required = [
-    ["Core", settings.core],
-    ["PoolKeyIndex", DEFAULT_POOL_KEY_INDEX],
-    ["FreeLPMetadataRenderer", DEFAULT_METADATA_RENDERER],
-    ["FreeLP", settings.manager],
-    [
-      "FreeLPDataFetcher",
-      settings.freeLPDataFetcher ?? DEFAULT_POSITION_DATA_FETCHER,
-    ],
-  ] as const;
-  const results = await Promise.all(
-    required.map(async ([kind, address]) => {
-      try {
-        await verifyCode(settings, address, kind);
-        return undefined;
-      } catch (error) {
-        return {
-          message: `${kind}: ${errorMessage(error)}`,
-          missing:
-            error instanceof ContractIdentityError && error.state === "missing",
-        };
-      }
-    }),
-  );
-  return results.filter((error): error is DeploymentIssue => !!error);
-}
+  verifyNetworkDeployment,
+  type NetworkCheck,
+} from "./networkVerification";
 export function CreateDeploymentGate({ children }: { children: ReactNode }) {
-  const { settings, revision, selectNetwork } = useSession();
+  const { settings, revision } = useSession();
   const [refresh, setRefresh] = useState(0);
-  const [result, setResult] = useState<{
-    key: string;
-    errors: DeploymentIssue[];
-  }>();
+  const [result, setResult] = useState<{ key: string; check: NetworkCheck }>();
   const key = JSON.stringify([settings, revision, refresh]);
   useEffect(() => {
     let active = true;
-    void checkCreateDeployment(settings)
-      .catch((error) => [{ message: errorMessage(error), missing: false }])
-      .then((errors) => {
-        if (active) setResult({ key, errors });
-      });
+    void verifyNetworkDeployment(settings).then((check) => {
+      if (active) setResult({ key, check });
+    });
     return () => {
       active = false;
     };
   }, [settings, key]);
-  const current = result?.key === key ? result : undefined;
+  const current = result?.key === key ? result.check : undefined;
   if (!current) return <p role="status">Checking required contracts…</p>;
-  if (!current.errors.length) return children;
-  const missing = current.errors.every((error) => error.missing);
+  if (current.state === "ready") return children;
+  const missing = current.state === "missing";
   return (
     <div className="panel" role="alert">
       <h3>
@@ -75,17 +36,13 @@ export function CreateDeploymentGate({ children }: { children: ReactNode }) {
         on this network.
       </p>
       <ul>
-        {current.errors.map((error) => (
-          <li key={error.message}>{error.message}</li>
+        {current.issues.map((issue) => (
+          <li key={issue.kind}>{issue.message}</li>
         ))}
       </ul>
       <div className="row">
         {missing ? (
-          <a
-            className="primary-link"
-            href="#/deploy"
-            onClick={() => selectNetwork(settings.chainId)}
-          >
+          <a className="primary-link" href={deployPath(settings.chainId)}>
             Go to Deploy
           </a>
         ) : (

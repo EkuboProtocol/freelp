@@ -82,7 +82,9 @@ for (const storageAvailable of [true, false]) {
       page.getByRole("button", { name: "Accept terms", exact: true }),
     ).toHaveCount(0);
     await page.getByRole("button", { name: "Connect Test wallet" }).click();
-    await page.getByRole("link", { name: "Deploy", exact: true }).click();
+    await page.evaluate(() => {
+      location.hash = "#/deploy/1";
+    });
     await expect(
       page.getByRole("button", { name: "Deploy Core", exact: true }),
     ).toBeEnabled();

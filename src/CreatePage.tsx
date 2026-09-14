@@ -4,6 +4,7 @@ import { snapCreateForm, snapPrice, snapNumber } from "./snapCreateForm";
 import { SnappedInput } from "./SnappedInput";
 import { PoolChart } from "./PoolChart";
 import { useSelectedPool } from "./useSelectedPool";
+import { poolInitialized } from "./poolData";
 import { MAX_TICK, tickPrice } from "./prices";
 import { changeCreateToken, changeCreateAmount } from "./createIntent";
 import { CreateDeploymentGate } from "./CreateDeploymentGate";
@@ -195,7 +196,7 @@ function CreatePositionForm({
                 symbols={symbols}
                 decimals={pool.data.decimals}
                 stable={form.kind === "stable"}
-                initialized={pool.data.state.sqrtRatio !== 0n}
+                initialized={poolInitialized(pool.data.state)}
               />
             </section>
             <section
@@ -474,7 +475,7 @@ function poolRangeDefaults(
   pool: ReturnType<typeof useSelectedPool>["data"],
 ) {
   if (!pool) return range;
-  const initialized = pool.state.sqrtRatio !== 0n;
+  const initialized = poolInitialized(pool.state);
   const price = initialized
     ? tickPrice(pool.state.tick, ...pool.decimals)
     : initialRangePrice(range, pool.decimals);
