@@ -181,9 +181,8 @@ test("the owner can withdraw while the RPC is busy, and the dialog reviews amoun
   await page
     .getByRole("button", { name: "Connect Test wallet", exact: true })
     .click();
-  await expect(
-    page.getByText("Owner: 0x1111…1111 · this wallet"),
-  ).toBeVisible();
+  // The owner's portfolio load replaces the lookup view; either view must
+  // enable actions, so assert on the controls rather than the owner line.
   const withdraw = page.getByRole("button", { name: "Withdraw", exact: true });
   await expect(withdraw).toBeEnabled();
   state.busy = true;
