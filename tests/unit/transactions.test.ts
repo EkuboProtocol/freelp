@@ -142,3 +142,50 @@ test("a position transaction requests its own network before wallet submission",
     server.stop(true);
   }
 });
+
+test("position transactions reach the wallet without any RPC read", async () => {
+  const { executeTransaction } = await import("../../src/transactions");
+  const rpcMethods: string[] = [];
+  const server = Bun.serve({
+    port: 0,
+    async fetch(request) {
+      const body = await request.json();
+      rpcMethods.push(body.method);
+      return Response.json({
+        jsonrpc: "2.0",
+        id: body.id,
+        error: { code: 429, message: "Too many requests" },
+      });
+    },
+  });
+  const wallet: string[] = [];
+  const provider: Provider = {
+    request: async ({ method }) => {
+      wallet.push(method);
+      if (method === "eth_accounts") return [account];
+      if (method === "eth_sendTransaction")
+        throw Object.assign(new Error("User declined"), { code: 4001 });
+      return "0x1";
+    },
+  };
+  try {
+    await expect(
+      executeTransaction(
+        provider,
+        account,
+        {
+          chainId: 1,
+          rpcUrl: server.url.toString(),
+          core: account,
+          manager: "0x0000000000000000000000000000000000000009",
+          nativeSymbol: "ETH",
+        },
+        { to: "0x0000000000000000000000000000000000000009", data: "0x00" },
+      ),
+    ).rejects.toThrow("rejected in the wallet");
+    expect(rpcMethods).toEqual([]);
+    expect(wallet).toContain("eth_sendTransaction");
+  } finally {
+    server.stop(true);
+  }
+});

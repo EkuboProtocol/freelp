@@ -1,8 +1,6 @@
 import { switchWalletChain } from "./walletNetwork";
 import { CREATE2_FACTORY, verifyDeploymentTransaction } from "./deterministic";
 import { rpc } from "./rpc";
-import { verifyCode } from "./contracts";
-import { DEFAULT_POOL_KEY_INDEX } from "./deployments";
 import { toHex, isAddressEqual, type Address } from "viem";
 import type { Provider, Settings, Transaction } from "./types";
 import {
@@ -42,7 +40,7 @@ export async function executeTransaction(
 ) {
   const client = rpc(settings);
   observer?.({ state: "checking" });
-  await validateTransaction(client, provider, account, settings, tx);
+  await validateTransaction(provider, account, settings, tx);
   await assertWallet(provider, account, settings.chainId);
   return submitAndObserve(client, provider, account, tx, observer);
 }
@@ -102,25 +100,24 @@ async function requestHash(
   }
 }
 
+/**
+ * Only deployments need RPC-side verification. Position and token calls target
+ * addresses fixed by the build and the contracts enforce ownership and
+ * amounts, so a busy RPC never blocks a withdrawal from reaching the wallet.
+ */
 async function validateTransaction(
-  client: ReturnType<typeof rpc>,
   provider: Provider,
   account: Address,
   settings: Settings,
   tx: Transaction,
 ) {
-  if ((await client.getChainId()) !== settings.chainId)
-    throw new Error("RPC chain ID does not match settings.");
   await ensureWalletChain(provider, settings);
   await assertWallet(provider, account, settings.chainId);
-  if (tx.to?.toLowerCase() === CREATE2_FACTORY.toLowerCase())
+  if (tx.to?.toLowerCase() === CREATE2_FACTORY.toLowerCase()) {
+    if ((await rpc(settings).getChainId()) !== settings.chainId)
+      throw new Error("RPC chain ID does not match settings.");
     await verifyDeploymentTransaction(settings, tx);
-  else if (tx.to)
-    await Promise.all([
-      verifyCode(settings, settings.core, "Core"),
-      verifyCode(settings, DEFAULT_POOL_KEY_INDEX, "PoolKeyIndex"),
-      verifyCode(settings, settings.manager, "FreeLP"),
-    ]);
+  }
 }
 
 async function observeReceipt(

@@ -772,3 +772,10 @@ header { flex-wrap: wrap; }
 .position-dialog .position-deposit > .row { margin-bottom: 0; }
 
 .position-summary-grid .position-summary > h3 { min-height: 44px; display: flex; align-items: center; }
+.position-dialog .status:empty { display: none; }
+.withdrawal-review { display: grid; gap: 12px; margin: 16px 0; }
+.withdrawal-review > div { display: grid; grid-template-columns: minmax(120px, 1fr) 2fr; gap: 8px; align-items: start; }
+.withdrawal-review dt { color: #555; }
+.withdrawal-review dd { margin: 0; display: grid; gap: 4px; text-align: right; }
+.withdrawal-fields .recipient-input { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; }
+.withdrawal-fields > label { display: block; margin-top: 16px; }

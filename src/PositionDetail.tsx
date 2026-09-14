@@ -10,33 +10,40 @@ import { usePositionActions } from "./usePositionActions";
 import type { Position } from "./types";
 import type { Token } from "./contracts";
 import { withdrawalReview } from "./positionReview";
-import { isAddress } from "viem";
+import { isAddress, type Address } from "viem";
 import { displayAmount } from "./displayAmount";
 import { PositionArtwork } from "./PositionArtwork";
 
+/**
+ * Stale data never disables actions: amounts are estimates and the contract
+ * enforces the real state. Read-only views only prevent signing.
+ */
 export function PositionDetail({
   position: p,
   onRefresh,
-  fresh = true,
+  owner,
+  readOnly = false,
 }: {
   position: Position;
   onRefresh?: () => void | Promise<void>;
-  fresh?: boolean;
+  owner?: Address;
+  readOnly?: boolean;
 }) {
   const { settings, account, busy, status, setStatus } = useSession();
-  const controlsDisabled = busy || !fresh;
-  const actions = usePositionActions(p);
+  const controlsDisabled = busy || readOnly;
+  const actions = usePositionActions(p, owner);
   const { tokens } = actions;
   const dialog = useRef<HTMLDialogElement>(null);
   const [mode, setMode] = useState<"add" | "withdraw">("add");
   function open(next: typeof mode) {
-    if (busy || !fresh) return;
+    if (controlsDisabled) return;
     actions.setRecipient(account ?? "");
     actions.setPortion(100);
     setStatus("");
     setMode(next);
     dialog.current?.showModal();
-    actions.refreshTokens();
+    // Balances only matter for deposits; withdrawals need no fresh reads.
+    if (next === "add") actions.refreshTokens();
     void onRefresh?.();
   }
   async function add() {
@@ -93,7 +100,7 @@ export function PositionDetail({
         <section className="position-summary">
           <div className="row spread">
             <h3>Uncollected fees</h3>
-            <Action run={claim} disabled={claimUnavailable(fresh, p)}>
+            <Action run={claim} disabled={claimUnavailable(readOnly, p)}>
               Collect fees
             </Action>
           </div>
@@ -158,17 +165,9 @@ export function PositionDetail({
         <p className="status" role="status" aria-live="polite" aria-busy={busy}>
           {status}
         </p>
-        <details className="transaction-settings">
-          <summary>Advanced</summary>
-          {mode === "withdraw" ? (
-            <Field label="Recipient address">
-              <input
-                value={actions.recipient}
-                onChange={(e) => actions.setRecipient(e.target.value)}
-              />
-            </Field>
-          ) : null}
-          {mode === "add" ? (
+        {mode === "add" ? (
+          <details className="transaction-settings">
+            <summary>Advanced</summary>
             <Field label="Slippage (basis points)">
               <input
                 type="number"
@@ -178,16 +177,16 @@ export function PositionDetail({
                 onChange={(e) => actions.setSlippage(Number(e.target.value))}
               />
             </Field>
-          ) : null}
-        </details>
+          </details>
+        ) : null}
       </dialog>
     </div>
   );
 }
 
-function claimUnavailable(fresh: boolean, position: Position) {
+function claimUnavailable(readOnly: boolean, position: Position) {
   return (
-    !fresh || (position.amounts.fees0 === 0n && position.amounts.fees1 === 0n)
+    readOnly || (position.amounts.fees0 === 0n && position.amounts.fees1 === 0n)
   );
 }
 
@@ -273,6 +272,15 @@ function WithdrawalFields({
           </button>
         ))}
       </div>
+      <Field label="Recipient address">
+        <input
+          className="recipient-input"
+          value={actions.recipient}
+          autoComplete="off"
+          spellCheck={false}
+          onChange={(e) => actions.setRecipient(e.target.value)}
+        />
+      </Field>
       <WithdrawalReview position={p} actions={actions} withdraw={withdraw} />
     </div>
   );
@@ -288,7 +296,6 @@ function WithdrawalReview({
   withdraw: () => Promise<void>;
 }) {
   const { review, error } = getWithdrawalState(p, actions.portion);
-  const recipient = actions.recipient || "No recipient selected";
   return (
     <>
       <p className="muted">
@@ -296,16 +303,6 @@ function WithdrawalReview({
         change before execution; withdrawals have no minimum-output limit.
       </p>
       <dl className="withdrawal-review">
-        <div>
-          <dt>Recipient</dt>
-          <dd>
-            <code>{recipient}</code>
-          </dd>
-        </div>
-        <div>
-          <dt>Liquidity</dt>
-          <dd>{review?.liquidity.toString() ?? "Unavailable"}</dd>
-        </div>
         <ReviewRow
           label="Principal"
           values={review && [review.principal0, review.principal1]}
@@ -324,6 +321,9 @@ function WithdrawalReview({
       </dl>
       <FullWithdrawalNotice review={review} />
       <ReviewError error={error} />
+      {!isRecipient(actions.recipient) ? (
+        <p className="muted">Enter a valid recipient address to withdraw.</p>
+      ) : null}
       <Action run={withdraw} disabled={!canWithdraw(review, actions.recipient)}>
         Withdraw liquidity and fees
       </Action>
@@ -392,10 +392,11 @@ function ReviewRow({
         {tokens && values
           ? values.map((value, i) => (
               <span key={tokens[i].address}>
-                {tokens[i].symbol}:{" "}
                 {tokens[i].metadataMissing
                   ? value.toString()
-                  : formatUnits(value, tokens[i].decimals)}
+                  : formatUnits(value, tokens[i].decimals)}{" "}
+                {tokens[i].symbol}
+                {tokens[i].metadataMissing ? " (raw units)" : ""}
               </span>
             ))
           : "Unavailable"}

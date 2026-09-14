@@ -11,6 +11,7 @@ import { networkName } from "./networks";
 import { PositionDetail } from "./PositionDetail";
 import { WalletConnectButton } from "./WalletConnectButton";
 import { PortfolioPosition } from "./PortfolioPosition";
+import { PositionLookupPage } from "./PositionLookupPage";
 import "./portfolio.css";
 
 const PAGE_SIZE = 12;
@@ -59,15 +60,19 @@ export function PositionsPage({ route: hash }: { route: string }) {
   }
 
   if (route === null || (route && !current)) {
-    return (
-      <PositionRouteState
-        route={route}
-        connected={!!account}
-        rows={rows}
-        networks={networks}
-        retry={refreshChain}
-      />
+    const settings = networks.find(
+      (network) => network.chainId === route?.chainId,
     );
+    if (route && settings)
+      return (
+        <PositionLookupPage
+          settings={settings}
+          id={route.id}
+          account={account}
+          refreshChain={refreshChain}
+        />
+      );
+    return <PositionRouteState route={route} />;
   }
 
   return (
@@ -86,50 +91,20 @@ export function PositionsPage({ route: hash }: { route: string }) {
 
 function PositionRouteState({
   route,
-  connected,
-  rows,
-  networks,
-  retry,
 }: {
   route: ReturnType<typeof routePosition>;
-  connected: boolean;
-  rows: PortfolioRow[];
-  networks: PortfolioRow["settings"][];
-  retry: (chainId: number) => Promise<void>;
 }) {
-  const row = rows.find((row) => row.settings.chainId === route?.chainId);
-  const message = missingPositionMessage(route, connected, row, networks);
   return (
     <section className="portfolio-route-state">
       <h2 tabIndex={-1}>Position unavailable</h2>
-      <p role="status">{message}</p>
-      {!connected ? <WalletConnectButton /> : null}
-      {row?.availability === "unavailable" ? (
-        <button onClick={() => void retry(row.settings.chainId)}>
-          Retry network
-        </button>
-      ) : null}
+      <p role="status">
+        {route
+          ? "Enable this network in Networks to view the position."
+          : "This position link is invalid. Check its network and position number."}
+      </p>
       <a href="#/positions">All positions</a> <a href="#/networks">Networks</a>
     </section>
   );
-}
-
-function missingPositionMessage(
-  route: ReturnType<typeof routePosition>,
-  connected: boolean,
-  row: PortfolioRow | undefined,
-  networks: PortfolioRow["settings"][],
-) {
-  if (!route)
-    return "This position link is invalid. Check its network and position number.";
-  if (!connected) return "Connect the wallet that owns this FreeLP position.";
-  if (!networks.some((network) => network.chainId === route.chainId))
-    return "Enable this network in Networks to view the position.";
-  if (!row || row.availability === "loading")
-    return "Loading this network’s position snapshot…";
-  if (row.availability === "unavailable")
-    return "The network is unavailable. Retry its RPC before checking whether this position exists.";
-  return "This position is not owned by this wallet. It may have been transferred or fully withdrawn and burned, or created with another position manager.";
 }
 
 function PortfolioDetail({
@@ -195,8 +170,8 @@ function PortfolioDetail({
           </div>
           {!fresh ? (
             <p role="status">
-              Position data is stale or refreshing. Refresh this position to
-              enable actions.
+              Position data may be stale while it refreshes. Estimates update
+              after Refresh position; the contract enforces actual amounts.
             </p>
           ) : null}
           {current.position.amounts.liquidity === 0n ? (
@@ -209,7 +184,6 @@ function PortfolioDetail({
           <PositionDetail
             key={`${current.settings.chainId}:${current.position.id}`}
             position={current.position}
-            fresh={fresh}
             onRefresh={() => refreshChain(current.settings.chainId)}
           />
         </div>

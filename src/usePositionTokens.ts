@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { readPositionToken, type PositionTokenRead } from "./positionToken";
 import { useSession } from "./session";
+import type { Address } from "viem";
 import type { Position } from "./types";
 import type { Token } from "./contracts";
 
@@ -9,8 +10,10 @@ type Loaded = {
   scope: string;
   reads: [PositionTokenRead, PositionTokenRead];
 };
-export function usePositionTokens(position: Position) {
-  const { settings, account, revision } = useSession();
+/** Reads token metadata for the position; balances belong to the holder. */
+export function usePositionTokens(position: Position, holder?: Address) {
+  const { settings, account: connected, revision } = useSession();
+  const account = connected ?? holder;
   const [refresh, setRefresh] = useState(0);
   const [loaded, setLoaded] = useState<Loaded>();
   const previous = useRef<Loaded | undefined>(undefined);

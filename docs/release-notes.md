@@ -1,3 +1,13 @@
+FreeLP 0.1.15 keeps withdrawals reachable when an RPC is busy and opens positions to anyone by ID.
+
+Withdraw, collect, and add-liquidity requests now go to the wallet without any RPC read first: the ownerOf pre-check and the chain and code reads before signing are gone for position and token calls, and stale position data no longer disables actions. The wallet still confirms the account and network, and the contracts enforce ownership and amounts. Deployments keep their RPC-side verification.
+
+A position link such as #/positions/1/42 now loads that position by ID, with or without a connected wallet, and shows its owner. Anyone can view it; only the owning wallet can sign, and other wallets see the actions disabled instead of "Position unavailable".
+
+The withdraw dialog lists principal, fees, and estimated receipt with one line per token, drops the raw liquidity number, moves the recipient field next to the review, and hides the empty status line.
+
+Run `bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest`.
+
 FreeLP 0.1.14 stops listing the same browser wallet twice.
 
 Wallets that announce themselves through EIP-6963 often expose a different wrapper object on window.ethereum, so the injected-wallet fallback appeared next to the announced entry, for example Ambire alongside Injected wallet. The fallback now appears only when no wallet announced. Wallets that only inject window.ethereum are still offered.

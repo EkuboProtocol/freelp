@@ -10,8 +10,6 @@ import { walletRejected } from "./transactionStatus";
 import { batchOutcome } from "./batchOutcome";
 import { CREATE2_FACTORY, verifyDeploymentBatch } from "./deterministic";
 import { switchWalletChain } from "./walletNetwork";
-import { verifyCode } from "./contracts";
-import { DEFAULT_POOL_KEY_INDEX } from "./deployments";
 import type { Provider, Settings, Transaction } from "./types";
 export async function executeBatch(
   provider: Provider,
@@ -22,24 +20,19 @@ export async function executeBatch(
 ) {
   if (calls.length === 1)
     return executeTransaction(provider, account, settings, calls[0], observer);
-  const client = rpc(settings);
   observer?.({ state: "checking" });
-  if ((await client.getChainId()) !== settings.chainId)
-    throw new Error("RPC chain ID does not match settings.");
   await switchWalletChain(provider, settings);
   await assertWallet(provider, account, settings.chainId);
+  // Only deployment batches need RPC-side verification; see executeTransaction.
   if (
     calls.some(
       (call) => call.to?.toLowerCase() === CREATE2_FACTORY.toLowerCase(),
     )
   ) {
+    if ((await rpc(settings).getChainId()) !== settings.chainId)
+      throw new Error("RPC chain ID does not match settings.");
     await verifyDeploymentBatch(settings, calls);
-  } else
-    await Promise.all([
-      verifyCode(settings, settings.core, "Core"),
-      verifyCode(settings, DEFAULT_POOL_KEY_INDEX, "PoolKeyIndex"),
-      verifyCode(settings, settings.manager, "FreeLP"),
-    ]);
+  }
   const batch = calls.map((call) => {
     if (!call.to) throw new Error("Batch calls require a destination.");
     return { ...call, to: call.to };
