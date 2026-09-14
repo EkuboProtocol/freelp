@@ -1,6 +1,6 @@
 # FreeLP implementation and verification
 
-FreeLP uses injected wallets and configured RPC endpoints for application data and signing. Its initial 11 mainnets are an explicit FreeLP default set; other viem mainnets can be enabled in Settings. Names, native-token metadata and default endpoints come from viem. Catalog membership does not prove deployment or EVM-version compatibility. RPC overrides are empty by default. Disabled chains stay disabled, including when all chains are off. Native currencies use the zero address, and imported metadata is unique by chain ID and normalized token address.
+FreeLP uses injected wallets and configured RPC endpoints for application data and signing. Its initial four mainnets (Robinhood Chain, Base, Arbitrum, Ethereum) are the networks with deployed contracts; other viem mainnets can be enabled in Settings. Names, native-token metadata and default endpoints come from viem. Catalog membership does not prove deployment or EVM-version compatibility. RPC overrides are empty by default. Disabled chains stay disabled, including when all chains are off. Native currencies use the zero address, and imported metadata is unique by chain ID and normalized token address.
 
 Contract checks verify the exact bundled runtime, with Core-bound immutable slots filled rather than ignored. RPC failures, missing contracts, and incompatible code are distinct states. Artifact imports require a clean pinned source checkout and verify metadata source hashes and compiler settings before replacing any artifact.
 

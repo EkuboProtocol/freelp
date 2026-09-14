@@ -8,7 +8,7 @@ import {
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-test("viem mainnet catalog enables only the chosen 11 by default and persists toggles", async ({
+test("viem mainnet catalog enables only the four deployed networks by default and persists toggles", async ({
   page,
 }) => {
   await mockDeployments(page, undefined, [43114]);
@@ -18,7 +18,9 @@ test("viem mainnet catalog enables only the chosen 11 by default and persists to
     page.getByRole("button", { name: "Add network", exact: true }),
   ).toHaveCount(0);
   await expect(page.getByLabel("Native token symbol")).toHaveCount(0);
-  await expect(page.getByRole("checkbox", { checked: true })).toHaveCount(11);
+  await expect(page.getByRole("checkbox", { checked: true })).toHaveCount(
+    DEFAULT_CHAIN_IDS.length,
+  );
   expect(
     await page.evaluate(() => localStorage.getItem("freelp:chainPreferences")),
   ).toBeNull();
@@ -132,7 +134,7 @@ test("all chains may be disabled without deployment RPC requests or silent re-en
     return route.abort();
   });
   await page.goto("/#/settings");
-  for (let i = 0; i < 11; i++)
+  for (let i = 0; i < DEFAULT_CHAIN_IDS.length; i++)
     await page.getByRole("checkbox", { checked: true }).first().click();
   await page.reload();
   await expect(page.getByRole("checkbox", { checked: true })).toHaveCount(0);
@@ -187,14 +189,16 @@ test("Robinhood defaults include USDG and tokenized assets without wrapping ETH"
     .fill("Robinhood");
   await expect(dialog.getByRole("button", { name: /WETH/ })).toHaveCount(0);
   await dialog.getByLabel("Search tokens or paste an address").fill("NVDA");
-  await expect(dialog.getByRole("button", { name: /NVDA/ })).toBeVisible();
+  await expect(
+    dialog.getByRole("button", { name: /^NVIDIA, NVDA, / }),
+  ).toBeVisible();
   await dialog.getByLabel("Search tokens or paste an address").fill("USDG");
-  await dialog.getByRole("button", { name: /USDG/ }).click();
+  await dialog.getByRole("button", { name: /^Global Dollar, USDG, / }).click();
   await expect
     .poll(() => readCreateForm(new URL(page.url()).hash, 1).a)
     .toBe("0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168");
   await page.getByRole("button", { name: "Select second token" }).click();
-  await dialog.getByRole("button", { name: /ETH/ }).click();
+  await dialog.getByRole("button", { name: /^Ether, ETH, / }).click();
   await expect
     .poll(() => readCreateForm(new URL(page.url()).hash, 1).a)
     .toBe("0x0000000000000000000000000000000000000000");

@@ -1,11 +1,9 @@
 # Bundled token defaults
 
-The token picker uses native ETH (zero address) and a local metadata snapshot. WETH is not a default: Ekubo accepts native ETH directly. Address-based custom token imports remain supported.
+The token picker uses the native currency (zero address) from viem plus bundled metadata for each supported chain. Address-based custom token imports remain supported. No hosted logos, supply data, token API, or download from any other service is involved.
 
-The snapshot comes from EkuboProtocol/default-tokens `curated-tokens.json` at commit d1128b1bca85da405674686400afae017337e5a7, restricted to Ethereum, Base, Arbitrum, and Robinhood Chain. Only addresses, names, symbols, and decimals are retained. No hosted logos, supply data, token API, or runtime list download is included.
+The metadata ships inside the app as `tokens/<chainId>.json` (source: `public/tokens/`), one file per chain, and is fetched from the app's own origin the first time a chain's tokens are needed rather than compiled into the script bundle. That keeps startup fast while carrying thousands of entries; the create page waits for the current chain's file before rendering the picker.
 
-Counts including native ETH: Ethereum 37, Base 4, Arbitrum 10, Robinhood 98. Robinhood includes USDG and its curated tokenized assets. Base also includes EURC and cbBTC, with addresses from [Circle](https://www.circle.com/blog/eurc-is-coming-to-base) and [Coinbase](https://www.coinbase.com/cbbtc).
+`bun scripts/sync-default-tokens.ts` regenerates the files from `https://prod-api.ekubo.org/tokens?chainId=<id>`, keeping every token with `visibility_priority >= 0` except the chain's wrapped native token (Ekubo pools use the native currency directly). Only address (checksummed), symbol, name, and decimals are retained; tokens bundled earlier but absent from the API are kept. `--check` fails when the files are stale. The endpoint returns at most 1000 tokens per chain without pagination, so Ethereum, Base, Arbitrum, BNB Smart Chain, and Polygon carry the first 1000 by visibility priority and sort order.
 
-All 145 ERC-20 entries had symbol and decimals checked against live chain RPC responses on 2026-09-11 UTC. Base cbBTC was retried successfully through PublicNode after the default RPC failed. Arbitrum's former USDT entry now reports USD₮0; its searchable name includes USDT0. This validates metadata, not asset safety or available pool liquidity.
-
-The seven additional mainnets use the same metadata-only snapshot format, sourced from EkuboProtocol/default-tokens commit `c407db09e64ce9a7d2fbaac521fd860f6ecb5ff6`. Wrapped native tokens are omitted; native BNB, XDAI, POL, MON, or ETH appears at the zero address as appropriate. No testnet lists are bundled.
+Last sync: 2026-09-14 UTC. Counts excluding native currency: Ethereum 1003, Base 998, Arbitrum 998, Robinhood 976, Optimism 893, BNB Smart Chain 998, Gnosis 465, Unichain 332, Polygon 998, Monad 223, Ink 655. The metadata reflects the API, not asset safety or available pool liquidity.

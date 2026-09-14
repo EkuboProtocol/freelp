@@ -14,6 +14,7 @@ import { decimalInput } from "./decimalFormat";
 import { TokenBalance } from "./TokenBalance";
 import { PoolPicker } from "./PoolPicker";
 import { networkCurrencies, type Currency } from "./tokens";
+import { useTokenCatalog } from "./tokenCatalog";
 import { CurrencySelect } from "./CurrencySelect";
 import { RangeFields } from "./RangeFields";
 import { ApprovalButton } from "./ApprovalButton";
@@ -35,12 +36,14 @@ export function CreatePage() {
   const [sourceForm, setForm] = useCreateForm(settings.chainId);
   const form = sourceForm;
   const network = networks.find((n) => n.chainId === form.chain);
+  const catalogReady = useTokenCatalog(form.chain);
   if (!network)
     return (
       <p role="alert">
         Enable this network in Networks before using this link.
       </p>
     );
+  if (!catalogReady) return <p role="status">Loading the token list…</p>;
   return (
     <NetworkScope settings={network}>
       <section className="create-position">

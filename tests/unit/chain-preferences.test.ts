@@ -12,6 +12,7 @@ import {
   updateNetworks,
 } from "../../src/networks";
 import { rpc } from "../../src/rpc";
+import { rememberVerification } from "../../src/networkVerification";
 function storage(run: (store: Map<string, string>) => void) {
   const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
   const store = new Map<string, string>();
@@ -29,11 +30,13 @@ function storage(run: (store: Map<string, string>) => void) {
     else Reflect.deleteProperty(globalThis, "localStorage");
   }
 }
-test("fresh preferences enable exactly 11 chains without overriding viem RPCs", () =>
+test("fresh preferences enable exactly the four deployed chains without overriding viem RPCs", () =>
   storage(() => {
+    expect(DEFAULT_CHAIN_IDS).toEqual([4663, 8453, 42161, 1]);
     expect(loadNetworkPreferences()).toEqual({
       enabledChainIds: [...DEFAULT_CHAIN_IDS],
       rpcOverrides: {},
+      version: 2,
     });
     for (const network of loadNetworks()) {
       expect(network.rpcUrl).toBe("");
@@ -76,4 +79,27 @@ test("migration drops bundled defaults but preserves custom overrides", () =>
     expect(loadNetworks().find((chain) => chain.chainId === 1)?.rpcUrl).toBe(
       "",
     );
+  }));
+
+test("saved preferences from older builds drop unverified extras once and keep verified or configured ones", () =>
+  storage((store) => {
+    store.set(
+      "freelp:chainPreferences",
+      JSON.stringify({
+        enabledChainIds: [
+          4663, 8453, 42161, 1, 10, 56, 100, 130, 137, 143, 57073,
+        ],
+        rpcOverrides: { 137: "https://polygon.example/rpc" },
+      }),
+    );
+    rememberVerification(10);
+    expect(loadNetworkPreferences()).toEqual({
+      enabledChainIds: [4663, 8453, 42161, 1, 10, 137],
+      rpcOverrides: { 137: "https://polygon.example/rpc" },
+      version: 2,
+    });
+    expect(JSON.parse(store.get("freelp:chainPreferences")!).version).toBe(2);
+    // Migrated once: a later explicit enable survives without verification.
+    setNetworkEnabled(loadNetworks(), 56, true);
+    expect(loadNetworkPreferences().enabledChainIds).toContain(56);
   }));

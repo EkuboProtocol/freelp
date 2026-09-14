@@ -235,7 +235,7 @@ function RegisteredPoolCard({
       </strong>
       <small>
         {pool.poolType === "concentrated"
-          ? `Concentrated, spacing ${pool.tickSpacing}`
+          ? `Concentrated, spacing ${decimalDisplay(spacingPercent(pool.tickSpacing ?? 0), 3)}%`
           : `${pool.poolType === "full_range" ? "Full-range" : "Stableswap"}, center ${pool.stableswapParams?.centerTick}, amplification ${pool.stableswapParams?.amplification}`}
       </small>
       <small>

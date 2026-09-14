@@ -4,6 +4,7 @@ import { rpc } from "./rpc";
 import type { Settings } from "./types";
 import type { Token } from "./contracts";
 import { networkCurrencies } from "./tokens";
+import { loadTokenCatalog } from "./tokenCatalog";
 
 export type PositionTokenRead = {
   token: Token;
@@ -22,6 +23,7 @@ export async function readPositionToken(
   if (address === zeroAddress)
     return readNativeToken(settings, holder, previous);
   const result = await readErc20Token(settings, address, holder, previous);
+  await loadTokenCatalog(settings.chainId);
   const known = networkCurrencies(settings).find(
     (currency) => currency.address.toLowerCase() === address.toLowerCase(),
   );

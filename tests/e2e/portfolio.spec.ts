@@ -112,7 +112,7 @@ test("all networks load independently with exactly one portfolio RPC each", asyn
     "Out of range",
   );
   await expect(page.locator(".position-status.closed")).toHaveText("Closed");
-  expect(calls.size).toBe(11);
+  expect(calls.size).toBe(NETWORKS.length);
   for (const requests of calls.values()) expect(requests).toEqual(["eth_call"]);
   await page.screenshot({
     path: test.info().outputPath("portfolio-desktop.png"),

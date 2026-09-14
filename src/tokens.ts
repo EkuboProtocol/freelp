@@ -1,7 +1,7 @@
 import { nativeCurrency } from "./nativeCurrency";
 import type { Settings } from "./types";
 import { getAddress, isAddress, zeroAddress, type Address } from "viem";
-import defaultTokens from "./default-tokens.json";
+import { bundledTokens } from "./tokenCatalog";
 import { load, save } from "./storage";
 export type Currency = {
   address: Address;
@@ -18,21 +18,18 @@ const eth: Currency = {
   decimals: 18,
   source: "bundled",
 };
-// Snapshot of EkuboProtocol/default-tokens, stripped of hosted logos and API data.
-// Source and verification details: docs/token-defaults.md.
-const lists: Record<number, Currency[]> = Object.fromEntries(
-  Object.entries(defaultTokens).map(([chainId, tokens]) => [
-    chainId,
-    [
-      eth,
-      ...tokens.map((token) => ({
-        ...token,
-        address: getAddress(token.address.toLowerCase()),
-        source: "bundled" as const,
-      })),
-    ],
-  ]),
-);
+// Bundled metadata comes from tokens/<chainId>.json (see src/tokenCatalog.ts
+// and docs/token-defaults.md). Until a chain's catalog has been fetched, only
+// the native currency and imported tokens are listed.
+function bundledList(chainId: number): Currency[] {
+  return [
+    eth,
+    ...(bundledTokens(chainId) ?? []).map((token) => ({
+      ...token,
+      source: "bundled" as const,
+    })),
+  ];
+}
 export function currencies(
   chainId: number,
   nativeSymbol = "ETH",
@@ -52,10 +49,7 @@ export function currencies(
       )
     : [];
   const merged = new Map(
-    (lists[chainId] ?? [eth]).map((token) => [
-      token.address.toLowerCase(),
-      token,
-    ]),
+    bundledList(chainId).map((token) => [token.address.toLowerCase(), token]),
   );
   for (const token of valid.map((entry) => ({
     ...entry,
@@ -106,8 +100,11 @@ export function networkCurrencies(settings: Settings) {
   );
 }
 
+/** Persists the native entry with imports only; bundled tokens stay in code. */
 export function ensureNativeCurrency(settings: Settings) {
-  const entries = networkCurrencies(settings);
+  const entries = networkCurrencies(settings).filter(
+    (token) => token.source !== "bundled",
+  );
   const unique = new Map(
     entries.map((token) => [
       token.address.toLowerCase(),

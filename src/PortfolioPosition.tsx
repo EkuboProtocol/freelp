@@ -1,6 +1,7 @@
 import { PoolIdentity } from "./PoolIdentity";
 import { PositionStatus, PositionRange } from "./PositionRange";
 import { networkCurrencies } from "./tokens";
+import { useTokenCatalog } from "./tokenCatalog";
 import { networkName } from "./networks";
 import { displayAmount } from "./displayAmount";
 import type { Position, Settings } from "./types";
@@ -15,6 +16,7 @@ export function PortfolioPosition({
   onOpen: () => void;
   stale?: boolean;
 }) {
+  useTokenCatalog(settings.chainId);
   const tokens = [p.descriptor.poolKey.token0, p.descriptor.poolKey.token1].map(
     (address) =>
       networkCurrencies(settings).find(

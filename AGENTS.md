@@ -4,7 +4,7 @@ FreeLP is prepared for open-source distribution under MIT. CI publishes verified
 
 Use worktrees; keep main clean. New Solidity belongs in EkuboProtocol/evm-contracts. Import pinned compiled artifacts with `scripts/import-contracts.ts` and record their source commit in `artifacts/source.json`.
 
-The application uses only configured RPC endpoints and injected wallets. Core, FreeLP and FreeLPDataFetcher addresses are fixed by the build; never expose protocol address overrides. Use viem chains and defaults. Enable 11 chosen mainnets initially; persist explicit RPC overrides. No hosted metadata, token APIs, indexers, relays, analytics, fonts, or transaction services. All position/NFT data is on-chain. Distribute the static app as @ekubo/freelp, runnable with bunx or npx. Do not add attestations or compiled launchers.
+The application uses only configured RPC endpoints and injected wallets. Core, FreeLP and FreeLPDataFetcher addresses are fixed by the build; never expose protocol address overrides. Use viem chains and defaults. Enable only the four mainnets with deployed contracts (4663, 8453, 42161, 1) initially; persist explicit RPC overrides. No hosted metadata, token APIs, indexers, relays, analytics, fonts, or transaction services. All position/NFT data is on-chain. Distribute the static app as @ekubo/freelp, runnable with bunx or npx. Do not add attestations or compiled launchers.
 
 Use black/white styling and system fonts. Retain required license and protocol identifiers.
 

@@ -194,7 +194,9 @@ for (const { missingDecimals, native, batch } of [
         request.method() === "GET" &&
         parsed.origin === "http://127.0.0.1:14173" &&
         (parsed.pathname === "/" ||
-          /^\/(assets\/[^/]+\.(js|css)|favicon\.svg)$/.test(parsed.pathname))
+          /^\/(assets\/[^/]+\.(js|css)|tokens\/\d+\.json|favicon\.svg)$/.test(
+            parsed.pathname,
+          ))
       )
         return;
       const endpoints = [rpcUrl, ...NETWORKS.map(rpcEndpoint)].map(
