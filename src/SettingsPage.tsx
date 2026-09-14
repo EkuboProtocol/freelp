@@ -6,7 +6,6 @@ import { rpc, useSession } from "./session";
 import { errorMessage } from "./errors";
 import type { Settings } from "./types";
 import { storageWarning, subscribeStorageWarnings } from "./storage";
-import { deployPath } from "./routes";
 import {
   EnableBlockedDialog,
   ROW_LABELS,
@@ -139,31 +138,18 @@ export function SettingsPage() {
                 </small>
               </span>
             </label>
-            <span className="row">
-              <a
-                aria-label={`Deploy contracts on ${chain.name}`}
-                href={deployPath(chain.id)}
-              >
-                Deploy contracts
-              </a>
-              <button
-                aria-label={`Edit ${chain.name} RPC`}
-                disabled={transactionBusy}
-                onClick={() => open(chain.id)}
-              >
-                RPC settings
-              </button>
-            </span>
+            <button
+              aria-label={`Edit ${chain.name} RPC`}
+              disabled={transactionBusy}
+              onClick={() => open(chain.id)}
+            >
+              RPC settings
+            </button>
           </div>
         ))}
       </div>
       {!matches.length ? <p>No matching networks.</p> : null}
-      <EnableBlockedDialog
-        blocked={gate.blocked}
-        checking={gate.checking !== undefined}
-        onRetry={() => void gate.enable(gate.blocked!.chainId)}
-        onCancel={gate.dismiss}
-      />
+      <EnableBlockedDialog blocked={gate.blocked} onCancel={gate.dismiss} />
       <dialog
         ref={dialog}
         className="network-dialog"

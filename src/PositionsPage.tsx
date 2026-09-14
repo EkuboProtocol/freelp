@@ -382,6 +382,10 @@ function PortfolioEmpty({
             ? "Positions could not be checked on all enabled networks. Retry the unavailable networks below."
             : "No FreeLP positions found on the enabled networks."}
         </p>
+        <p className="muted">
+          Positions from earlier contract deployments remain at their original
+          manager and need a compatible pinned release.
+        </p>
         <a className="primary-link" href="#/create">
           Create position
         </a>

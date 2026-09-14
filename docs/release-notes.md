@@ -1,3 +1,11 @@
+FreeLP 0.1.16 shows its version, links the source, and simplifies the network check.
+
+The footer now carries a GitHub mark linking to the repository and the running version, injected from the package manifest at build time. About FreeLP is rewritten around what a user needs: what the app is, one run command, the version with the pinned contracts commit, a data and privacy note, and the license links. Contract addresses left the page; each network's Deploy page shows them beside the code check. The note about NFTs from earlier deployments moved to the empty Positions state.
+
+The enable-network modal no longer lists individual contracts or offers Retry. It names the case, explains it, and offers Deploy on this network plus Cancel; an unreachable RPC only points at RPC settings. Network rows no longer carry a Deploy contracts link, so deployment is reached from the modal or the creation gate.
+
+Run `bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest`.
+
 FreeLP 0.1.15 keeps withdrawals reachable when an RPC is busy and opens positions to anyone by ID.
 
 Withdraw, collect, and add-liquidity requests now go to the wallet without any RPC read first: the ownerOf pre-check and the chain and code reads before signing are gone for position and token calls, and stale position data no longer disables actions. The wallet still confirms the account and network, and the contracts enforce ownership and amounts. Deployments keep their RPC-side verification.

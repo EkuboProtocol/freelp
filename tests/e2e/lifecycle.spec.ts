@@ -721,14 +721,10 @@ async function openDeployPage(page: Page, batch: boolean) {
     await page
       .getByRole("checkbox", { name: "Enable Anvil", exact: true })
       .uncheck();
-    await page
-      .getByRole("link", { name: "Deploy contracts on Anvil" })
-      .click();
-  } else {
-    await page.evaluate(() => {
-      location.hash = "#/deploy/31337";
-    });
   }
+  await page.evaluate(() => {
+    location.hash = "#/deploy/31337";
+  });
   await expect(page.locator("p", { hasText: "Network:" })).toContainText(
     batch ? "Anvil (31337) · not enabled" : "Anvil (31337) · enabled",
   );

@@ -74,18 +74,14 @@ const EXPLANATIONS: Record<NetworkIssueState, string> = {
   mismatched:
     "Code at this build's fixed addresses does not match. Do not use this network with this build.",
   unreachable:
-    "The RPC did not answer for this network. Review its RPC settings or retry.",
+    "The RPC did not answer for this network. Review its RPC settings, then enable it again.",
 };
 
 export function EnableBlockedDialog({
   blocked,
-  checking,
-  onRetry,
   onCancel,
 }: {
   blocked?: Blocked;
-  checking: boolean;
-  onRetry: () => void;
   onCancel: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -104,7 +100,7 @@ export function EnableBlockedDialog({
       aria-labelledby="enable-blocked-title"
       onCancel={(event) => {
         event.preventDefault();
-        if (!checking) onCancel();
+        onCancel();
       }}
     >
       {blocked && state ? (
@@ -116,30 +112,23 @@ export function EnableBlockedDialog({
             <button
               type="button"
               aria-label="Close network check"
-              disabled={checking}
               onClick={onCancel}
             >
               ×
             </button>
           </div>
           <p>{EXPLANATIONS[state.state]} The network stays disabled.</p>
-          <ul>
-            {state.issues.map((issue) => (
-              <li key={issue.kind}>{issue.message}</li>
-            ))}
-          </ul>
           <div className="rpc-dialog-actions">
-            <a className="primary-link" href={deployPath(blocked.chainId)}>
-              Deploy on this network
-            </a>
-            <span className="row">
-              <button type="button" disabled={checking} onClick={onCancel}>
-                Cancel
-              </button>
-              <button type="button" disabled={checking} onClick={onRetry}>
-                {checking ? "Checking…" : "Retry"}
-              </button>
-            </span>
+            {state.state === "unreachable" ? (
+              <span />
+            ) : (
+              <a className="primary-link" href={deployPath(blocked.chainId)}>
+                Deploy on this network
+              </a>
+            )}
+            <button type="button" onClick={onCancel}>
+              Cancel
+            </button>
           </div>
         </>
       ) : null}

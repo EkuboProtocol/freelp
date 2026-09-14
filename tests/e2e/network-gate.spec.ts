@@ -44,10 +44,14 @@ test("listing networks makes no code reads and a blocked enable opens the deploy
       name: "Contracts are not deployed on Ethereum",
     }),
   ).toBeVisible();
-  await expect(dialog).toContainText("FreeLP: FreeLP is not deployed");
+  await expect(dialog).not.toContainText("FreeLP:");
+  await expect(dialog.getByRole("button", { name: "Retry" })).toHaveCount(0);
   await expect(
     dialog.getByRole("link", { name: "Deploy on this network" }),
   ).toHaveAttribute("href", "#/deploy/1");
+  await expect(
+    page.getByRole("link", { name: /Deploy contracts on/ }),
+  ).toHaveCount(0);
   await expect(ethereum).not.toBeChecked();
   expect(methods.filter((method) => method === "eth_chainId")).toHaveLength(1);
   expect(methods.filter((method) => method === "eth_getCode")).toHaveLength(5);
@@ -72,11 +76,15 @@ test("listing networks makes no code reads and a blocked enable opens the deploy
     dialog.getByRole("heading", { name: "Could not verify Ethereum" }),
   ).toBeVisible({ timeout: 20000 });
   await expect(ethereum).not.toBeChecked();
+  await expect(
+    dialog.getByRole("link", { name: "Deploy on this network" }),
+  ).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(dialog).not.toBeVisible();
 
   await page.unroute(url);
   await mockDeployments(page);
-  await dialog.getByRole("button", { name: "Retry", exact: true }).click();
-  await expect(dialog).not.toBeVisible();
+  await ethereum.click();
   await expect(ethereum).toBeChecked();
   await expect(row).toContainText("Ready");
   expect(
@@ -141,10 +149,6 @@ test("deploy pages are scoped to a chain and invalid links point back to Network
   await expect(
     page.getByRole("heading", { name: "Networks", exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("link", { name: "Deploy contracts on Base", exact: true })
-    .click();
-  await expect(page).toHaveURL(/#\/deploy\/8453$/);
 
   await page.goto("/#/deploy");
   await expect(page).toHaveURL(/#\/deploy\/1$/);

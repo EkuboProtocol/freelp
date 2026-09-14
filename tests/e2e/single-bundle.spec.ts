@@ -23,9 +23,9 @@ test("page navigation uses the initial JavaScript bundle", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Networks", exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("link", { name: "Deploy contracts on Ethereum", exact: true })
-    .click();
+  await page.evaluate(() => {
+    location.hash = "#/deploy/1";
+  });
   await expect(
     page.getByRole("heading", { name: "Deploy contracts" }),
   ).toBeVisible();
