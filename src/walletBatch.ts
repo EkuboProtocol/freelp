@@ -8,7 +8,7 @@ import {
 } from "./transactions";
 import { walletRejected } from "./transactionStatus";
 import { batchOutcome } from "./batchOutcome";
-import { assertNativeFunding, paddedGas } from "./nativeGas";
+import { CREATE2_FACTORY, verifyDeploymentBatch } from "./deterministic";
 import { switchWalletChain } from "./walletNetwork";
 import { verifyCode } from "./contracts";
 import { DEFAULT_POOL_KEY_INDEX } from "./deployments";
@@ -23,44 +23,27 @@ export async function executeBatch(
   if (calls.length === 1)
     return executeTransaction(provider, account, settings, calls[0], observer);
   const client = rpc(settings);
-  observer?.({ state: "simulation" });
+  observer?.({ state: "checking" });
   if ((await client.getChainId()) !== settings.chainId)
     throw new Error("RPC chain ID does not match settings.");
   await switchWalletChain(provider, settings);
   await assertWallet(provider, account, settings.chainId);
-  await Promise.all([
-    verifyCode(settings, settings.core, "Core"),
-    verifyCode(settings, DEFAULT_POOL_KEY_INDEX, "PoolKeyIndex"),
-    verifyCode(settings, settings.manager, "FreeLP"),
-  ]);
+  if (
+    calls.some(
+      (call) => call.to?.toLowerCase() === CREATE2_FACTORY.toLowerCase(),
+    )
+  ) {
+    await verifyDeploymentBatch(settings, calls);
+  } else
+    await Promise.all([
+      verifyCode(settings, settings.core, "Core"),
+      verifyCode(settings, DEFAULT_POOL_KEY_INDEX, "PoolKeyIndex"),
+      verifyCode(settings, settings.manager, "FreeLP"),
+    ]);
   const batch = calls.map((call) => {
     if (!call.to) throw new Error("Batch calls require a destination.");
     return { ...call, to: call.to };
   });
-  // Sequential simulation preserves approvals for the following deposit.
-  const simulation = await client
-    .simulateCalls({ account, calls: batch })
-    .catch(() => {
-      throw new Error(
-        "Unable to simulate this batch. Change this network’s RPC URL in Networks and retry.",
-      );
-    });
-  if (
-    simulation.results.length !== calls.length ||
-    simulation.results.some((result) => result.status !== "success")
-  )
-    throw new Error(
-      "The batch simulation failed. Review the deposit amounts and approvals.",
-    );
-  await assertNativeFunding(
-    settings,
-    account,
-    simulation.results.reduce(
-      (sum, result) => sum + paddedGas(result.gasUsed),
-      0n,
-    ),
-    calls.reduce((sum, call) => sum + (call.value ?? 0n), 0n),
-  );
   await assertWallet(provider, account, settings.chainId);
   const wallet = walletClient(provider, account, settings);
   return submitBatch(wallet, settings, batch, observer);

@@ -10,7 +10,6 @@ import {
   isTransactionHash,
   type TransactionState,
 } from "./transactionStatus";
-import { assertNativeFunding, paddedGas } from "./nativeGas";
 export type TransactionObserver = (event: {
   state: TransactionState;
   hash?: string;
@@ -42,29 +41,20 @@ export async function executeTransaction(
   observer?: TransactionObserver,
 ) {
   const client = rpc(settings);
-  observer?.({ state: "simulation" });
-  const gas = await validateTransaction(
-    client,
-    provider,
-    account,
-    settings,
-    tx,
-  );
+  observer?.({ state: "checking" });
+  await validateTransaction(client, provider, account, settings, tx);
   await assertWallet(provider, account, settings.chainId);
-  await assertNativeFunding(settings, account, paddedGas(gas), tx.value ?? 0n);
-  await assertWallet(provider, account, settings.chainId);
-  return submitAndObserve(client, provider, account, tx, gas, observer);
+  return submitAndObserve(client, provider, account, tx, observer);
 }
 async function submitAndObserve(
   client: ReturnType<typeof rpc>,
   provider: Provider,
   account: Address,
   tx: Transaction,
-  gas: bigint,
   observer?: TransactionObserver,
 ) {
   observer?.({ state: "awaiting wallet" });
-  const hash = await requestHash(provider, account, tx, gas, observer);
+  const hash = await requestHash(provider, account, tx, observer);
   if (!isTransactionHash(hash)) {
     observer?.({ state: "unknown" });
     throw new Error(
@@ -85,7 +75,6 @@ async function requestHash(
   provider: Provider,
   account: Address,
   tx: Transaction,
-  gas: bigint,
   observer?: TransactionObserver,
 ) {
   try {
@@ -97,7 +86,6 @@ async function requestHash(
           to: tx.to,
           data: tx.data,
           value: toHex(tx.value ?? 0n),
-          gas: toHex(paddedGas(gas)),
         },
       ],
     });
@@ -133,8 +121,6 @@ async function validateTransaction(
       verifyCode(settings, DEFAULT_POOL_KEY_INDEX, "PoolKeyIndex"),
       verifyCode(settings, settings.manager, "FreeLP"),
     ]);
-  await client.call({ ...tx, account });
-  return client.estimateGas({ ...tx, account });
 }
 
 async function observeReceipt(

@@ -37,6 +37,16 @@ for (const kind of [
   });
 }
 
+test("pinned manager exposes wide withdrawal totals", () => {
+  const withdrawal = manager.abi.find(
+    (entry) => entry.type === "function" && entry.name === "withdraw",
+  );
+  expect(withdrawal?.outputs?.map((output) => output.type)).toEqual([
+    "uint256",
+    "uint256",
+  ]);
+});
+
 test("manager immutables are bound to their exact protocol addresses", () => {
   const core = DEFAULT_SETTINGS.core;
   const expected = expectedRuntime("FreeLP", core);

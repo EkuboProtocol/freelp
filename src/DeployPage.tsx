@@ -1,6 +1,7 @@
 import { useSession } from "./session";
 import { NetworkSettingSelect } from "./NetworkSettingSelect";
 import { DeploymentCard } from "./DeploymentCard";
+import { DeployAllButton } from "./DeployAllButton";
 import { DEPLOYMENT_SALT, CREATE2_FACTORY } from "./deterministic";
 export function DeployPage() {
   const { networks } = useSession();
@@ -20,6 +21,7 @@ export function DeployPage() {
         Existing contracts are detected before any deployment.
       </p>
       <NetworkSettingSelect />
+      <DeployAllButton />
       <DeploymentCard kind="Core" />
       <DeploymentCard kind="PoolKeyIndex" />
       <DeploymentCard kind="FreeLPMetadataRenderer" />

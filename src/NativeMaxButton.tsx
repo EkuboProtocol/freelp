@@ -37,9 +37,9 @@ export function NativeMaxButton({
     if (!account || !calls?.length || pending) return;
     const id = ++request.current.version;
     setPending(true);
-    setMessage("Estimating gas for this draft and its approvals…");
+    setMessage("Reading network fees…");
     try {
-      const reserve = await estimateNativeReserve(settings, account, calls);
+      const reserve = await estimateNativeReserve(settings, calls);
       if (id !== request.current.version) return;
       onAmount(
         formatUnits(
@@ -48,7 +48,7 @@ export function NativeMaxButton({
         ),
       );
       setMessage(
-        `Estimated gas reserve: ${formatUnits(reserve, value.decimals)} ${value.symbol}. Final network cost may change.`,
+        `Provisional reserve: ${formatUnits(reserve, value.decimals)} ${value.symbol}, budgeting 1,000,000 gas per call. Your wallet sets the final gas.`,
       );
     } catch (error) {
       if (id === request.current.version) setMessage(errorMessage(error));

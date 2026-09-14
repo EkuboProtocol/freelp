@@ -17,16 +17,17 @@ describe("transaction wallet boundary", () => {
   });
 });
 
-test("an account change during gas estimation prevents any transaction request", async () => {
+test("an account change before submission prevents any transaction request without simulation", async () => {
   const { executeTransaction } = await import("../../src/transactions");
-  let current = account;
+  let reads = 0;
   const requests: string[] = [];
   const server = Bun.serve({
     port: 0,
     async fetch(request) {
       const body = await request.json();
-      if (body.method === "eth_estimateGas")
-        current = "0x0000000000000000000000000000000000000002";
+      expect(["eth_simulateV1", "eth_estimateGas", "eth_call"]).not.toContain(
+        body.method,
+      );
       const values: Record<string, string> = {
         eth_chainId: "0x1",
         eth_call: "0x",
@@ -42,7 +43,13 @@ test("an account change during gas estimation prevents any transaction request",
   const provider: Provider = {
     request: async ({ method }) => {
       requests.push(method);
-      return method === "eth_accounts" ? [current] : "0x1";
+      return method === "eth_accounts"
+        ? [
+            ++reads === 1
+              ? account
+              : "0x0000000000000000000000000000000000000002",
+          ]
+        : "0x1";
     },
   };
   try {
@@ -99,10 +106,14 @@ test("a position transaction requests its own network before wallet submission",
         return null;
       }
       if (method === "eth_accounts") return [account];
-      if (method === "eth_sendTransaction")
+      if (method === "eth_sendTransaction") {
+        expect((params as Record<string, unknown>[])[0]).not.toHaveProperty(
+          "gas",
+        );
         throw Object.assign(new Error("User declined transaction"), {
           code: 4001,
         });
+      }
       return chain;
     },
   };

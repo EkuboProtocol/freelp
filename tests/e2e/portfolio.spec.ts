@@ -128,6 +128,33 @@ test("all networks load independently with exactly one portfolio RPC each", asyn
     path: test.info().outputPath("portfolio-mobile.png"),
     fullPage: true,
   });
+  // Navigation must not depend on an RPC response or a focus-triggered refresh.
+  await page.route("https://**", (route) => route.abort());
+  for (const exit of ["back", "navigation", "all positions"]) {
+    await page
+      .locator(".portfolio-position")
+      .first()
+      .getByRole("link", { name: "Manage position #1", exact: true })
+      .click();
+    await expect(
+      page.getByLabel("Manage position", { exact: true }),
+    ).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    if (exit === "back") await page.goBack();
+    else if (exit === "navigation")
+      await page
+        .getByRole("navigation")
+        .getByRole("link", { name: "Positions", exact: true })
+        .click();
+    else
+      await page
+        .getByRole("link", { name: "All positions", exact: true })
+        .click();
+    await expect(page.locator(".portfolio-positions")).toBeVisible();
+    await expect(
+      page.getByLabel("Manage position", { exact: true }),
+    ).toHaveCount(0);
+  }
 });
 test("RPC failure never claims an empty portfolio and a targeted retry recovers", async ({
   page,

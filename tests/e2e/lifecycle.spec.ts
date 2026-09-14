@@ -6,6 +6,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
 import {
   parseUnits,
+  decodeFunctionData,
   createPublicClient,
   createTestClient,
   erc20Abi,
@@ -206,6 +207,7 @@ for (const { missingDecimals, native, batch } of [
     await page.route(`${rpcUrl}/`, async (route) => {
       const body = route.request().postDataJSON();
       const methods = Array.isArray(body) ? body : [body];
+      methods.forEach((request) => assertReadOnlyRpc(request, manager));
       if (failsCodeRead(body.method, body.params?.[0])) {
         await route.fulfill({
           json: {
@@ -367,48 +369,68 @@ for (const { missingDecimals, native, batch } of [
         .first()
         .click();
     }
-    await page
-      .getByRole("button", { name: "Deploy Core", exact: true })
-      .click();
-    await expect(transactionStatus(page)).toContainText("Deployed Core at", {
-      timeout: 30000,
-    });
-    deployedCore = await page.evaluate(
-      () => JSON.parse(localStorage.getItem("freelp:settings")!).core,
-    );
-    expect(deployedCore).toBe("0x00000000000014aA86C5d3c41765bb24e11bd701");
-    await expect(
-      page.getByRole("button", { name: "Deploy Core", exact: true }),
-    ).toHaveCount(0);
-    await page
-      .getByRole("button", { name: "Deploy PoolKeyIndex", exact: true })
-      .click();
-    await expect(transactionStatus(page)).toContainText(
-      "Deployed PoolKeyIndex at",
-      { timeout: 30000 },
-    );
-    await expect(
-      page.getByRole("button", { name: "Deploy PoolKeyIndex", exact: true }),
-    ).toHaveCount(0);
-    await page
-      .getByRole("button", {
-        name: "Deploy FreeLPMetadataRenderer",
-        exact: true,
-      })
-      .click();
-    await expect(transactionStatus(page)).toContainText(
-      "Deployed FreeLPMetadataRenderer at",
-      { timeout: 30000 },
-    );
-    await page
-      .getByRole("button", { name: "Deploy FreeLP", exact: true })
-      .click();
-    await expect(transactionStatus(page)).toContainText("Deployed FreeLP at", {
-      timeout: 30000,
-    });
-    await expect(
-      page.getByRole("button", { name: "Deploy FreeLP", exact: true }),
-    ).toHaveCount(0);
+    if (batch) {
+      await page
+        .getByRole("button", { name: "Deploy all", exact: true })
+        .click();
+      await expect(transactionStatus(page)).toContainText(
+        "Deployed all required contracts.",
+        { timeout: 30000 },
+      );
+      await expect(
+        page.getByRole("button", { name: "Deploy all", exact: true }),
+      ).toBeDisabled();
+      deployedCore = core;
+    } else {
+      await expect(
+        page.getByRole("button", { name: "Deploy all", exact: true }),
+      ).toHaveCount(0);
+      await page
+        .getByRole("button", { name: "Deploy Core", exact: true })
+        .click();
+      await expect(transactionStatus(page)).toContainText("Deployed Core at", {
+        timeout: 30000,
+      });
+      deployedCore = await page.evaluate(
+        () => JSON.parse(localStorage.getItem("freelp:settings")!).core,
+      );
+      expect(deployedCore).toBe("0x00000000000014aA86C5d3c41765bb24e11bd701");
+      await expect(
+        page.getByRole("button", { name: "Deploy Core", exact: true }),
+      ).toHaveCount(0);
+      await page
+        .getByRole("button", { name: "Deploy PoolKeyIndex", exact: true })
+        .click();
+      await expect(transactionStatus(page)).toContainText(
+        "Deployed PoolKeyIndex at",
+        { timeout: 30000 },
+      );
+      await expect(
+        page.getByRole("button", { name: "Deploy PoolKeyIndex", exact: true }),
+      ).toHaveCount(0);
+      await page
+        .getByRole("button", {
+          name: "Deploy FreeLPMetadataRenderer",
+          exact: true,
+        })
+        .click();
+      await expect(transactionStatus(page)).toContainText(
+        "Deployed FreeLPMetadataRenderer at",
+        { timeout: 30000 },
+      );
+      await page
+        .getByRole("button", { name: "Deploy FreeLP", exact: true })
+        .click();
+      await expect(transactionStatus(page)).toContainText(
+        "Deployed FreeLP at",
+        {
+          timeout: 30000,
+        },
+      );
+      await expect(
+        page.getByRole("button", { name: "Deploy FreeLP", exact: true }),
+      ).toHaveCount(0);
+    }
     expect(deploymentAddress("FreeLP", deployedCore as Hex)).toBe(
       DEFAULT_MANAGER,
     );
@@ -424,7 +446,7 @@ for (const { missingDecimals, native, batch } of [
         "FreeLP",
       ),
     ).rejects.toThrow("already deployed");
-    await deployFetchers(page);
+    await deployFetchers(page, batch);
     await expect(
       page.getByRole("button", { name: "Refresh status" }),
     ).toHaveCount(0);
@@ -495,7 +517,7 @@ for (const { missingDecimals, native, batch } of [
         await page.evaluate(() =>
           Number(sessionStorage.getItem("test:batchCount")),
         ),
-      ).toBe(1);
+      ).toBe(2);
     await checkPoolChart(page, missingDecimals, native);
     await captureChart(page, missingDecimals, native);
     await checkCustomSpacing(page, missingDecimals, native);
@@ -663,7 +685,29 @@ async function seedIncompleteActivity(page: Page) {
   }, account.address);
 }
 
-async function deployFetchers(page: Page) {
+function assertReadOnlyRpc(
+  request: { method: string; params: { to?: string; data: Hex }[] },
+  manager: string,
+) {
+  expect(["eth_simulateV1", "eth_estimateGas"]).not.toContain(request.method);
+  if (request.method !== "eth_call") return;
+  const call = request.params[0];
+  expect(call.to?.toLowerCase()).not.toBe(CREATE2_FACTORY.toLowerCase());
+  if (call.to?.toLowerCase() !== manager.toLowerCase()) return;
+  const { functionName } = decodeFunctionData({
+    abi: managerArtifact.abi,
+    data: call.data,
+  });
+  expect([
+    "createPosition",
+    "addLiquidity",
+    "withdraw",
+    "multicall",
+  ]).not.toContain(functionName);
+}
+
+async function deployFetchers(page: Page, alreadyDeployed: boolean) {
+  if (alreadyDeployed) return;
   await page
     .getByRole("button", { name: "Deploy FreeLPDataFetcher", exact: true })
     .click();

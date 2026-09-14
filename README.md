@@ -20,7 +20,7 @@ Connect your wallet to view positions across enabled networks. Create a position
 
 The portfolio shows NFTs owned in the FreeLP manager. Official Ekubo Positions v2/v3 and Ve33 NFTs use different managers and are not included. Withdrawing all liquidity burns the FreeLP NFT; fee collection preserves it.
 
-Use minimum/maximum price fields or exact ticks to edit ranges with a keyboard. New pools require an explicit initial price. Native-token **Max available** estimates a gas reserve from a valid deposit draft and its approvals; the final transaction is estimated again before requesting your wallet. Network gas and token/pool/extension costs are separate from FreeLP's zero application fees.
+Use minimum/maximum price fields or exact ticks to edit ranges with a keyboard. New pools require an explicit initial price. Native-token **Max available** leaves a provisional reserve of 1,000,000 gas per draft call at current network fees, without executing the draft. Your wallet sets the final transaction gas; the app does not simulate submissions. Batch-capable wallets can deploy all missing contracts with **Deploy all**. Network gas and token/pool/extension costs are separate from FreeLP's zero application fees.
 
 This browser's activity retains submitted hashes and wallet batch IDs. If confirmation is unavailable, use **Check status** instead of repeating the action. Reconnect the submitting account and enable its network to recover after reload. A wallet that fails to return any identifier requires checking its own activity; FreeLP cannot infer whether that request was broadcast.
 

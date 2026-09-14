@@ -150,7 +150,7 @@ function useSessionState() {
     // incomplete and cannot determine whether another action is available.
     transactionLock.current = true;
     setBusy(true);
-    setStatus("Simulating transaction…");
+    setStatus("Checking wallet and network…");
     const observer: TransactionObserver = ({ state, hash, batchId }) => {
       const identifier = hash ?? batchId;
       setStatus(identifier ? `${state}: ${identifier}` : `${state}…`);

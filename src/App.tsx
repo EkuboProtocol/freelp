@@ -72,7 +72,7 @@ function Page({ route }: { route: string }) {
     case "#/build":
       return <BuildPage />;
     default:
-      return <PositionsPage />;
+      return <PositionsPage route={route} />;
   }
 }
 export function App() {

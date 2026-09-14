@@ -22,6 +22,70 @@ export function deploymentAddress(kind: ContractKind, core: Address) {
     bytecode: deployment(kind, core),
   });
 }
+
+export const DEPLOYMENT_KINDS = [
+  "Core",
+  "PoolKeyIndex",
+  "FreeLPMetadataRenderer",
+  "FreeLP",
+  "FreeLPDataFetcher",
+] as const;
+
+function deploymentTransaction(
+  settings: Settings,
+  kind: ContractKind,
+): Transaction {
+  return {
+    to: CREATE2_FACTORY,
+    data: concatHex([DEPLOYMENT_SALT, deployment(kind, settings.core)]),
+  };
+}
+
+async function verifyFactory(settings: Settings) {
+  if (
+    (
+      await rpc(settings).getCode({ address: CREATE2_FACTORY })
+    )?.toLowerCase() !== FACTORY_RUNTIME
+  )
+    throw new Error(
+      "The standard CREATE2 factory is missing or has unexpected code on this network.",
+    );
+}
+
+/** Full missing set in dependency order, verified against current chain state. */
+export async function prepareAllDeployments(
+  settings: Settings,
+): Promise<Transaction[]> {
+  const statuses = await Promise.all(
+    DEPLOYMENT_KINDS.map((kind) => deploymentStatus(settings, kind)),
+  );
+  const missing = DEPLOYMENT_KINDS.filter(
+    (_, index) => !statuses[index].exists,
+  );
+  if (!missing.length) return [];
+  await verifyFactory(settings);
+  return missing.map((kind) => deploymentTransaction(settings, kind));
+}
+
+export async function verifyDeploymentBatch(
+  settings: Settings,
+  calls: Transaction[],
+) {
+  const expected = await prepareAllDeployments(settings);
+  if (
+    !expected.length ||
+    calls.length !== expected.length ||
+    calls.some(
+      (call, index) =>
+        call.to?.toLowerCase() !== CREATE2_FACTORY.toLowerCase() ||
+        call.data.toLowerCase() !== expected[index].data.toLowerCase() ||
+        (call.value ?? 0n) !== 0n,
+    )
+  )
+    throw new Error(
+      "Deployment state changed or the batch differs from this build. Refresh deployments and retry.",
+    );
+}
 export async function deploymentStatus(settings: Settings, kind: ContractKind) {
   const address = deploymentAddress(kind, settings.core);
   const client = rpc(settings);
@@ -46,18 +110,9 @@ export async function prepareDeployment(
     throw new Error(
       "This contract is already deployed. Use the existing address.",
     );
-  if (
-    (await client.getCode({ address: CREATE2_FACTORY }))?.toLowerCase() !==
-    FACTORY_RUNTIME
-  )
-    throw new Error(
-      "The standard CREATE2 factory is missing or has unexpected code on this network.",
-    );
+  await verifyFactory(settings);
   await verifyDependencies(settings, kind);
-  return {
-    to: CREATE2_FACTORY,
-    data: concatHex([DEPLOYMENT_SALT, deployment(kind, settings.core)]),
-  };
+  return deploymentTransaction(settings, kind);
 }
 
 async function verifyDependencies(settings: Settings, kind: ContractKind) {
@@ -74,14 +129,7 @@ export async function verifyDeploymentTransaction(
   settings: Settings,
   tx: Transaction,
 ) {
-  const kinds = [
-    "Core",
-    "PoolKeyIndex",
-    "FreeLPMetadataRenderer",
-    "FreeLP",
-    "FreeLPDataFetcher",
-  ] as const;
-  const kind = kinds.find(
+  const kind = DEPLOYMENT_KINDS.find(
     (kind) =>
       concatHex([
         DEPLOYMENT_SALT,

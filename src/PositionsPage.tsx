@@ -29,10 +29,10 @@ function rowMessage(row: PortfolioRow) {
   return undefined;
 }
 
-export function PositionsPage() {
+export function PositionsPage({ route: hash }: { route: string }) {
   const { account, busy, networks } = useSession();
   const { rows, pending, refreshChain, refreshAll } = usePortfolio(0);
-  const route = routePosition(location.hash);
+  const route = routePosition(hash);
   const positions = rows.flatMap((row) =>
     row.items.map((position) => ({
       settings: row.settings,
