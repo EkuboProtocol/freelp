@@ -1,3 +1,9 @@
+FreeLP 0.1.14 stops listing the same browser wallet twice.
+
+Wallets that announce themselves through EIP-6963 often expose a different wrapper object on window.ethereum, so the injected-wallet fallback appeared next to the announced entry, for example Ambire alongside Injected wallet. The fallback now appears only when no wallet announced. Wallets that only inject window.ethereum are still offered.
+
+Run `bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest`.
+
 FreeLP 0.1.13 gates network enabling on verified contract code and scopes deployment to one chain.
 
 Enabling a network in Networks now reads its chain ID and the code of the five required contracts once, compares that code with this build, and enables only when everything matches. Missing, incompatible, or unreachable networks stay disabled and open a modal that explains which case occurred, with Deploy on this network, Retry, and Cancel. Listing networks makes no RPC requests: rows show Ready, Needs deployment, or Not checked from local configuration and remembered successful checks. Disabling never contacts the RPC, and failed checks are never remembered.

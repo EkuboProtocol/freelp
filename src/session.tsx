@@ -53,11 +53,13 @@ function useSessionState() {
       const provider = (window as Window & { ethereum?: Wallet["provider"] })
         .ethereum;
       if (typeof provider?.request !== "function") return;
+      // Wallets that announce through EIP-6963 also own window.ethereum, often
+      // through a different wrapper object, so identity checks cannot dedupe
+      // them. Offer the legacy entry only when nothing announced.
       setWallets((current) =>
-        current.some((wallet) => wallet.provider === provider)
+        current.length
           ? current
           : [
-              ...current,
               {
                 info: { uuid: "legacy-injected", name: "Injected wallet" },
                 provider,
