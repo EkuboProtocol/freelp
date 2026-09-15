@@ -94,7 +94,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$GITHUB_REF_NAME" --notes-file docs/release-notes.md
+        run: |
+          bun scripts/extract-release-notes.ts docs/release-notes.md "$GITHUB_REF_NAME" release/notes.md
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$GITHUB_REF_NAME" --notes-file release/notes.md
 
   publish-npm:
     needs: build
