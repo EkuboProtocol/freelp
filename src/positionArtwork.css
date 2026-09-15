@@ -1,23 +1,26 @@
 .position-artwork {
-  margin-top: 1rem;
-}
-
-.position-artwork summary {
-  cursor: pointer;
-  font-weight: 600;
+  margin: 0;
 }
 
 .position-artwork-image {
   display: block;
-  width: min(100%, 640px);
-  height: auto;
-  max-height: 640px;
-  margin-top: 0.75rem;
+  width: 160px;
+  height: 160px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
   object-fit: contain;
   background: #fff;
 }
 
 .position-artwork-fallback {
-  margin: 0.75rem 0 0;
+  margin: 0;
   color: #666;
+  font-size: 13px;
+}
+
+@media (max-width: 650px) {
+  .position-artwork-image {
+    width: 96px;
+    height: 96px;
+  }
 }

@@ -17,8 +17,7 @@ export function PositionArtwork({
     ? `Position NFT artwork for position #${positionId}`
     : "Position NFT artwork";
   return (
-    <details className="position-artwork">
-      <summary>View position NFT</summary>
+    <figure className="position-artwork">
       {image ? (
         <img
           className="position-artwork-image"
@@ -26,7 +25,6 @@ export function PositionArtwork({
           alt={label}
           width={640}
           height={640}
-          loading="lazy"
           decoding="async"
         />
       ) : (
@@ -34,6 +32,6 @@ export function PositionArtwork({
           Artwork unavailable.
         </p>
       )}
-    </details>
+    </figure>
   );
 }

@@ -955,11 +955,10 @@ function approvalCount(batch: boolean, native: boolean) {
 }
 
 async function capturePosition(page: Page) {
-  await page.getByText("View position NFT", { exact: true }).click();
   const artwork = page.getByRole("img", { name: /Position NFT artwork/ });
   await expect(artwork).toBeVisible();
   await expect(artwork).toHaveJSProperty("naturalWidth", 640);
-  await page.getByText("View position NFT", { exact: true }).click();
+  await expect(page.getByText("Exact amount")).toHaveCount(0);
   await expect(page.locator(".current-price strong").last()).toBeVisible();
   await expect(
     page.getByRole("button", { name: /Burn|Transfer NFT/ }),

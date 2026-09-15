@@ -42,9 +42,8 @@ export function PositionDetail({
     setStatus("");
     setMode(next);
     dialog.current?.showModal();
-    // Balances only matter for deposits; withdrawals need no fresh reads.
+    // Balances only matter for deposits; nothing else is re-read on open.
     if (next === "add") actions.refreshTokens();
-    void onRefresh?.();
   }
   async function add() {
     await actions.add();
@@ -63,8 +62,9 @@ export function PositionDetail({
   }
   return (
     <div className="position-detail">
-      <div className="position-heading row spread">
-        <div>
+      <div className="position-heading">
+        <PositionArtwork metadata={p.metadata} positionId={p.id.toString()} />
+        <div className="position-heading-text">
           <h2 tabIndex={-1}>
             {tokens
               ? `${tokens[0].symbol} / ${tokens[1].symbol}`
@@ -117,7 +117,6 @@ export function PositionDetail({
           />
         ) : null}
       </section>
-      <PositionArtwork metadata={p.metadata} positionId={p.id.toString()} />
       <dialog
         ref={dialog}
         className="position-dialog"
@@ -214,15 +213,15 @@ function PositionAmounts({
             ) : null}
           </dt>
           <dd>
-            <span>{displayAmount(values[i], t.decimals)}</span>
-            <details>
-              <summary>Exact amount</summary>
-              <code>
-                {t.metadataMissing
-                  ? values[i].toString()
-                  : formatUnits(values[i], t.decimals)}
-              </code>
-            </details>
+            <span
+              title={
+                t.metadataMissing
+                  ? `${values[i].toString()} raw units`
+                  : `${formatUnits(values[i], t.decimals)} ${t.symbol}`
+              }
+            >
+              {displayAmount(values[i], t.decimals)}
+            </span>
           </dd>
         </div>
       ))}

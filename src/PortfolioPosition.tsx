@@ -8,12 +8,10 @@ import type { Position, Settings } from "./types";
 export function PortfolioPosition({
   settings,
   position: p,
-  onOpen,
   stale = false,
 }: {
   settings: Settings;
   position: Position;
-  onOpen: () => void;
   stale?: boolean;
 }) {
   useTokenCatalog(settings.chainId);
@@ -59,7 +57,6 @@ export function PortfolioPosition({
       <a
         className="primary-link"
         href={`#/positions/${settings.chainId}/${p.id}`}
-        onClick={onOpen}
         aria-label={`Manage position #${p.id}`}
       >
         Manage position

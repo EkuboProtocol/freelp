@@ -1,3 +1,9 @@
+FreeLP 0.1.18 calms the position page and cuts background RPC traffic.
+
+The position page shows the NFT artwork beside the heading instead of behind a disclosure, and the liquidity and fee amounts drop their Exact amount disclosures; the exact figure is the hover title on each amount. Refreshes no longer happen on window focus, when opening a position from the list, or when opening the add or withdraw dialog, and a transaction reloads only its own network instead of every enabled one. The toolbar shows Updated with a time, or Updating…, in place, without a notice popping in and out. Refresh position remains for a manual reload.
+
+Run `bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest`.
+
 FreeLP 0.1.17 enables only the four networks that carry this build's contracts by default.
 
 Robinhood Chain, Base, Arbitrum, and Ethereum are the default networks; the pool index on each was seeded with every pool holding liquidity. Optimism, BNB Smart Chain, Gnosis, Unichain, Polygon, Monad, and Ink are no longer enabled by default. Browsers with saved preferences drop those seven once unless a network was verified through Enable or has a custom RPC URL; any network can be enabled again in Networks after its code check. Registered pool cards now show tick spacing as a percentage instead of raw ticks. The bundled token list now mirrors the Ekubo API: every token with a non-negative visibility priority on each bundled chain except the wrapped native token, about 8,500 entries including USDG on Ethereum, Unichain, Ink, and Robinhood Chain. The list ships as one JSON file per chain inside the app and is read from the app's own origin when a chain is first used, so the script bundle stays the same size; `bun scripts/sync-default-tokens.ts` refreshes it.

@@ -123,13 +123,6 @@ function PortfolioDetail({
 }) {
   const fresh = !current.stale;
   useEffect(() => {
-    const chainId = current.settings.chainId;
-    const refreshOnReturn = () => {
-      if (!busy && document.visibilityState === "visible")
-        void refreshChain(chainId);
-    };
-    window.addEventListener("focus", refreshOnReturn);
-    document.addEventListener("visibilitychange", refreshOnReturn);
     requestAnimationFrame(() => {
       const heading = document.querySelector<HTMLElement>(
         ".position-heading h2",
@@ -137,11 +130,7 @@ function PortfolioDetail({
       heading?.focus();
       heading?.scrollIntoView({ block: "start" });
     });
-    return () => {
-      window.removeEventListener("focus", refreshOnReturn);
-      document.removeEventListener("visibilitychange", refreshOnReturn);
-    };
-  }, [current.settings.chainId, refreshChain, busy]);
+  }, [current.settings.chainId, current.position.id]);
   return (
     <section>
       <a href="#/positions" className="back-link">
@@ -154,26 +143,19 @@ function PortfolioDetail({
           aria-busy={!fresh}
         >
           <div className="portfolio-detail-toolbar">
-            <span>
-              Data {fresh ? "updated" : "stale"}{" "}
-              {current.loadedAt
-                ? `at ${new Date(current.loadedAt).toLocaleString()}`
-                : ""}
+            <span role="status" aria-live="polite">
+              {fresh
+                ? `Updated ${current.loadedAt ? new Date(current.loadedAt).toLocaleTimeString() : ""}`
+                : "Updating…"}
             </span>
             <button
               type="button"
-              disabled={busy}
+              disabled={busy || !fresh}
               onClick={() => refreshChain(current.settings.chainId)}
             >
               Refresh position
             </button>
           </div>
-          {!fresh ? (
-            <p role="status">
-              Position data may be stale while it refreshes. Estimates update
-              after Refresh position; the contract enforces actual amounts.
-            </p>
-          ) : null}
           {current.position.amounts.liquidity === 0n ? (
             <p className="portfolio-closed-note">
               This position is closed. It remains visible so you can review its
@@ -264,7 +246,6 @@ function PortfolioList({
             settings={settings}
             position={position}
             stale={stale}
-            onOpen={() => refreshChain(settings.chainId)}
           />
         ))}
       </div>
