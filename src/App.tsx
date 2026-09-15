@@ -18,9 +18,13 @@ function AboutPage() {
       <h2>About FreeLP</h2>
       <p>
         FreeLP is an ownerless liquidity position manager for Ekubo on EVM
-        networks. It charges no application fees, runs from a package on your
-        own machine, and talks only to the RPC endpoints you configure and the
-        wallet you connect.
+        networks. It charges no application fees and talks only to the RPC
+        endpoints you configure and the wallet you connect.
+      </p>
+      <h3>Hosted version</h3>
+      <p>
+        <a href="https://freelp.ekubo.org/">freelp.ekubo.org</a> serves this
+        release. Your wallet still signs transactions in the browser.
       </p>
       <h3>Run locally</h3>
       <Command command="bunx @ekubo/freelp@latest" />
@@ -53,7 +57,8 @@ function AboutPage() {
       <p>
         Everything on-chain comes from the RPC endpoints configured in Networks.
         Network preferences and imported token metadata stay in this browser.
-        Nothing is sent to any other service.
+        Loading the hosted site involves distribution traffic; nothing else
+        leaves the browser.
       </p>
       <h3>Licenses</h3>
       <p className="row">

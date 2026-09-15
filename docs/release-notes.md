@@ -1,3 +1,9 @@
+FreeLP 0.1.20 links the hosted site and trims the docs.
+
+https://freelp.ekubo.org/ now serves the stable release through a Cloudflare DNSLink gateway tracking the published IPNS name. The README and the in-app About page link it, and the README's usage section plus the distribution and publishing notes are shorter and current.
+
+Run `bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest`.
+
 FreeLP 0.1.19 gives the position NFT a readable column on the position page.
 
 The artwork now fills a 380px column beside the position details on wide screens and the full width above them on phones, so its pair, decimals, and price range are legible. The heading, liquidity and fee cards, and price range sit in the content column with the actions aligned to the heading.

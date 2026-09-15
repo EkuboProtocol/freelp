@@ -1,5 +1,7 @@
 # FreeLP
 
+Try it at https://freelp.ekubo.org/ — no install needed.
+
 Manage EVM liquidity positions using only RPC endpoints and your wallet. No application fees, indexers, hosted token APIs, or API keys. Position data and NFT metadata live on-chain.
 
 ## Run
@@ -16,19 +18,11 @@ You can also open an IPFS build from the **IPFS preview** commit status or GitHu
 
 ## Use
 
-Connect your wallet to view positions across enabled networks. Create a position by selecting a network, tokens, pool, and price range. Deposit amounts are calculated locally; the liquidity chart supports hover, zoom, and range selection. Add liquidity, withdraw, or claim fees from your positions.
+Connect your wallet to view positions across enabled networks, or open any position by ID at `#/positions/<chainId>/<id>` without a wallet; only its owner can sign. Create a position by selecting a network, tokens, pool, and price range. Deposit amounts are calculated locally; the liquidity chart supports hover, zoom, and range selection, and new pools require an explicit initial price. Add liquidity, withdraw, or claim fees from your positions. Withdrawing all liquidity burns the FreeLP NFT; fee collection preserves it.
 
-The portfolio shows NFTs owned in the FreeLP manager. Any position can also be opened by ID at `#/positions/<chainId>/<id>` without a wallet; only its owner can sign. Position and token transactions go straight to the wallet without RPC pre-checks, so a busy RPC cannot block a withdrawal. Official Ekubo Positions v2/v3 and Ve33 NFTs use different managers and are not included. Withdrawing all liquidity burns the FreeLP NFT; fee collection preserves it.
+Robinhood Chain, Base, Arbitrum, and Ethereum are enabled by default, since those carry this build's contracts and registered pools. Other networks can be enabled in Networks after a code check against this build; enabling reads the chain ID and the five required contracts once, and missing, incompatible, or unreachable networks stay disabled with an explanation. Listing or disabling networks makes no RPC requests, and failed checks are never remembered. Position and token transactions go straight to the wallet without RPC pre-checks, so a busy RPC cannot block a withdrawal.
 
-Use minimum/maximum price fields or exact ticks to edit ranges with a keyboard. New pools require an explicit initial price. Native-token **Max available** leaves a provisional reserve of 1,000,000 gas per draft call at current network fees, without executing the draft. Your wallet sets the final transaction gas; the app does not simulate submissions. Batch-capable wallets can deploy all missing contracts with **Deploy all**. Network gas and token/pool/extension costs are separate from FreeLP's zero application fees.
-
-This browser's activity retains submitted hashes and wallet batch IDs. If confirmation is unavailable, use **Check status** instead of repeating the action. Reconnect the submitting account and enable its network to recover after reload. A wallet that fails to return any identifier requires checking its own activity; FreeLP cannot infer whether that request was broadcast.
-
-Once loaded, the bundled app uses only configured RPC endpoints and injected wallets for application data and signing. Installing through npm or loading through an IPFS gateway involves distribution traffic; wallet-internal networking is controlled by your wallet.
-
-Robinhood Chain, Base, Arbitrum, and Ethereum are enabled by default, since those carry this build's contracts and registered pools. Enable other mainnets or override their RPC URLs in Networks. Listing networks makes no RPC requests; rows show **Ready**, **Needs deployment**, or **Not checked** from local configuration and remembered successful checks. Enabling a network reads its chain ID and the code of the five required contracts once, then compares that code with this build. Networks that are missing contracts, hold incompatible code, or do not answer stay disabled and explain why, with a link to deploy on that network. Disabling never contacts the RPC, and failed checks are never remembered. Import tokens by address using their on-chain metadata.
-
-If required contracts are missing on a network, **Deploy contracts** from that network's row in Networks opens `#/deploy/<chainId>`, which can deploy Core, the shared PoolKeyIndex, the metadata renderer, FreeLP, and FreeLPDataFetcher at their fixed addresses on that network only. Deployment never enables a network; enable it afterwards in Networks, which verifies the deployed code again. Pair discovery reads registered keys from PoolKeyIndex; unregistered initialized pools can still be configured manually. Registration never implies initialization: pools can be initialized outside this interface, so the app reads each pool's live Core state to decide whether creation must set an initial price. Registry coverage is not a complete index of Core history.
+Once loaded, the app talks only to your configured RPC endpoints and wallet. Your wallet confirms every submission and sets the gas; the app does not simulate transactions. Submitted hashes stay in this browser's activity; use **Check status** instead of repeating an action. Import tokens by address using their on-chain metadata. If a network is missing contracts, deploy them from `#/deploy/<chainId>`; deployment never enables the network.
 
 This contract revision uses a new manager address. Existing NFTs remain in their original manager and require a compatible pinned release to manage them; upgrading the UI does not move positions. See [contract integration](docs/contracts.md) for the source pin and deployment addresses.
 

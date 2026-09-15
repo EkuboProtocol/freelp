@@ -1,8 +1,6 @@
 # npm trusted publishing
 
-The GitHub side is prepared for `@ekubo/freelp`. The maintainer authorized public npm publication after the pool-flow fixes pass verification. The manifest uses `private: false` and `publishConfig.access: public`; there is no npm `public: true` setting. Trusted publishing is configured; tagged commits publish through GitHub CI with `FREELP_NPM_PUBLISH=true`.
-
-On npmjs, open https://www.npmjs.com/package/@ekubo/freelp/access and add a GitHub Actions trusted publisher:
+`@ekubo/freelp` publishes through GitHub CI with `FREELP_NPM_PUBLISH=true`. The manifest uses `private: false` and `publishConfig.access: public`. Trusted publishing is configured; tagged commits publish with Node 24/npm OIDC and no NPM_TOKEN. On npmjs, the package's trusted publisher is:
 
 | Field | Value |
 | --- | --- |

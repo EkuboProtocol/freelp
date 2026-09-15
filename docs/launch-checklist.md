@@ -7,4 +7,4 @@
 - Publish a tested version; confirm `bunx @ekubo/freelp@VERSION` and `npx @ekubo/freelp@VERSION` opens the bundled app. No attestation or separate binary is needed.
 - Retain public site CARs on user-operated IPFS nodes. Every successful CI build is pinned on the dedicated DigitalOcean node, with its link attached to the commit.
 
-The persistent DigitalOcean node, signing/deployment keys, and independent IPNS workflow are described in distribution.md. At launch enable FREELP_PUBLIC_RELEASE only after public source/package readiness. Run the IPNS workflow in dry-run mode before enabling public publication.
+The persistent DigitalOcean node, signing/deployment keys, and independent IPNS workflow are described in distribution.md. The repository is public with `FREELP_PUBLIC_RELEASE=true`; the IPNS name is published and renewed by automation. Run the IPNS workflow in dry-run mode before dispatching a real publication.
