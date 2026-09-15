@@ -1,13 +1,16 @@
 .position-artwork {
   margin: 0;
+  width: 100%;
+  max-width: 480px;
 }
 
 .position-artwork-image {
   display: block;
-  width: 160px;
-  height: 160px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
   border: 1px solid #ddd;
-  border-radius: 12px;
+  border-radius: 16px;
   object-fit: contain;
   background: #fff;
 }
@@ -16,11 +19,4 @@
   margin: 0;
   color: #666;
   font-size: 13px;
-}
-
-@media (max-width: 650px) {
-  .position-artwork-image {
-    width: 96px;
-    height: 96px;
-  }
 }

@@ -720,8 +720,15 @@ header { flex-wrap: wrap; }
 .positions-empty { min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; }
 .positions-empty .empty-connect, .positions-empty .primary-link { padding: 14px 32px; font-size: 18px; border-radius: 10px; }
 .position-management { border: 0; background: transparent; border-radius: 0; padding: 0; margin: 20px 0; min-width: 0; max-width: none; }
-.position-heading { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px 20px; align-items: start; margin: 0 0 24px; }
+.position-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+.position-side { display: flex; justify-content: center; }
+.position-main { min-width: 0; }
+.position-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 20px; align-items: start; margin: 0 0 24px; }
 .position-heading-text { min-width: 0; }
+@media (min-width: 900px) {
+  .position-layout { grid-template-columns: 380px minmax(0, 1fr); gap: 32px; }
+  .position-side { position: sticky; top: 16px; }
+}
 .position-heading h2 { margin: 0; font-size: 28px; }
 .position-heading p { margin: 4px 0 12px; }
 .position-heading .pool-identity { margin: 0; }
@@ -784,6 +791,5 @@ header { flex-wrap: wrap; }
 .about-page { max-width: 76ch; }
 .about-page h3 { margin: 28px 0 8px; }
 @media (max-width: 650px) {
-  .position-heading { grid-template-columns: auto minmax(0, 1fr); }
-  .position-heading .position-actions { grid-column: 1 / -1; }
+  .position-heading { grid-template-columns: minmax(0, 1fr); }
 }

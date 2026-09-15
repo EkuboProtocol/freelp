@@ -62,61 +62,70 @@ export function PositionDetail({
   }
   return (
     <div className="position-detail">
-      <div className="position-heading">
-        <PositionArtwork metadata={p.metadata} positionId={p.id.toString()} />
-        <div className="position-heading-text">
-          <h2 tabIndex={-1}>
-            {tokens
-              ? `${tokens[0].symbol} / ${tokens[1].symbol}`
-              : "Manage position"}
-          </h2>
-          <p className="muted">
-            {networkName(settings.chainId, settings.name)} · Position #
-            {p.id.toString()}
-          </p>
-          <div className="row">
-            <PositionStatus position={p} />
-            <PoolIdentity descriptor={p.descriptor} />
+      <div className="position-layout">
+        <aside className="position-side">
+          <PositionArtwork metadata={p.metadata} positionId={p.id.toString()} />
+        </aside>
+        <div className="position-main">
+          <div className="position-heading">
+            <div className="position-heading-text">
+              <h2 tabIndex={-1}>
+                {tokens
+                  ? `${tokens[0].symbol} / ${tokens[1].symbol}`
+                  : "Manage position"}
+              </h2>
+              <p className="muted">
+                {networkName(settings.chainId, settings.name)} · Position #
+                {p.id.toString()}
+              </p>
+              <div className="row">
+                <PositionStatus position={p} />
+                <PoolIdentity descriptor={p.descriptor} />
+              </div>
+            </div>
+            <div className="row position-actions">
+              <button
+                onClick={() => open("add")}
+                disabled={controlsDisabled}
+                aria-label="Add liquidity to position"
+              >
+                Add liquidity
+              </button>
+              <button
+                disabled={controlsDisabled}
+                onClick={() => open("withdraw")}
+              >
+                Withdraw
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="row position-actions">
-          <button
-            onClick={() => open("add")}
-            disabled={controlsDisabled}
-            aria-label="Add liquidity to position"
-          >
-            Add liquidity
-          </button>
-          <button disabled={controlsDisabled} onClick={() => open("withdraw")}>
-            Withdraw
-          </button>
+          <div className="position-summary-grid">
+            <section className="position-summary">
+              <h3>Liquidity</h3>
+              <PositionAmounts position={p} tokens={tokens} fees={false} />
+            </section>
+            <section className="position-summary">
+              <div className="row spread">
+                <h3>Uncollected fees</h3>
+                <Action run={claim} disabled={claimUnavailable(readOnly, p)}>
+                  Collect fees
+                </Action>
+              </div>
+              <PositionAmounts position={p} tokens={tokens} fees />
+            </section>
+          </div>
+          <section className="position-summary">
+            <h3>Price range</h3>
+            {tokens ? (
+              <PositionRange
+                position={p}
+                decimals={[tokens[0].decimals, tokens[1].decimals]}
+                symbols={[tokens[0].symbol, tokens[1].symbol]}
+              />
+            ) : null}
+          </section>
         </div>
       </div>
-      <div className="position-summary-grid">
-        <section className="position-summary">
-          <h3>Liquidity</h3>
-          <PositionAmounts position={p} tokens={tokens} fees={false} />
-        </section>
-        <section className="position-summary">
-          <div className="row spread">
-            <h3>Uncollected fees</h3>
-            <Action run={claim} disabled={claimUnavailable(readOnly, p)}>
-              Collect fees
-            </Action>
-          </div>
-          <PositionAmounts position={p} tokens={tokens} fees />
-        </section>
-      </div>
-      <section className="position-summary">
-        <h3>Price range</h3>
-        {tokens ? (
-          <PositionRange
-            position={p}
-            decimals={[tokens[0].decimals, tokens[1].decimals]}
-            symbols={[tokens[0].symbol, tokens[1].symbol]}
-          />
-        ) : null}
-      </section>
       <dialog
         ref={dialog}
         className="position-dialog"

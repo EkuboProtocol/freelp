@@ -1,3 +1,9 @@
+FreeLP 0.1.19 gives the position NFT a readable column on the position page.
+
+The artwork now fills a 380px column beside the position details on wide screens and the full width above them on phones, so its pair, decimals, and price range are legible. The heading, liquidity and fee cards, and price range sit in the content column with the actions aligned to the heading.
+
+Run `bunx @ekubo/freelp@latest` or `npx @ekubo/freelp@latest`.
+
 FreeLP 0.1.18 calms the position page and cuts background RPC traffic.
 
 The position page shows the NFT artwork beside the heading instead of behind a disclosure, and the liquidity and fee amounts drop their Exact amount disclosures; the exact figure is the hover title on each amount. Refreshes no longer happen on window focus, when opening a position from the list, or when opening the add or withdraw dialog, and a transaction reloads only its own network instead of every enabled one. The toolbar shows Updated with a time, or Updating…, in place, without a notice popping in and out. Refresh position remains for a manual reload.
