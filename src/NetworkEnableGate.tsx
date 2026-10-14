@@ -9,7 +9,10 @@ import {
 } from "./networkVerification";
 
 export type RowState =
-  "ready" | "needs-deployment" | "incompatible" | "unchecked";
+  | "ready"
+  | "needs-deployment"
+  | "incompatible"
+  | "unchecked";
 export const ROW_LABELS: Record<RowState, string> = {
   ready: "Ready",
   "needs-deployment": "Needs deployment",

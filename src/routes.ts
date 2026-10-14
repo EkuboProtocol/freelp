@@ -1,7 +1,9 @@
 import { chainDefinition } from "./chains";
 
 export type DeployRoute =
-  { kind: "active" } | { kind: "chain"; chainId: number } | { kind: "invalid" };
+  | { kind: "active" }
+  | { kind: "chain"; chainId: number }
+  | { kind: "invalid" };
 
 export function deployPath(chainId: number) {
   return `#/deploy/${chainId}`;

@@ -7,7 +7,10 @@ import { rpc } from "./rpc";
 import type { Position, Settings } from "./types";
 
 export type PortfolioAvailability =
-  "available" | "available-empty" | "proven-not-deployed" | "unavailable";
+  | "available"
+  | "available-empty"
+  | "proven-not-deployed"
+  | "unavailable";
 
 export type PortfolioResult = {
   items: Position[];
