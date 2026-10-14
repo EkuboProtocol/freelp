@@ -114,6 +114,8 @@ jobs:
           bun-version: 1.4.0
       - run: bun install --frozen-lockfile
       - run: bun run build
+      # The packaged-app and gateway checks load the site in Chromium.
+      - run: bunx playwright install --with-deps chromium
       - name: Package content-addressed site
         run: |
           bun scripts/package-release.ts
