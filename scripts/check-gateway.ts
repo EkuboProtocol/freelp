@@ -20,9 +20,7 @@ async function check(browser: Browser, base: string) {
       page.getByRole("heading", { name: "Terms of Service" }),
     ).toBeVisible();
     await page.getByRole("link", { name: "Networks", exact: true }).click();
-    await expect(
-      page.getByRole("heading", { name: "Networks" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Networks" })).toBeVisible();
     expect(failures).toEqual([]);
     console.log("Gateway deep links and local assets verified:", base);
   } finally {

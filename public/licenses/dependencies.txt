@@ -5524,7 +5524,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 ---
-zod@4.6.1
+zod@3.25.76
 License: MIT
 Package author: "Colin McDonnell <zod@colinhacks.com>"
 

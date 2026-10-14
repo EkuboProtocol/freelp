@@ -2,13 +2,13 @@
 
 `@ekubo/freelp` publishes through GitHub CI with `FREELP_NPM_PUBLISH=true`. The manifest uses `private: false` and `publishConfig.access: public`. Trusted publishing is configured; tagged commits publish with Node 24/npm OIDC and no NPM_TOKEN. On npmjs, the package's trusted publisher is:
 
-| Field | Value |
-| --- | --- |
-| Organization or user | `EkuboProtocol` |
-| Repository | `freelp` |
-| Workflow filename | `deploy.yml` |
-| Environment name | `npm` |
-| Allowed actions | Enable direct `npm publish` |
+| Field                | Value                       |
+| -------------------- | --------------------------- |
+| Organization or user | `EkuboProtocol`             |
+| Repository           | `freelp`                    |
+| Workflow filename    | `deploy.yml`                |
+| Environment name     | `npm`                       |
+| Allowed actions      | Enable direct `npm publish` |
 
 The GitHub `npm` environment permits tags. The publish job requires the build job to pass, downloads that tag's tested npm tarball, validates its name/version/repository/launch readiness, and publishes it with Node 24/npm OIDC. No NPM_TOKEN is needed. Any pushed tag triggers publication. Set a new, unpublished package version before tagging; tags do not change the package version. Use `v<version>` by convention. Publication updates npm’s `latest` dist-tag. This is the workflow filename containing the publish job, not a separate publish.yml.
 
