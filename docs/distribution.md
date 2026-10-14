@@ -10,7 +10,7 @@ The stable name is `ipns://k51qzi5uqu5dhvrw6m3hzjr4c4hgohescj5ge8krqugbmgr44avgh
 
 ## Release jobs
 
-`deploy.yml` checks every pushed branch commit and tag: lint, typecheck, unit tests, production build, browser lifecycles, accessibility/Lighthouse, packaged-app check, and isolated IPFS gateway verification. It pins that build's CAR on the persistent node, links the preview to the commit, and retains the tested tarball, CAR, deployment descriptor, and reports as Actions artifacts for 90 days. Tagged builds create a notes-only GitHub release and publish to npm through trusted publishing. Fork PRs do not run this workflow.
+`deploy.yml` checks every pushed branch commit and tag: formatting, notices, lint, typecheck and unit tests in one job, the browser lifecycles in two parallel jobs, and accessibility/Lighthouse in another. Once all pass, the build job runs the production build, packaged-app check, and isolated IPFS gateway verification. It pins that build's CAR on the persistent node, links the preview to the commit, and retains the tested tarball, CAR, deployment descriptor, and reports as Actions artifacts for 90 days. Tagged builds create a notes-only GitHub release and publish to npm through trusted publishing. Fork PRs do not run this workflow.
 
 `ipns.yml` is separate and serialized. It runs after a successful tagged build, manually, or every 12 hours, and only for public releases. It verifies the tag, commit, CID shape, and latest-release selection, re-pins the CAR, then signs a seven-day IPNS record with a five-minute TTL. Failed pinning leaves the current record untouched. A manual dry run signs and resolves offline without publishing.
 

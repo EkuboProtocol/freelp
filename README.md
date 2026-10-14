@@ -35,7 +35,7 @@ bun install --frozen-lockfile
 bun run dev
 ```
 
-Run `bun run lint`, `bun run check-ts`, `bun run test`, and `bun run build` to verify changes. Browser tests require Anvil with Osaka support on port 18545, then `bun run test:e2e`.
+Run `bun run format:check`, `bun run lint`, `bun run check-ts`, `bun run test`, and `bun run build` to verify changes (`bun run format` applies oxfmt). Browser tests require Anvil with Osaka support on port 18545, then `bun run test:e2e`; `--project=chain` runs only the Anvil specs and `--project=browser` the rest.
 
 ## Release
 
