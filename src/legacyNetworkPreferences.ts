@@ -2,8 +2,6 @@ import { load } from "./storage";
 import { chainDefinition, DEFAULT_CHAIN_IDS, rpcEndpoint } from "./chains";
 import { validateSettings } from "./config";
 import type { Settings } from "./types";
-// These were bundled defaults, never user-selected overrides. Used only to
-// migrate old storage; all current default URLs come from viem.
 const oldDefaults = new Set([
   "https://rpc.mainnet.chain.robinhood.com",
   "https://mainnet.base.org",

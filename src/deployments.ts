@@ -1,7 +1,5 @@
-// Canonical v3 deployments reused from EkuboProtocol/interface.
 export const DEFAULT_CORE = "0x00000000000014aA86C5d3c41765bb24e11bd701";
 
-// CREATE2 predictions for the pinned artifacts and protocol deployment salt.
 export const DEFAULT_MANAGER = "0x0dB596aF023b61c681c91c39E540829bf81bEcD5";
 export const DEFAULT_POOL_KEY_INDEX =
   "0x827A68AC37AA3715c865F2E0704a63118496986f";

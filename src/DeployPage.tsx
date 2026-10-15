@@ -43,7 +43,6 @@ export function InvalidDeployLink() {
 
 export function DeployPage({ chainId }: { chainId: number }) {
   const { networks } = useSession();
-  // RPC overrides change only in Networks, which replaces this page.
   const settings = useMemo(() => configuredNetwork(chainId), [chainId]);
   const enabled = networks.some((network) => network.chainId === chainId);
   return (
@@ -84,7 +83,6 @@ export function DeployPage({ chainId }: { chainId: number }) {
   );
 }
 
-/** Deployment never enables a network; the user enables it in Networks. */
 function DeployNextStep({
   settings,
   enabled,

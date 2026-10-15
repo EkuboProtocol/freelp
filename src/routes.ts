@@ -9,7 +9,6 @@ export function deployPath(chainId: number) {
   return `#/deploy/${chainId}`;
 }
 
-/** `#/deploy` targets the active network; `#/deploy/:chainId` a catalog chain. */
 export function parseDeployRoute(route: string): DeployRoute | undefined {
   const path = route.split("?")[0];
   if (path === "#/deploy" || path === "#/deploy/") return { kind: "active" };

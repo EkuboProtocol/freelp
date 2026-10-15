@@ -51,7 +51,6 @@ export function calculateDepositQuote(input: Input) {
   );
   if (amounts[input.specified] === 0n)
     throw new Error("Enter an amount greater than zero.");
-  // Validate the pool key and range before calculating with the SDK.
   poolRange(
     range,
     metadata[0].decimals,

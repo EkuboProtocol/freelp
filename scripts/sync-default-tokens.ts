@@ -1,8 +1,3 @@
-// Refreshes public/tokens/<chainId>.json from the Ekubo API: every token with
-// visibility_priority >= 0 on each bundled chain. Only address, symbol, name,
-// and decimals are kept; native tokens come from viem at runtime. The app
-// fetches these files from its own origin on demand (src/tokenCatalog.ts).
-// Usage: bun scripts/sync-default-tokens.ts [--check]
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { getAddress, isAddress, zeroAddress } from "viem";
@@ -55,8 +50,6 @@ async function fetchVisible(chainId: string): Promise<ApiToken[]> {
   if (!response.ok) throw new Error(`${chainId}: HTTP ${response.status}`);
   const tokens = (await response.json()) as ApiToken[];
   if (!Array.isArray(tokens)) throw new Error(`${chainId}: unexpected body`);
-  // Ekubo pools use the native currency directly, so its wrapped form is
-  // never a default (docs/token-defaults.md).
   const wrapped = `w${chainDefinition(Number(chainId)).nativeCurrency.symbol}`;
   const visible = tokens.filter(
     (token) =>
@@ -64,7 +57,6 @@ async function fetchVisible(chainId: string): Promise<ApiToken[]> {
       token.symbol?.toLowerCase() !== wrapped.toLowerCase() &&
       !(chainId === "137" && token.symbol === "WMATIC"),
   );
-  // The endpoint returns at most 1000 entries and offers no pagination.
   if (tokens.length >= 1000)
     console.warn(`${chainId}: the API capped the list at 1000 tokens`);
   return visible;

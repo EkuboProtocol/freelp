@@ -11,7 +11,6 @@ export type NetworkPreferences = {
   version?: number;
 };
 const key = "freelp:chainPreferences";
-// Version 2 dropped the seven former default networks without deployments.
 const PREFERENCES_VERSION = 2;
 export function networkName(chainId: number, name?: string) {
   try {
@@ -51,11 +50,6 @@ export function loadNetworkPreferences(): NetworkPreferences {
   return { enabledChainIds, rpcOverrides, version: PREFERENCES_VERSION };
 }
 
-/**
- * Older builds enabled eleven networks by default, most without contracts.
- * Keep the current defaults, anything the user verified or configured, and
- * drop the rest once; Enable re-adds any of them after a code check.
- */
 function migratePreferences(
   enabledChainIds: number[],
   rpcOverrides: Record<number, string>,

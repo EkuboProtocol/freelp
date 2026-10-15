@@ -1,7 +1,5 @@
 import { defineConfig } from "@playwright/test";
 
-// The chain specs drive a local Anvil node on port 18545 and take most of the
-// suite's time, so CI runs them in their own job beside the browser specs.
 const chainSpecs = ["lifecycle.spec.ts", "deterministic.spec.ts"];
 
 export default defineConfig({

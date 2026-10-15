@@ -3,7 +3,6 @@ export function checkSpacing(spacing: number) {
   if (!Number.isInteger(spacing) || spacing < 1 || spacing > MAX_TICK_SPACING)
     throw new Error("Tick spacing must be an integer between 1 and 698605.");
 }
-// Ported from interface/util/common/format.ts: each tick changes price by 1.000001.
 export function spacingPercent(spacing: number) {
   return Math.expm1(spacing * Math.log1p(0.000001)) * 100;
 }

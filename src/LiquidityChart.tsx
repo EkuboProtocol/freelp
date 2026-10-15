@@ -34,7 +34,6 @@ export function LiquidityChart({
   );
   const price = (tick: number) =>
     decimalDisplay(tickPrice(tick, decimals0, decimals1), 6);
-  // Use token1-equivalent values only for bar heights, keeping exact amounts in tooltips.
   const priceNow = tickPrice(data.tick, decimals0, decimals1);
   const values = buckets.map((b) => [
     Number(formatUnits(b.amounts[0], decimals0)) * priceNow,

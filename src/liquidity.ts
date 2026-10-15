@@ -1,4 +1,3 @@
-// Reused from EkuboProtocol/interface math/evm/marketDepth.ts.
 import type { QuoteDataFetcherResult } from "./quoteData";
 export function liquidityAtTick(
   poolTickData: QuoteDataFetcherResult,

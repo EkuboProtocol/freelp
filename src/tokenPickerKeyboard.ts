@@ -1,5 +1,4 @@
 import type { KeyboardEvent } from "react";
-// Adapted from the interface's token navigation; real buttons retain native Tab/Enter behavior.
 export function tokenPickerKeyboard(event: KeyboardEvent<HTMLElement>) {
   if (!["ArrowDown", "ArrowUp"].includes(event.key)) return;
   const buttons = Array.from(

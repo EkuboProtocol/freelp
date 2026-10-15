@@ -140,7 +140,6 @@ function useSessionState() {
       throw new Error(
         "Finish the pending transaction before changing settings.",
       );
-    // Choosing an existing network does not invalidate balances or portfolio data.
     setSettings(next);
     save("freelp:settings", next);
   }

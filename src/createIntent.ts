@@ -20,7 +20,6 @@ export function changeCreateToken(
     BigInt(pair[0]) > BigInt(pair[1])
   )
     pair.reverse();
-  // A genuine replacement is not an inversion of the previous trading pair.
   return {
     ...form,
     a: pair[0],

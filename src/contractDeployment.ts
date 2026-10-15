@@ -38,7 +38,6 @@ function constructorArgs(kind: ContractKind, core: Address) {
     : [core];
 }
 
-/** Bind AST-identified immutable roles, including the shared registry. */
 export function expectedRuntime(kind: ContractKind, core: Address): Hex {
   const artifact = CONTRACT_ARTIFACTS[kind];
   let runtime = artifact.deployedBytecode.toLowerCase();

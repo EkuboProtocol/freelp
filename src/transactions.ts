@@ -100,11 +100,6 @@ async function requestHash(
   }
 }
 
-/**
- * Only deployments need RPC-side verification. Position and token calls target
- * addresses fixed by the build and the contracts enforce ownership and
- * amounts, so a busy RPC never blocks a withdrawal from reaching the wallet.
- */
 async function validateTransaction(
   provider: Provider,
   account: Address,

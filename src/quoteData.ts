@@ -1,4 +1,3 @@
-// Adapted from EkuboProtocol/interface useQuoteData.ts.
 export type QuoteDataFetcherResult = {
   tick: number;
   liquidity: bigint;
@@ -28,8 +27,6 @@ function parseTickDeltas(raw: unknown) {
     .sort((a, b) => a.number - b.number);
 }
 
-// The decoded struct is read by name where viem gives us one and by position
-// otherwise, so the same parser handles either shape.
 function readNumber(named: number | bigint | undefined, positional: unknown) {
   return Number(named ?? (positional as number | bigint | undefined));
 }

@@ -13,7 +13,6 @@ const cache = new Map<
     }>;
   }
 >();
-// The official interface uses this same sparse balance query. No token API or per-token requests.
 export function tokenSnapshot(
   settings: Settings,
   owner: Address,

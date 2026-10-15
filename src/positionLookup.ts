@@ -4,10 +4,6 @@ import type { Position, Settings } from "./types";
 
 export type PositionLookup = { owner: Address; position: Position };
 
-/**
- * Reads one position by ID without a connected wallet: the manager reports
- * its owner, and the data fetcher returns that owner's positions.
- */
 export async function loadPositionById(
   settings: Settings,
   id: bigint,

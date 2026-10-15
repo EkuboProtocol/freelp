@@ -684,7 +684,6 @@ async function seedIncompleteActivity(page: Page) {
           state,
           createdAt: Date.now(),
           updatedAt: Date.now(),
-          // Include both lost wallet responses and identifiers without receipts.
           ...(index === 1 ? { hash: `0x${"12".repeat(32)}` } : {}),
           ...(index === 2 ? { batchId: "old-wallet-batch" } : {}),
         }),
@@ -715,7 +714,6 @@ function assertReadOnlyRpc(
   ]).not.toContain(functionName);
 }
 
-/** Deployment never enables a network: batch runs disable Anvil first. */
 async function openDeployPage(page: Page, batch: boolean) {
   if (batch) {
     await page.getByRole("link", { name: "Networks", exact: true }).click();
@@ -732,7 +730,6 @@ async function openDeployPage(page: Page, batch: boolean) {
   );
 }
 
-/** Explicit enable after Deploy all re-verifies the chain code. */
 async function enableAnvil(page: Page, batch: boolean) {
   if (!batch) return;
   await page

@@ -48,9 +48,6 @@ export function usePortfolio(refresh: number) {
   const [loaded, setLoaded] = useState<Snapshot>({ identity: "", rows: [] });
   const requests = useRef(new Map<string, Promise<void>>());
   const sequence = useRef(0);
-  // Loads happen on account or network changes and explicit refreshes only.
-  // Actions refresh their own chain afterwards; nothing polls or reloads on
-  // focus, so RPC usage stays bounded.
   const generation = JSON.stringify([identity, refresh]);
 
   const refreshChain = useCallback(
