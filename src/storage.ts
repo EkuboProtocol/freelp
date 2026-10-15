@@ -24,7 +24,6 @@ export function subscribeStorageWarnings(listener: StorageWarningListener) {
 }
 
 export function load<T>(key: string, fallback: T): T {
-  // A failed write supersedes older persisted data for this session.
   if (memoryOnly.has(key)) return memory.get(key) as T;
   try {
     const value = localStorage.getItem(key);

@@ -33,7 +33,6 @@ const position = {
   metadata: "data:application/json;base64,e30=",
 };
 
-/** Mocks chain 1 with one position owned by `owner`; `busy` returns 429s. */
 async function mockChain(page: Page, state: { busy: boolean }) {
   const methods: string[] = [];
   await page.route(
@@ -181,8 +180,6 @@ test("the owner can withdraw while the RPC is busy, and the dialog reviews amoun
   await page
     .getByRole("button", { name: "Connect Test wallet", exact: true })
     .click();
-  // The owner's portfolio load replaces the lookup view; either view must
-  // enable actions, so assert on the controls rather than the owner line.
   const withdraw = page.getByRole("button", { name: "Withdraw", exact: true });
   await expect(withdraw).toBeEnabled();
   state.busy = true;
@@ -204,7 +201,6 @@ test("the owner can withdraw while the RPC is busy, and the dialog reviews amoun
     () => (window as unknown as { walletCalls: string[] }).walletCalls,
   );
   expect(walletCalls).toContain("eth_sendTransaction");
-  // Every RPC answered 429, so the request reached the wallet with no RPC gate.
   expect(methods.length).toBeGreaterThan(0);
   await expect(page.locator("dialog[open]")).toBeVisible();
 });

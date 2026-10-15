@@ -9,7 +9,6 @@ import { depositWithRefund } from "./depositTransaction";
 import type { Position } from "./types";
 import { usePositionTokens } from "./usePositionTokens";
 import { minimumLiquidity, withdrawalReview } from "./positionReview";
-/** Ownership is enforced by the contract; no RPC read gates a submission. */
 export function usePositionActions(p: Position, holder?: Address) {
   const { settings, account, send } = useSession();
   const { tokens, readiness, refreshTokens } = usePositionTokens(p, holder);
@@ -36,7 +35,6 @@ export function usePositionActions(p: Position, holder?: Address) {
   }
   async function claim() {
     if (!account) throw new Error("Connect a wallet first.");
-    // Claims have independent intent: cancelled withdrawal settings never apply.
     await send({
       to: settings.manager,
       data: managerData("multicall", [

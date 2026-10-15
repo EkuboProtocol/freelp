@@ -8,7 +8,6 @@ export type Currency = {
   symbol: string;
   name: string;
   decimals: number;
-  /** Where the display metadata came from; optional for persisted pre-provenance imports. */
   source?: "bundled" | "imported" | "onchain";
 };
 const eth: Currency = {
@@ -18,9 +17,6 @@ const eth: Currency = {
   decimals: 18,
   source: "bundled",
 };
-// Bundled metadata comes from tokens/<chainId>.json (see src/tokenCatalog.ts
-// and docs/token-defaults.md). Until a chain's catalog has been fetched, only
-// the native currency and imported tokens are listed.
 function bundledList(chainId: number): Currency[] {
   return [
     eth,
@@ -100,7 +96,6 @@ export function networkCurrencies(settings: Settings) {
   );
 }
 
-/** Persists the native entry with imports only; bundled tokens stay in code. */
 export function ensureNativeCurrency(settings: Settings) {
   const entries = networkCurrencies(settings).filter(
     (token) => token.source !== "bundled",

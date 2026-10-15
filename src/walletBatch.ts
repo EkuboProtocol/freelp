@@ -23,7 +23,6 @@ export async function executeBatch(
   observer?.({ state: "checking" });
   await switchWalletChain(provider, settings);
   await assertWallet(provider, account, settings.chainId);
-  // Only deployment batches need RPC-side verification; see executeTransaction.
   if (
     calls.some(
       (call) => call.to?.toLowerCase() === CREATE2_FACTORY.toLowerCase(),

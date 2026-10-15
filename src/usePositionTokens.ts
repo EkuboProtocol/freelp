@@ -10,7 +10,6 @@ type Loaded = {
   scope: string;
   reads: [PositionTokenRead, PositionTokenRead];
 };
-/** Reads token metadata for the position; balances belong to the holder. */
 export function usePositionTokens(position: Position, holder?: Address) {
   const { settings, account: connected, revision } = useSession();
   const account = connected ?? holder;

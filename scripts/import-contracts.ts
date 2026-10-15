@@ -56,7 +56,6 @@ for (const name of [
   };
   outputs.push({ name, output });
 }
-// Validate every input before replacing any committed artifact.
 await mkdir("artifacts", { recursive: true });
 for (const { name, output } of outputs)
   await writeFile(`artifacts/${name}.json`, JSON.stringify(output));

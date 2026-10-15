@@ -4,8 +4,6 @@ import { poolInitialized } from "../../src/poolData";
 import { verifiedPool } from "../../src/poolRegistry";
 import { deriveEvmPoolId } from "@ekubo/sdk";
 
-// Pools can be initialized outside this interface, and registration in
-// PoolKeyIndex is only a discovery hint. Only live Core state decides.
 test("initialization comes from Core pool state, never from registry presence", () => {
   expect(poolInitialized({ sqrtRatio: 0n })).toBe(false);
   expect(poolInitialized({ sqrtRatio: 1n << 96n })).toBe(true);

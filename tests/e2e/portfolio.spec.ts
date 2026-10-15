@@ -128,7 +128,6 @@ test("all networks load independently with exactly one portfolio RPC each", asyn
     path: test.info().outputPath("portfolio-mobile.png"),
     fullPage: true,
   });
-  // Navigation must not depend on an RPC response or a focus-triggered refresh.
   await page.route("https://**", (route) => route.abort());
   for (const exit of ["back", "navigation", "all positions"]) {
     await page

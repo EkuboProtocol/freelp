@@ -1,4 +1,3 @@
-/** Transient progress for the current submission; never persisted or recovered. */
 export type TransactionState =
   | "checking"
   | "awaiting wallet"

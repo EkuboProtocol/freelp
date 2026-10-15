@@ -14,10 +14,6 @@ import { isAddress, type Address } from "viem";
 import { displayAmount } from "./displayAmount";
 import { PositionArtwork } from "./PositionArtwork";
 
-/**
- * Stale data never disables actions: amounts are estimates and the contract
- * enforces the real state. Read-only views only prevent signing.
- */
 export function PositionDetail({
   position: p,
   onRefresh,
@@ -42,7 +38,6 @@ export function PositionDetail({
     setStatus("");
     setMode(next);
     dialog.current?.showModal();
-    // Balances only matter for deposits; nothing else is re-read on open.
     if (next === "add") actions.refreshTokens();
   }
   async function add() {

@@ -2,7 +2,6 @@ import { Eip1559FeesNotSupportedError } from "viem";
 import { rpc } from "./rpc";
 import type { Settings, Transaction } from "./types";
 
-// A provisional Max budget, not a simulation or a limit sent to the wallet.
 export const PROVISIONAL_CALL_GAS = 1_000_000n;
 
 export function availableAfterReserve(balance: bigint, reserve: bigint) {
@@ -28,7 +27,6 @@ export async function nativeFeeCeiling(settings: Settings) {
   return price;
 }
 
-/** Reserve a provisional budget per call at current fees without executing the draft. */
 export async function estimateNativeReserve(
   settings: Settings,
   calls: Transaction[],

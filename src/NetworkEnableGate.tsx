@@ -21,10 +21,6 @@ export const ROW_LABELS: Record<RowState, string> = {
 };
 export type Blocked = { chainId: number; check: NetworkCheck };
 
-/**
- * Enabling a network verifies that chain only, then persists the choice.
- * Negative results live in memory for this page; only success is cached.
- */
 export function useEnableGate(enableNetwork: (chainId: number) => void) {
   const [checking, setChecking] = useState<number>();
   const [blocked, setBlocked] = useState<Blocked>();

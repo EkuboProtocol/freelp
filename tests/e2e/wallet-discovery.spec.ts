@@ -11,7 +11,6 @@ test("an announced wallet suppresses the injected fallback even through a differ
     const announced = {
       request: async () => ["0x1111111111111111111111111111111111111111"],
     };
-    // Wallets commonly expose a distinct wrapper on window.ethereum.
     Object.defineProperty(window, "ethereum", {
       value: { request: () => announced.request() },
       configurable: true,

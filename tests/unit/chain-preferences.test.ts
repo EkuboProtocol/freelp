@@ -99,7 +99,6 @@ test("saved preferences from older builds drop unverified extras once and keep v
       version: 2,
     });
     expect(JSON.parse(store.get("freelp:chainPreferences")!).version).toBe(2);
-    // Migrated once: a later explicit enable survives without verification.
     setNetworkEnabled(loadNetworks(), 56, true);
     expect(loadNetworkPreferences().enabledChainIds).toContain(56);
   }));

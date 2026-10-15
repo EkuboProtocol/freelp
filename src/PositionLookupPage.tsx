@@ -5,10 +5,6 @@ import { usePositionLookup } from "./usePositionLookup";
 import { WalletConnectButton } from "./WalletConnectButton";
 import type { Settings } from "./types";
 
-/**
- * Shows any position by ID, with or without a wallet. Only the owning wallet
- * can sign; everyone else sees the same on-chain state read-only.
- */
 export function PositionLookupPage({
   settings,
   id,

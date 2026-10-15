@@ -2,7 +2,6 @@ import { evmLiquidity, amount0RoundedUp } from "./evmLiquidity";
 import { amount1Delta, toSqrtRatio, MAX_U128 } from "@ekubo/sdk";
 import type { Descriptor } from "./types";
 
-/** EVM-rounded SDK math; no RPC is needed when an amount or range changes. */
 export function quoteDeposit(
   descriptor: Descriptor,
   sqrtRatio: bigint,

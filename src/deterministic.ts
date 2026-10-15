@@ -52,7 +52,6 @@ async function verifyFactory(settings: Settings) {
     );
 }
 
-/** Full missing set in dependency order, verified against current chain state. */
 export async function prepareAllDeployments(
   settings: Settings,
 ): Promise<Transaction[]> {

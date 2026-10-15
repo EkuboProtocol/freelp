@@ -1,5 +1,3 @@
-// Adapted from interface/math/evm/marketDepth.ts: integrate every liquidity
-// delta in each price bucket rather than sampling liquidity at its midpoint.
 import {
   amount0Delta,
   amount1Delta,

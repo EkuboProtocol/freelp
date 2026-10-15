@@ -11,7 +11,6 @@ import { rpc } from "./rpc";
 import { load, save } from "./storage";
 import type { Settings } from "./types";
 
-/** Why a network cannot be used with this build. */
 export type NetworkIssueState = "missing" | "mismatched" | "unreachable";
 export type NetworkIssue = { kind: ContractKind; message: string };
 export type NetworkCheck =
@@ -39,10 +38,6 @@ function issueState(error: unknown): NetworkIssueState {
   return "unreachable";
 }
 
-/**
- * One chain ID read plus one code read per required contract, then the local
- * runtime assertion. Never cached when it fails.
- */
 export async function verifyNetworkDeployment(
   settings: Settings,
 ): Promise<NetworkCheck> {
@@ -91,8 +86,6 @@ function summarize(states: NetworkIssueState[]): NetworkIssueState {
   return "missing";
 }
 
-// Successful checks are remembered per chain for this build's contract set.
-// A build with different addresses ignores older entries.
 const key = "freelp:verifiedNetworks";
 type VerifiedNetworks = Record<string, { manager: string; fetcher: string }>;
 function loadVerified(): VerifiedNetworks {
