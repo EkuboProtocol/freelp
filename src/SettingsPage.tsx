@@ -83,13 +83,7 @@ export function SettingsPage() {
     <section className="networks-page">
       <h2>Networks</h2>
       <p>
-        The catalog lists supported viem mainnets. Enable only the networks you
-        use. Enabling a network checks that its RPC answers and that this
-        build's contracts are deployed there; listing makes no RPC requests.
-      </p>
-      <p>
-        Catalog: {MAINNET_CHAINS.length} mainnets · Enabled: {networks.length} ·
-        RPC: configured per enabled network
+        Enabled: {networks.length} of {MAINNET_CHAINS.length} mainnets
       </p>
       {storageMessage ? <p role="status">{storageMessage}</p> : null}
       {!networks.length ? (
@@ -191,7 +185,6 @@ export function SettingsPage() {
               onChange={(event) => setRpcUrl(event.target.value)}
             />
           </label>
-          <p>Leave blank to use this network's default RPC.</p>
           {error ? <p role="alert">{error}</p> : null}
           <div className="rpc-dialog-actions">
             <button type="button" disabled={busy} onClick={useDefaultRpc}>

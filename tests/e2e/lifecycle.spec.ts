@@ -534,9 +534,7 @@ for (const { missingDecimals, native, batch } of [
     await page.getByTestId("deposit-amount-1").fill(amount(1));
     await expect(page.getByLabel("Initial price")).toHaveCount(0);
     await page.getByText("Price and pool details", { exact: true }).click();
-    await expect(
-      page.getByText("Existing pool: the initial-price input is ignored."),
-    ).toBeVisible();
+    await expect(page.getByText(/^Initial price: 1 /)).toHaveCount(0);
     await page.getByRole("link", { name: "Positions", exact: true }).click();
     await seedIncompleteActivity(page);
     await page.reload();

@@ -51,10 +51,7 @@ export function CreatePage() {
           All positions
         </a>
         <div className="create-heading">
-          <div>
-            <h2>Create position</h2>
-            <p>Choose a pool, set your range, and fund the position.</p>
-          </div>
+          <h2>Create position</h2>
           <div className="create-network">
             <Field label={"Network"}>
               <select
@@ -208,7 +205,6 @@ function CreatePositionForm({
             >
               <div className="create-deposit-heading">
                 <h3 id="deposit-heading">Deposit amounts</h3>
-                <p>Enter either amount. The other follows your range.</p>
               </div>
               <div className="grid deposit-inputs">
                 <div className="deposit-input">

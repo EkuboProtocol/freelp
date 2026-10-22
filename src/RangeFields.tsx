@@ -85,14 +85,6 @@ export function RangeFields({
         </div>
       ) : null}
       <RangeDescription range={range} />
-      {(range.raw ? sourceRange.ticks : sourceRange.prices)
-        .slice(0, 2)
-        .some(
-          (value, i) =>
-            value && value !== (range.raw ? range.ticks : range.prices)[i],
-        ) ? (
-        <small className="snapped-value">Adjusted to nearest valid value</small>
-      ) : null}
       {!initialized ? (
         <InitialPriceField
           range={range}

@@ -55,10 +55,6 @@ export function PositionDepositFields({
           />
         ))}
       </div>
-      <p className="muted">
-        The matching amount is calculated from this position’s range and current
-        pool price.
-      </p>
       <ErrorText error={deposit.error ?? ""} />
       <DepositMessages
         account={account}
