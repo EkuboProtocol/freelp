@@ -81,10 +81,6 @@
   background: #f4f4f4;
 }
 
-.new-pool-warning p {
-  margin: 6px 0 0;
-}
-
 @media (max-width: 480px) {
   .pool-identity-details {
     grid-template-columns: 1fr;

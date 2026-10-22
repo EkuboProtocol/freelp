@@ -221,7 +221,6 @@ function PortfolioList({
       <section>
         <div className="portfolio-intro">
           <h2>Your FreeLP positions</h2>
-          <p>Connect a wallet to view positions on your enabled networks.</p>
         </div>
         <div className="positions-empty">
           <WalletConnectButton />
@@ -285,10 +284,7 @@ function PortfolioHeader({ showCreate }: { showCreate: boolean }) {
       <div className="row spread">
         <div>
           <h2>Your FreeLP positions</h2>
-          <p>
-            FreeLP positions on your enabled networks. Official Ekubo Positions
-            and Ve33 NFTs are managed separately.
-          </p>
+          <p>Official Ekubo Positions and Ve33 NFTs are managed separately.</p>
         </div>
         {showCreate ? (
           <a className="primary-link" href="#/create">

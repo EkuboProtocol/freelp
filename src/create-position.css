@@ -54,10 +54,6 @@
   letter-spacing: -1px;
   font-weight: 650;
 }
-.create-heading p {
-  color: var(--create-muted);
-  margin: 12px 0 0;
-}
 .create-network {
   flex: 0 0 220px;
 }
@@ -258,10 +254,8 @@
   border-radius: 16px;
   background: var(--create-paper);
 }
-.create-deposit-heading p {
-  margin: 8px 0 24px;
-  color: var(--create-muted);
-  font-size: 14px;
+.create-deposit-heading {
+  margin-bottom: 24px;
 }
 .create-position .deposit-inputs {
   grid-template-columns: 1fr;
@@ -398,9 +392,6 @@
   }
   .create-heading h2 {
     font-size: 28px;
-  }
-  .create-heading p {
-    margin-top: 8px;
   }
   .create-network {
     width: 100%;

@@ -30,9 +30,8 @@ export function PricePreview({
       : sqrtPrice(sqrtRatio, a.decimals, b.decimals);
   return (
     <div>
-      {initialTick !== undefined ? (
+      {initialTick !== undefined && sqrtRatio === 0n ? (
         <InitialPriceNotice
-          isNew={sqrtRatio === 0n}
           initialTick={initialTick}
           price={price}
           tokens={tokens}
@@ -58,28 +57,19 @@ export function PricePreview({
 }
 
 function InitialPriceNotice({
-  isNew,
   initialTick,
   price,
   tokens,
 }: {
-  isNew: boolean;
   initialTick: number;
   price: number;
   tokens: [Token, Token];
 }) {
   return (
-    <div className="new-pool-warning" role="note">
-      {isNew
-        ? "New pool: creation will initialize its price. If the initial price is wrong, arbitrage and price movement can cause an immediate loss before your range is adjusted."
-        : "Existing pool: the initial-price input is ignored."}
-      {isNew ? (
-        <p>
-          Initial price: 1 {tokens[0].symbol} unit = {displayPrice(price)}{" "}
-          {tokens[1].symbol} units (tick {initialTick}).
-        </p>
-      ) : null}
-    </div>
+    <p className="new-pool-warning" role="note">
+      Initial price: 1 {tokens[0].symbol} unit = {displayPrice(price)}{" "}
+      {tokens[1].symbol} units (tick {initialTick}).
+    </p>
   );
 }
 

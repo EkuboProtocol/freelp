@@ -8,6 +8,8 @@ The application uses only configured RPC endpoints and injected wallets. Core, F
 
 Use black/white styling and system fonts. Retain required license and protocol identifiers.
 
+Cut taglines, helper text and secondary labels. If a screen needs them to make sense, fix the layout. Make the best decision that will elevate all three: the user experience (UX), developer experience (DX), and agent experience (AX) always, without breaking anything. Keep accessible names, amounts, units, network identity, price and range facts, risk notices, validation and recovery instructions; prefer clear grouping, hierarchy and action labels over prose explaining the screen.
+
 PoolKeyIndex and FreeLPMetadataRenderer are also fixed by the build. Discover registered pools with bounded, block-pinned pairPoolIdCount/pairPoolIds reads; registry coverage is not all initialized Core pools. Creation prepends maybeInitializePool; deposits require positive minimum liquidity and include refundNativeToken in the same manager multicall. Withdrawals have no minimum-output arguments. Import compiler AST-derived immutable bindings, verifying Core, index, and renderer addresses.
 
 Use plain English JSX and strings for user-facing copy. No translation framework or catalogs.
