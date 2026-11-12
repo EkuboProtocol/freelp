@@ -1,0 +1,162 @@
+// Positions page state: the portfolio across enabled networks, one
+// position's detail, and its add, withdraw and collect dialog.
+use PositionNetwork, ChainPortfolio, PositionView, WithdrawView, DepositView, positionKind, routeSegment from "./positions.contract"
+use Balance, MaxReply from "./tokens.contract"
+use TxReply from "./shapes.contract"
+
+members App
+  state portfolioTick = 0
+  state retries: number[] = []
+  state chainFilter = "all"
+  state portfolioPage = 0
+  state openPools: string[] = []
+  state detailTick = 0
+  state balanceTick = 0
+  state dialogMode = ""
+  state portion = 100
+  state portionText = "100"
+  state recipient = ""
+  state slippage = 50
+  state slippageText = "50"
+  state advancedOpen = false
+  state depositSide = 0
+  state depositValue = ""
+  state maxIndex = 0
+  state maxMessage = ""
+  derive positionPage = page == "positions" ? positionKind(route) : ""
+  derive routeChain = match parseNumber(routeSegment(route, 2)) { case some(n) => n, case none => 0 }
+  derive routeId = routeSegment(route, 3)
+  resource positionNets = positionNetworks(revision, session.account) when page == "positions" as shape PositionNetwork[] else empty() transient
+  resource positionChains = chainPositions(n.id, revision, `${portfolioTick}:${retries.filter(r => r == n.id).length}`, session.account) for n in positionNets key=`${n.id}:${revision}:${portfolioTick}:${retries.filter(r => r == n.id).length}:${session.account}` as shape ChainPortfolio
+  resource positionView = positionDetail(routeChain, routeId, revision, detailTick, session.account) when positionPage == "detail" as shape PositionView else empty() transient
+  resource withdrawal = withdrawReview(routeChain, routeId, revision, detailTick, portion, recipient) when dialogMode == "withdraw" as shape WithdrawView else empty() transient
+  resource deposit = depositView(routeChain, routeId, revision, detailTick, depositSide, depositValue, slippage) when dialogMode == "add" as shape DepositView else empty() transient
+  resource depositBalances = positionBalance(routeChain, t.address, revision, balanceTick) for t in (dialogMode == "add" ? positionView.tokens : []) key=`${t.address}:${revision}:${balanceTick}` as shape Balance
+  mutation withdrawSent as shape TxReply then afterWithdraw
+  mutation collectSent as shape TxReply then afterPositionTx
+  mutation addSent as shape TxReply then afterAdd
+  mutation approveSent as shape TxReply then afterPositionTx
+  mutation maxSent as shape MaxReply then afterMax
+  derive allCards = positionChains.map(c => c.positions).flat()
+  derive shownCards = allCards.filter(c => chainFilter == "all" or `${c.chainId}` == chainFilter)
+  derive pageCount = max(1, ceil(shownCards.length / 12))
+  derive activePage = min(portfolioPage, pageCount - 1)
+  derive checkingChains = positionChains.filter(c => not c.loaded).length + (pending(positionNets) and positionNets.length == 0 ? 1 : 0)
+  derive detailReady = positionView.state != "" and positionView.chainId == routeChain and positionView.id == routeId
+  action setChainFilter(v: string)
+    chainFilter = v
+    portfolioPage = 0
+  action previousPage
+    portfolioPage = activePage - 1
+  action nextPage
+    portfolioPage = activePage + 1
+  action refreshPositions
+    portfolioTick = portfolioTick + 1
+  action retryChain(id: number)
+    retries = retries.concat([id])
+  action togglePool(key: string)
+    openPools = openPools.includes(key) ? openPools.filter(k => k != key) : openPools.concat([key])
+  action refreshPosition
+    retries = retries.concat([routeChain])
+    detailTick = detailTick + 1
+  action retryPosition
+    detailTick = detailTick + 1
+  action connectEmpty
+    if session.wallets.length == 1
+      send walletConnected = connectWallet(match first(session.wallets) { case some(w) => w.uuid, case none => "" })
+    else
+      showModal("wallet-dialog")
+  action pickWallet(uuid: string)
+    close("wallet-dialog")
+    send walletConnected = connectWallet(uuid)
+  action closeWalletDialog
+    close("wallet-dialog")
+  action openAdd
+    dialogMode = "add"
+    recipient = session.account
+    portion = 100
+    portionText = "100"
+    depositSide = 0
+    depositValue = ""
+    maxMessage = ""
+    advancedOpen = false
+    status = ""
+    balanceTick = balanceTick + 1
+    showModal("position-dialog")
+  action openWithdraw
+    dialogMode = "withdraw"
+    recipient = session.account
+    portion = 100
+    portionText = "100"
+    status = ""
+    showModal("position-dialog")
+  action closePositionDialog
+    close("position-dialog")
+    dialogMode = ""
+  action dialogCancelled
+    dialogMode = ""
+  action setPortionText(v: string)
+    portionText = v
+    portion = match parseNumber(v) { case some(n) => n, case none => 0 }
+  action setPortionRange(n: number)
+    portion = n
+    portionText = `${n}`
+  action presetPortion(n: number)
+    portion = n
+    portionText = `${n}`
+  action setRecipient(v: string)
+    recipient = v
+  action setSlippageText(v: string)
+    slippageText = v
+    slippage = match parseNumber(v) { case some(n) => n, case none => 0 }
+  action toggleAdvanced
+    advancedOpen = not advancedOpen
+  action setDeposit(i: number, v: string)
+    depositSide = i
+    depositValue = v
+  action retryBalances
+    balanceTick = balanceTick + 1
+  action retryTokenReads
+    detailTick = detailTick + 1
+  action withdrawNow
+    send withdrawSent = withdrawPosition(routeChain, routeId, revision, detailTick, portion, recipient)
+  action collectNow
+    send collectSent = collectFees(routeChain, routeId, revision, detailTick)
+  action addNow
+    send addSent = addLiquidity(routeChain, routeId, revision, detailTick, depositSide, depositValue, slippage)
+  action approveNow(i: number)
+    send approveSent = approvePositionToken(routeChain, routeId, revision, detailTick, i, match deposit.sides.at(i) { case some(s) => (depositSide == i ? depositValue : s.amount), case none => "0" })
+  action maxFor(i: number)
+    maxIndex = i
+    send maxSent = positionNativeMax(routeChain, routeId, revision, detailTick, depositSide, depositValue, slippage, i)
+  action afterMax
+    match maxSent
+      case some(r)
+        maxMessage = r.message
+        if r.ok
+          depositSide = maxIndex
+          depositValue = r.amount
+      case none
+        maxMessage = ""
+  action afterPositionTx
+    revision = revision + 1
+  action afterAdd
+    match addSent
+      case some(r)
+        if r.ok
+          close("position-dialog")
+          dialogMode = ""
+          revision = revision + 1
+      case none
+        dialogMode = dialogMode
+  action afterWithdraw
+    match withdrawSent
+      case some(r)
+        if r.ok
+          close("position-dialog")
+          dialogMode = ""
+          revision = revision + 1
+          if portion == 100
+            nav = go(nav, "/#/positions")
+      case none
+        dialogMode = dialogMode
