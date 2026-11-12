@@ -44,7 +44,8 @@ test("pool key changes make one automatic pool read; invalid amounts make no RPC
       .getByRole("group", { name: "Price range", exact: true }),
   ).toHaveCount(0);
   await page
-    .getByTestId("pool-options").getByRole("button")
+    .getByTestId("pool-options")
+    .getByRole("button")
     .filter({ hasText: "0.05%" })
     .click();
   await expect.poll(() => configs.length).toBe(2);
@@ -73,7 +74,9 @@ test("URL values display snapped values without replacing the original URL", asy
   const lower = page.getByTestId("range-controls");
   await expect(lower).toBeVisible();
   expect(new URL(page.url()).hash).toBe(hash);
-  await expect(page.getByTestId("snapped-value").locator("visible=true").first()).toBeVisible();
+  await expect(
+    page.getByTestId("snapped-value").locator("visible=true").first(),
+  ).toBeVisible();
   await page.getByRole("switch", { name: "Advanced", exact: true }).click();
   await page.getByLabel("Pool type", { exact: true }).selectOption("stable");
   await expect(page.getByLabel("Amplification exponent")).toHaveValue("26");
@@ -90,5 +93,7 @@ test("initialized pools hide initial price and show range controls outside pool 
   await page.goto(`/#/create?${pair}`);
   await expect(page.getByTestId("range-section")).toBeVisible();
   await expect(page.getByLabel("Initial price")).toHaveCount(0);
-  await expect(page.getByTestId("pool-picker").getByTestId("liquidity-chart")).toHaveCount(0);
+  await expect(
+    page.getByTestId("pool-picker").getByTestId("liquidity-chart"),
+  ).toHaveCount(0);
 });

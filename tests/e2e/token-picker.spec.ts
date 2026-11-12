@@ -76,7 +76,7 @@ test("picker batches balances only on the selected network, caches reads, and su
   ).toHaveCount(0);
   expect(calls.size).toBe(1);
   expect(calls.has(1)).toBe(true);
-  await expect(page.locator(".currency-mark")).toHaveCount(0);
+  await expect(page.getByRole("dialog").locator("img")).toHaveCount(0);
   expect([...calls.values()]).toEqual([1]);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.screenshot({

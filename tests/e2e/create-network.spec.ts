@@ -35,7 +35,9 @@ test("verified runtime code enables a chain-scoped form without fabricated pool 
   await expect(
     page.getByRole("button", { name: "Select first token" }),
   ).toBeEnabled();
-  await expect(page.getByTestId("pool-options").getByRole("button")).toHaveCount(0);
+  await expect(
+    page.getByTestId("pool-options").getByRole("button"),
+  ).toHaveCount(0);
   await expect(
     page.getByText(
       "Select two tokens to discover registered pools for the pair.",
@@ -55,7 +57,7 @@ test("verified runtime code enables a chain-scoped form without fabricated pool 
   await expect(
     page.getByRole("dialog").getByTestId("token-network").first(),
   ).toHaveText("Ethereum");
-  await expect(page.locator(".currency-mark")).toHaveCount(0);
+  await expect(page.getByRole("dialog").locator("img")).toHaveCount(0);
   await page.getByRole("button", { name: "Close token selector" }).click();
   await page.getByLabel("Network", { exact: true }).selectOption("8453");
   await page.getByRole("button", { name: "Select first token" }).click();

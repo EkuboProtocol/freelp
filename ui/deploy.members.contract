@@ -8,6 +8,11 @@ members App
   resource deployment = deployView(page == "deploy" ? route : "", revision + deployRefresh) as shape DeployView else empty()
   mutation deployed as shape TxReply then afterDeploy
   mutation deployedAll as shape TxReply then afterDeploy
+  // `#/deploy` names the active network in the URL once it is known.
+  task deployCanonical when page == "deploy" and (route == "/deploy" or route == "/deploy/") and deployment.chainId > 0 and not pending(deployment)
+    after(1, canonicalDeploy)
+  action canonicalDeploy
+    nav = replace(nav, path("home") + `#/deploy/${deployment.chainId}`)
   action deployContract(kind: string)
     send deployed = deployContract(deployment.chainId, kind)
   action deployAllContracts

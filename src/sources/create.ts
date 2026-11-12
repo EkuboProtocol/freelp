@@ -1,5 +1,11 @@
 import { fixedSqrtRatioToFloat, toSqrtRatio } from "@ekubo/sdk";
-import { formatUnits, getAddress, isAddress, zeroAddress, type Address } from "viem";
+import {
+  formatUnits,
+  getAddress,
+  isAddress,
+  zeroAddress,
+  type Address,
+} from "viem";
 import { readCreateForm, type CreateForm } from "../createForm";
 import { snapCreateForm, snapNumber, snapPrice } from "../snapCreateForm";
 import { DEFAULT_SETTINGS, loadSettings } from "../config";
@@ -10,13 +16,25 @@ import { page, ready } from "../page";
 import { save } from "../storage";
 import { errorMessage } from "../errors";
 import { verifyNetworkDeployment } from "../networkVerification";
-import { readRegistryPage, PAGE_SIZE, type RegisteredPool, type RegistrySnapshot } from "../poolRegistry";
+import {
+  readRegistryPage,
+  PAGE_SIZE,
+  type RegisteredPool,
+  type RegistrySnapshot,
+} from "../poolRegistry";
 import { fetchPools, poolInitialized } from "../poolData";
 import { poolConfig, poolRange, stableBounds } from "../poolOptions";
 import { exactFeeFromPercent, percentFromExactFee } from "../fee";
 import { decimalDisplay, decimalInput } from "../decimalFormat";
 import { checkSpacing, percentToSpacing, spacingPercent } from "../pools";
-import { MAX_TICK, displayPrice, priceToTick, rangeTicks, sqrtPrice, tickPrice } from "../prices";
+import {
+  MAX_TICK,
+  displayPrice,
+  priceToTick,
+  rangeTicks,
+  sqrtPrice,
+  tickPrice,
+} from "../prices";
 import { liquidityBuckets } from "../liquidityBuckets";
 import { calculateDepositQuote } from "../calculateDepositQuote";
 import { createDepositTransaction } from "../depositTransaction";
@@ -37,8 +55,10 @@ import type { Settings } from "../types";
 // (`#/create?…`) and hands the route here; every source reads it again.
 
 type Reply = { ok: boolean; error: string };
-const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
-const sameAddress = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+const short = (address: string) =>
+  `${address.slice(0, 6)}…${address.slice(-4)}`;
+const sameAddress = (a: string, b: string) =>
+  a.toLowerCase() === b.toLowerCase();
 
 function activeSettings() {
   const networks = loadNetworks();
@@ -59,7 +79,7 @@ async function scope(route: string) {
 }
 
 function snapped(form: CreateForm, settings: Settings): CreateForm {
-  return snapCreateForm(form, networkCurrencies(settings)) as CreateForm;
+  return snapCreateForm(form, networkCurrencies(settings));
 }
 
 // A write the page has stored before the reply lands: a source's
@@ -119,7 +139,11 @@ export async function createTokens(chain: number) {
 // One batched balance and allowance read per network, account and
 // revision, shared by the picker, the deposit fields and the preview.
 const snapshots = new Map<string, ReturnType<typeof tokenSnapshot>>();
-function walletSnapshot(settings: Settings, account: Address, revision: number) {
+function walletSnapshot(
+  settings: Settings,
+  account: Address,
+  revision: number,
+) {
   const tokens = networkCurrencies(settings).map((t) => t.address);
   const key = JSON.stringify([settings, account, tokens, revision]);
   let cached = snapshots.get(key);
@@ -194,7 +218,14 @@ export async function readToken(chain: number, address: string) {
       decimals: token.decimals,
     };
   } catch (error) {
-    return { ok: false, error: errorMessage(error), address: "", symbol: "", name: "", decimals: 0 };
+    return {
+      ok: false,
+      error: errorMessage(error),
+      address: "",
+      symbol: "",
+      name: "",
+      decimals: 0,
+    };
   }
 }
 
@@ -228,14 +259,28 @@ export async function createGate(chain: number) {
   const check = await verifyNetworkDeployment(configuredNetwork(chain));
   return {
     state: check.state,
-    issues: check.issues.map((issue) => ({ kind: issue.kind as string, message: issue.message })),
+    issues: check.issues.map((issue) => ({
+      kind: issue.kind as string,
+      message: issue.message,
+    })),
   };
 }
 
 // --- Registered pools ----------------------------------------------------
 
-type RegistryState = { pools: RegisteredPool[]; scanned: bigint; snapshot?: RegistrySnapshot };
+type RegistryState = {
+  pools: RegisteredPool[];
+  scanned: bigint;
+  snapshot?: RegistrySnapshot;
+};
 const registries = new Map<string, Promise<RegistryState>>();
+
+function poolDetail(pool: RegisteredPool) {
+  if (pool.poolType === "concentrated")
+    return `Concentrated, spacing ${decimalDisplay(spacingPercent(pool.tickSpacing ?? 0), 3)}%`;
+  const stable = pool.stableswapParams;
+  return `${pool.poolType === "full_range" ? "Full-range" : "Stableswap"}, center ${stable?.centerTick}, amplification ${stable?.amplification}`;
+}
 
 function poolCard(pool: RegisteredPool) {
   const fee = pool.fee.toString();
@@ -244,11 +289,11 @@ function poolCard(pool: RegisteredPool) {
     id: pool.id as string,
     config: pool.key.config.toLowerCase(),
     title: `${decimalDisplay(Number(percentFromExactFee(fee)))}% fee`,
-    detail:
-      pool.poolType === "concentrated"
-        ? `Concentrated, spacing ${decimalDisplay(spacingPercent(pool.tickSpacing ?? 0), 3)}%`
-        : `${pool.poolType === "full_range" ? "Full-range" : "Stableswap"}, center ${stable?.centerTick}, amplification ${stable?.amplification}`,
-    extensionLabel: pool.extension === zeroAddress ? "No extension" : `Extension: ${pool.extension}`,
+    detail: poolDetail(pool),
+    extensionLabel:
+      pool.extension === zeroAddress
+        ? "No extension"
+        : `Extension: ${pool.extension}`,
     exactFee: fee,
     fee: percentFromExactFee(fee),
     extension: pool.extension as string,
@@ -259,16 +304,41 @@ function poolCard(pool: RegisteredPool) {
   };
 }
 
-async function registryPages(settings: Settings, a: Address, b: Address, identity: string, pages: number) {
+async function registryPages(
+  settings: Settings,
+  a: Address,
+  b: Address,
+  identity: string,
+  pages: number,
+) {
   const cached = registries.get(`${identity}:${pages}`);
   if (cached) return cached;
   const load = (async (): Promise<RegistryState> => {
     const previous: RegistryState =
-      pages > 1 ? await registryPages(settings, a, b, identity, pages - 1) : { pools: [], scanned: 0n };
-    if (pages > 1 && previous.snapshot && previous.scanned >= previous.snapshot.total) return previous;
-    const page = await readRegistryPage(settings, a, b, previous.scanned, undefined, previous.snapshot);
+      pages > 1
+        ? await registryPages(settings, a, b, identity, pages - 1)
+        : { pools: [], scanned: 0n };
+    if (
+      pages > 1 &&
+      previous.snapshot &&
+      previous.scanned >= previous.snapshot.total
+    )
+      return previous;
+    const page = await readRegistryPage(
+      settings,
+      a,
+      b,
+      previous.scanned,
+      undefined,
+      previous.snapshot,
+    );
     const pools = [
-      ...new Map([...previous.pools, ...page.pools].map((pool) => [pool.id.toLowerCase(), pool])).values(),
+      ...new Map(
+        [...previous.pools, ...page.pools].map((pool) => [
+          pool.id.toLowerCase(),
+          pool,
+        ]),
+      ).values(),
     ];
     return { pools, scanned: page.scanned, snapshot: page.snapshot };
   })();
@@ -277,15 +347,42 @@ async function registryPages(settings: Settings, a: Address, b: Address, identit
   return load;
 }
 
-export async function createRegistry(chain: number, a: string, b: string, revision: number, retry: number, pages: number) {
+export async function createRegistry(
+  chain: number,
+  a: string,
+  b: string,
+  revision: number,
+  retry: number,
+  pages: number,
+) {
   await ready();
   const valid = isAddress(a) && isAddress(b) && !sameAddress(a, b);
-  const empty = { valid, pools: [], scanned: "0", total: "0", block: "", hasMore: false, error: "" };
+  const empty = {
+    valid,
+    pools: [],
+    scanned: "0",
+    total: "0",
+    block: "",
+    hasMore: false,
+    error: "",
+  };
   if (!valid) return empty;
   const settings = configuredNetwork(chain);
-  const identity = JSON.stringify([settings, a.toLowerCase(), b.toLowerCase(), revision, retry]);
+  const identity = JSON.stringify([
+    settings,
+    a.toLowerCase(),
+    b.toLowerCase(),
+    revision,
+    retry,
+  ]);
   try {
-    const state = await registryPages(settings, getAddress(a), getAddress(b), identity, Math.max(1, pages));
+    const state = await registryPages(
+      settings,
+      getAddress(a),
+      getAddress(b),
+      identity,
+      Math.max(1, pages),
+    );
     const total = state.snapshot?.total ?? 0n;
     return {
       valid,
@@ -316,8 +413,14 @@ export async function createSnap(route: string) {
     tokens.find((t) => sameAddress(t.address, address))?.symbol ?? fallback;
   const label = (address: string) => {
     const token = tokens.find((t) => sameAddress(t.address, address));
-    if (token) return { text: token.symbol, title: "", network: network ? networkName(network.chainId, network.name) : "" };
-    if (isAddress(address)) return { text: short(address), title: address, network: "" };
+    if (token)
+      return {
+        text: token.symbol,
+        title: "",
+        network: network ? networkName(network.chainId, network.name) : "",
+      };
+    if (isAddress(address))
+      return { text: short(address), title: address, network: "" };
     return { text: "Select token", title: "", network: "" };
   };
   let config = "";
@@ -365,9 +468,17 @@ export async function spacingCandidate(value: string, raw: boolean) {
   try {
     const spacing = raw ? Number(value) : percentToSpacing(Number(value));
     checkSpacing(spacing);
-    return { spacing, label: `Applies ${spacing} ticks: ${decimalDisplay(spacingPercent(spacing))}%`, error: "" };
+    return {
+      spacing,
+      label: `Applies ${spacing} ticks: ${decimalDisplay(spacingPercent(spacing))}%`,
+      error: "",
+    };
   } catch {
-    return { spacing: 0, label: "", error: "Enter a positive spacing that rounds to 1–698605 integer ticks." };
+    return {
+      spacing: 0,
+      label: "",
+      error: "Enter a positive spacing that rounds to 1–698605 integer ticks.",
+    };
   }
 }
 
@@ -378,8 +489,13 @@ const pools = new Map<string, Promise<PoolData>>();
 
 function poolKeyOf(form: CreateForm, settings: Settings) {
   const tokens = [form.a, form.b].map((address) => {
-    const token = networkCurrencies(settings).find((t) => sameAddress(t.address, address));
-    if (!token) throw new Error("Import this token's on-chain metadata before selecting a pool.");
+    const token = networkCurrencies(settings).find((t) =>
+      sameAddress(t.address, address),
+    );
+    if (!token)
+      throw new Error(
+        "Import this token's on-chain metadata before selecting a pool.",
+      );
     return token;
   });
   const poolKey = {
@@ -387,8 +503,12 @@ function poolKeyOf(form: CreateForm, settings: Settings) {
     token1: getAddress(form.b),
     config: poolConfig(form.fee, form.range.spacing, form),
   };
-  if (BigInt(form.a) >= BigInt(form.b)) throw new Error("Choose two different tokens in address order.");
-  return { poolKey, decimals: tokens.map((t) => t.decimals) as [number, number] };
+  if (BigInt(form.a) >= BigInt(form.b))
+    throw new Error("Choose two different tokens in address order.");
+  return {
+    poolKey,
+    decimals: tokens.map((t) => t.decimals) as [number, number],
+  };
 }
 
 function loadPool(form: CreateForm, settings: Settings, retry: number) {
@@ -396,13 +516,19 @@ function loadPool(form: CreateForm, settings: Settings, retry: number) {
   const key = JSON.stringify([settings, poolKey, retry]);
   const cached = pools.get(key);
   if (cached) return cached;
-  const load = fetchPools(settings, [poolKey]).then(([state]) => ({ state, decimals }));
+  const load = fetchPools(settings, [poolKey]).then(([state]) => ({
+    state,
+    decimals,
+  }));
   pools.set(key, load);
   load.catch(() => pools.delete(key));
   return load;
 }
 
-function initialRangePrice(range: CreateForm["range"], decimals: [number, number]) {
+function initialRangePrice(
+  range: CreateForm["range"],
+  decimals: [number, number],
+) {
   return range.raw
     ? range.ticks[2] === ""
       ? NaN
@@ -413,32 +539,53 @@ function initialRangePrice(range: CreateForm["range"], decimals: [number, number
 // Empty bounds start 16 spacings either side of the price.
 function poolRangeDefaults(range: CreateForm["range"], pool: PoolData) {
   const initialized = poolInitialized(pool.state);
-  const price = initialized ? tickPrice(pool.state.tick, ...pool.decimals) : initialRangePrice(range, pool.decimals);
+  const price = initialized
+    ? tickPrice(pool.state.tick, ...pool.decimals)
+    : initialRangePrice(range, pool.decimals);
   if (!Number.isFinite(price) || price <= 0) return range;
   const center = snapNumber(
-    (Math.log(price) - (pool.decimals[0] - pool.decimals[1]) * Math.LN10) / Math.log1p(0.000001),
+    (Math.log(price) - (pool.decimals[0] - pool.decimals[1]) * Math.LN10) /
+      Math.log1p(0.000001),
     -MAX_TICK,
     MAX_TICK,
     range.spacing,
   );
   const bound = (offset: number) =>
-    snapPrice(decimalInput(tickPrice(center + range.spacing * offset, ...pool.decimals)), ...pool.decimals, range.spacing);
+    snapPrice(
+      decimalInput(
+        tickPrice(center + range.spacing * offset, ...pool.decimals),
+      ),
+      ...pool.decimals,
+      range.spacing,
+    );
   return {
     ...range,
-    prices: [range.prices[0] || bound(-16), range.prices[1] || bound(16), decimalInput(price)] as CreateForm["range"]["prices"],
+    prices: [
+      range.prices[0] || bound(-16),
+      range.prices[1] || bound(16),
+      decimalInput(price),
+    ] as CreateForm["range"]["prices"],
   };
 }
 
 async function selectedPool(route: string, retry: number) {
   const { form: source, network } = await scope(route);
-  if (!network) throw new Error("Enable this network in Networks before using this link.");
+  if (!network)
+    throw new Error("Enable this network in Networks before using this link.");
   const form = snapped(source, network);
   if (!form.a || !form.b) return { form, network, pool: undefined };
   const pool = await loadPool(form, network, retry);
-  return { form: { ...form, range: poolRangeDefaults(form.range, pool) }, network, pool };
+  return {
+    form: { ...form, range: poolRangeDefaults(form.range, pool) },
+    network,
+    pool,
+  };
 }
 
-function chartSelection(range: CreateForm["range"], decimals: [number, number]) {
+function chartSelection(
+  range: CreateForm["range"],
+  decimals: [number, number],
+) {
   try {
     return rangeTicks(range, ...decimals, true);
   } catch {
@@ -450,7 +597,12 @@ function chartState(form: CreateForm, pool: PoolData) {
   let state = pool.state;
   if (state.sqrtRatio === 0n && form.range.prices[2]) {
     try {
-      const tick = priceToTick(form.range.prices[2], ...pool.decimals, 1, "round");
+      const tick = priceToTick(
+        form.range.prices[2],
+        ...pool.decimals,
+        1,
+        "round",
+      );
       state = {
         ...state,
         tick,
@@ -499,23 +651,77 @@ const NO_CHART = {
   selectable: false,
 };
 
-function chart(form: CreateForm, pool: PoolData, symbols: string[], zoom: number) {
-  let state: QuoteDataFetcherResult;
-  let selection: { lower: number; upper: number } | undefined;
-  let spacing = form.range.spacing;
+function chartSetup(
+  form: CreateForm,
+  pool: PoolData,
+):
+  | {
+      state: QuoteDataFetcherResult;
+      selection: { lower: number; upper: number } | undefined;
+      spacing: number;
+    }
+  | undefined {
   try {
-    state = chartState(form, pool);
-    if (form.kind === "stable") {
-      const bounds = stableBounds(form);
-      selection = bounds;
-      spacing = Math.max(1, Math.ceil((bounds.upper - bounds.lower) / 100));
-    } else selection = chartSelection(form.range, pool.decimals);
+    const state = chartState(form, pool);
+    if (form.kind !== "stable")
+      return {
+        state,
+        selection: chartSelection(form.range, pool.decimals),
+        spacing: form.range.spacing,
+      };
+    const bounds = stableBounds(form);
+    return {
+      state,
+      selection: bounds,
+      spacing: Math.max(1, Math.ceil((bounds.upper - bounds.lower) / 100)),
+    };
   } catch {
-    return NO_CHART;
+    return undefined;
   }
-  if (state.sqrtRatio === 0n) return NO_CHART;
+}
+
+function selectionBox(
+  selection: { lower: number; upper: number } | undefined,
+  x: (tick: number) => number,
+  price: (tick: number) => string,
+  lower: number,
+  upper: number,
+) {
+  if (!selection)
+    return {
+      selected: false,
+      selectionLeft: 0,
+      selectionWidth: 0,
+      selectionLower: "",
+      selectionUpper: "",
+      outside: false,
+    };
+  return {
+    selected: true,
+    selectionLeft: x(selection.lower),
+    selectionWidth: Math.max(0, x(selection.upper) - x(selection.lower)),
+    selectionLower: price(selection.lower),
+    selectionUpper: price(selection.upper),
+    outside: selection.lower < lower || selection.upper > upper,
+  };
+}
+
+function chart(
+  form: CreateForm,
+  pool: PoolData,
+  symbols: string[],
+  zoom: number,
+) {
+  const setup = chartSetup(form, pool);
+  if (!setup || setup.state.sqrtRatio === 0n) return NO_CHART;
+  const { state, selection, spacing } = setup;
   const [d0, d1] = pool.decimals;
-  const { lower, upper, buckets } = liquidityBuckets(state, spacing, zoom, selection);
+  const { lower, upper, buckets } = liquidityBuckets(
+    state,
+    spacing,
+    zoom,
+    selection,
+  );
   const price = (tick: number) => decimalDisplay(tickPrice(tick, d0, d1), 6);
   const priceNow = tickPrice(state.tick, d0, d1);
   const values = buckets.map((b) => [
@@ -523,19 +729,26 @@ function chart(form: CreateForm, pool: PoolData, symbols: string[], zoom: number
     Number(formatUnits(b.amounts[1], d1)),
   ]);
   const max = Math.max(...values.map(([x, y]) => x + y), Number.MIN_VALUE);
-  const x = (tick: number) => Math.max(0, Math.min(800, ((tick - lower) / Math.max(1, upper - lower)) * 800));
+  const x = (tick: number) =>
+    Math.max(
+      0,
+      Math.min(800, ((tick - lower) / Math.max(1, upper - lower)) * 800),
+    );
   const hypothetical = pool.state.sqrtRatio === 0n;
   const bars = buckets.flatMap((bucket, i) =>
-    bucket.amounts.map((amount, side) => ({
+    bucket.amounts.map((_, side) => ({
       key: `${bucket.lower}:${side}`,
       x: x(bucket.lower),
-      y: 210 - (values[i].slice(0, side + 1).reduce((s, v) => s + v, 0) / max) * 190,
+      y:
+        210 -
+        (values[i].slice(0, side + 1).reduce((s, v) => s + v, 0) / max) * 190,
       width: Math.max(0.5, x(bucket.upper) - x(bucket.lower) - 1),
       height: (values[i][side] / max) * 190,
       fill: side === 0 ? "#111" : "#999",
     })),
   );
   return {
+    ...selectionBox(selection, x, price, lower, upper),
     shown: true,
     hypothetical,
     price: `${hypothetical ? "Initial" : "Current"} price: ${price(state.tick)} ${symbols[1]} per ${symbols[0]}`,
@@ -549,16 +762,10 @@ function chart(form: CreateForm, pool: PoolData, symbols: string[], zoom: number
       amount0: formatUnits(bucket.amounts[0], d0),
       amount1: formatUnits(bucket.amounts[1], d1),
     })),
-    selected: !!selection,
-    selectionLeft: selection ? x(selection.lower) : 0,
-    selectionWidth: selection ? Math.max(0, x(selection.upper) - x(selection.lower)) : 0,
-    selectionLower: selection ? price(selection.lower) : "",
-    selectionUpper: selection ? price(selection.upper) : "",
     coverage: hypothetical
       ? "This is an initial-price preview. The pool has no on-chain liquidity yet."
       : `Depth coverage: ticks ${state.minTick} to ${state.maxTick}, from the latest RPC read.`,
     empty: !hypothetical && state.liquidity === 0n && state.ticks.length === 0,
-    outside: !!selection && (selection.lower < lower || selection.upper > upper),
     lowerTick: lower,
     upperTick: upper,
     spacing,
@@ -582,13 +789,19 @@ export async function createPool(route: string, retry: number, zoom: number) {
     if (!pool) return empty;
     const symbols = [form.a, form.b].map(
       (address, i) =>
-        networkCurrencies(network).find((t) => sameAddress(t.address, address))?.symbol ??
-        (i === 0 ? "First token" : "Second token"),
+        networkCurrencies(network).find((t) => sameAddress(t.address, address))
+          ?.symbol ?? (i === 0 ? "First token" : "Second token"),
     );
     return {
       state: "ready",
       error: "",
-      key: JSON.stringify([network.chainId, form.a, form.b, poolConfig(form.fee, form.range.spacing, form), retry]),
+      key: JSON.stringify([
+        network.chainId,
+        form.a,
+        form.b,
+        poolConfig(form.fee, form.range.spacing, form),
+        retry,
+      ]),
       initialized: poolInitialized(pool.state),
       prices: [...form.range.prices],
       ticks: [...form.range.ticks],
@@ -600,12 +813,23 @@ export async function createPool(route: string, retry: number, zoom: number) {
 }
 
 // A range bound picked on the chart, or a preset width around the price.
-export async function createRangeAt(route: string, retry: number, lower: number, upper: number, spacings: number) {
+export async function createRangeAt(
+  route: string,
+  retry: number,
+  lower: number,
+  upper: number,
+  spacings: number,
+) {
   const { form, pool } = await selectedPool(route, retry);
   if (!pool) return { ok: false, v0: "", v1: "", v2: "" };
   const range = form.range;
   if (spacings > 0) {
-    const center = snapNumber(priceToTick(range.prices[2], ...pool.decimals, 1, "round"), -MAX_TICK, MAX_TICK, range.spacing);
+    const center = snapNumber(
+      priceToTick(range.prices[2], ...pool.decimals, 1, "round"),
+      -MAX_TICK,
+      MAX_TICK,
+      range.spacing,
+    );
     const edge = Math.floor(MAX_TICK / range.spacing) * range.spacing;
     lower = Math.max(-edge, center - spacings * range.spacing);
     upper = Math.min(edge, center + spacings * range.spacing);
@@ -625,9 +849,20 @@ export async function createRangeMode(route: string, retry: number) {
     if (!pool) throw new Error("Pool state is unavailable.");
     const range = form.range;
     const values = range.raw
-      ? range.ticks.map((v) => (v === "" ? "" : decimalInput(tickPrice(Number(v), ...pool.decimals))))
+      ? range.ticks.map((v) =>
+          v === "" ? "" : decimalInput(tickPrice(Number(v), ...pool.decimals)),
+        )
       : range.prices.map((v, i) =>
-          v === "" ? "" : String(priceToTick(v, ...pool.decimals, i === 2 ? 1 : range.spacing, "round")),
+          v === ""
+            ? ""
+            : String(
+                priceToTick(
+                  v,
+                  ...pool.decimals,
+                  i === 2 ? 1 : range.spacing,
+                  "round",
+                ),
+              ),
         );
     return { ok: true, error: "", v0: values[0], v1: values[1], v2: values[2] };
   } catch (error) {
@@ -637,14 +872,29 @@ export async function createRangeMode(route: string, retry: number) {
 
 // --- The deposit ---------------------------------------------------------
 
-async function depositTokens(settings: Settings, account: Address, a: string, b: string, revision: number) {
+async function depositTokens(
+  settings: Settings,
+  account: Address,
+  a: string,
+  b: string,
+  revision: number,
+) {
   const metadata = networkCurrencies(settings);
   const tokens = [a, b].map((address) => {
-    const currency = metadata.find((entry) => sameAddress(entry.address, address));
-    if (!currency) throw new Error("Import this token's on-chain metadata before creating a position.");
+    const currency = metadata.find((entry) =>
+      sameAddress(entry.address, address),
+    );
+    if (!currency)
+      throw new Error(
+        "Import this token's on-chain metadata before creating a position.",
+      );
     return currency;
   });
-  const { balances, allowances } = await walletSnapshot(settings, account, revision);
+  const { balances, allowances } = await walletSnapshot(
+    settings,
+    account,
+    revision,
+  );
   return tokens.map((currency) => ({
     address: currency.address,
     symbol: currency.symbol,
@@ -671,7 +921,12 @@ function batchSupported(account: Address, settings: Settings) {
 
 function inactiveSide(form: CreateForm, pool: PoolData) {
   try {
-    const { lower, upper, initial } = poolRange(form.range, ...pool.decimals, pool.state.sqrtRatio !== 0n, form);
+    const { lower, upper, initial } = poolRange(
+      form.range,
+      ...pool.decimals,
+      pool.state.sqrtRatio !== 0n,
+      form,
+    );
     const tick = pool.state.sqrtRatio === 0n ? initial : pool.state.tick;
     return [tick >= upper, tick <= lower];
   } catch {
@@ -711,7 +966,15 @@ async function quoteFor(route: string, revision: number, retry: number) {
     });
     return { form, network, pool, account, tokens, walletError, quote };
   } catch (error) {
-    return { form, network, pool, account, tokens, walletError, error: errorMessage(error) };
+    return {
+      form,
+      network,
+      pool,
+      account,
+      tokens,
+      walletError,
+      error: errorMessage(error),
+    };
   }
 }
 
@@ -723,8 +986,17 @@ function minimum(liquidity: bigint, slippage: number) {
   }
 }
 
-function createCalls(settings: Settings, quote: ReturnType<typeof calculateDepositQuote>, slippage: number) {
-  return depositCalls(quote.tokens, [quote.max0, quote.max1], settings.manager, createDepositTransaction(settings, quote, slippage));
+function createCalls(
+  settings: Settings,
+  quote: ReturnType<typeof calculateDepositQuote>,
+  slippage: number,
+) {
+  return depositCalls(
+    quote.tokens,
+    [quote.max0, quote.max1],
+    settings.manager,
+    createDepositTransaction(settings, quote, slippage),
+  );
 }
 
 const NO_QUOTE = {
@@ -747,108 +1019,195 @@ const NO_QUOTE = {
   blocked: true,
 };
 
+type Quote = ReturnType<typeof calculateDepositQuote>;
+type QuoteResult = Awaited<ReturnType<typeof quoteFor>>;
+type QuoteToken = Quote["tokens"][number];
+
+function requiredAmount(token: QuoteToken, max: bigint) {
+  try {
+    return parseAmount(formatUnits(max, token.decimals), token.decimals);
+  } catch {
+    return undefined;
+  }
+}
+
+function approvalRows(quote: Quote) {
+  const maxes = [quote.max0, quote.max1];
+  return quote.tokens.flatMap((t, i) => {
+    const required = requiredAmount(t, maxes[i]);
+    if (required === undefined) return [];
+    if (t.address === zeroAddress || t.allowance >= required) return [];
+    const reset = t.allowance !== 0n;
+    return [
+      {
+        side: i,
+        label: reset ? `Reset ${t.symbol} approval` : `Approve ${t.symbol}`,
+      },
+    ];
+  });
+}
+
+function quotePrice(quote: Quote) {
+  const [a, b] = quote.tokens;
+  return quote.sqrtRatio === 0n
+    ? tickPrice(quote.initialTick ?? 0, a.decimals, b.decimals)
+    : sqrtPrice(quote.sqrtRatio, a.decimals, b.decimals);
+}
+
+function quoteLines(quote: Quote) {
+  const [a, b] = quote.tokens;
+  const price = quotePrice(quote);
+  const at = (tick: number) =>
+    displayPrice(tickPrice(tick, a.decimals, b.decimals));
+  return {
+    price: `Price (${b.symbol} per ${a.symbol}): ≈ ${displayPrice(price)}`,
+    range: `Position range: ≈ ${at(quote.descriptor.tickLower)} — ${at(quote.descriptor.tickUpper)}`,
+    initial:
+      quote.sqrtRatio === 0n
+        ? `Initial price: 1 ${a.symbol} unit = ${displayPrice(price)} ${b.symbol} units (tick ${quote.initialTick}).`
+        : "",
+    unavailable: quote.sqrtRatio === 0n && quote.initialTick === undefined,
+  };
+}
+
+function quoteBlocked(
+  quote: Quote,
+  batch: boolean | undefined,
+  loaded: boolean,
+  minLiquidity: bigint,
+) {
+  if (batch === undefined || !loaded || minLiquidity === 0n) return true;
+  const maxes = [quote.max0, quote.max1];
+  return quote.tokens.some(
+    (t, i) => (!batch && t.allowance < maxes[i]) || t.balance < maxes[i],
+  );
+}
+
+function batchLabel(batch: boolean | undefined) {
+  if (batch === undefined) return "unknown";
+  return batch ? "yes" : "no";
+}
+
+function quoteView(
+  quote: Quote,
+  form: CreateForm,
+  loaded: boolean,
+  batch: boolean | undefined,
+) {
+  const minLiquidity = minimum(quote.liquidity, form.slippage);
+  const maxes = [quote.max0, quote.max1];
+  const other = form.specified === 0 ? 1 : 0;
+  return {
+    ok: true,
+    matching: formatUnits(maxes[other], quote.tokens[other].decimals),
+    batch: batchLabel(batch),
+    ...quoteLines(quote),
+    rows: quote.tokens.map((t, i) => ({
+      symbol: t.symbol,
+      amount: formatUnits(i === 0 ? quote.used0 : quote.used1, t.decimals),
+      insufficient: loaded && t.balance < maxes[i],
+      inactive: quote.inactive[i],
+    })),
+    liquidity: quote.liquidity.toString(),
+    minLiquidity: minLiquidity.toString(),
+    approvals: loaded && batch === false ? approvalRows(quote) : [],
+    blocked: quoteBlocked(quote, batch, loaded, minLiquidity),
+  };
+}
+
+function resultQuote(result: QuoteResult) {
+  return "quote" in result ? result.quote : undefined;
+}
+
+function resultError(result: QuoteResult) {
+  const error = "error" in result ? result.error : undefined;
+  return error ?? result.walletError ?? "";
+}
+
 // The deposit preview: matching amount, limits and what the wallet must do.
-export async function createQuote(route: string, revision: number, retry: number) {
+export async function createQuote(
+  route: string,
+  revision: number,
+  retry: number,
+) {
   try {
     const result = await quoteFor(route, revision, retry);
     if (!result.pool) return { ...NO_QUOTE, route };
-    const { form, network, pool, account, tokens, walletError } = result;
-    const inactive = "quote" in result && result.quote ? result.quote.inactive : inactiveSide(form, pool);
+    const { form, network, pool, account, tokens } = result;
+    const quote = resultQuote(result);
     const base = {
       ...NO_QUOTE,
       route,
       connected: !!account,
       ready: !!tokens,
-      inactive,
-      error: ("error" in result ? result.error : undefined) ?? walletError,
+      inactive: quote ? quote.inactive : inactiveSide(form, pool),
+      error: resultError(result),
     };
-    if (!("quote" in result) || !result.quote) return base;
-    const quote = result.quote;
+    if (!quote) return base;
     const batch = account ? await batchSupported(account, network) : undefined;
-    const [a, b] = quote.tokens;
-    const unavailable = quote.sqrtRatio === 0n && quote.initialTick === undefined;
-    const price =
-      quote.sqrtRatio === 0n ? tickPrice(quote.initialTick ?? 0, a.decimals, b.decimals) : sqrtPrice(quote.sqrtRatio, a.decimals, b.decimals);
-    const minLiquidity = minimum(quote.liquidity, form.slippage);
-    const maxes = [quote.max0, quote.max1];
-    const approvals =
-      tokens && batch === false
-        ? quote.tokens.flatMap((t, i) => {
-            let required = 0n;
-            try {
-              required = parseAmount(formatUnits(maxes[i], t.decimals), t.decimals);
-            } catch {
-              return [];
-            }
-            if (t.address === zeroAddress || t.allowance >= required) return [];
-            const reset = t.allowance !== 0n;
-            return [{ side: i, label: reset ? `Reset ${t.symbol} approval` : `Approve ${t.symbol}` }];
-          })
-        : [];
-    return {
-      ...base,
-      ok: true,
-      matching: formatUnits(form.specified === 0 ? quote.max1 : quote.max0, quote.tokens[form.specified === 0 ? 1 : 0].decimals),
-      batch: batch === undefined ? "unknown" : batch ? "yes" : "no",
-      price: `Price (${b.symbol} per ${a.symbol}): ≈ ${displayPrice(price)}`,
-      range: `Position range: ≈ ${displayPrice(tickPrice(quote.descriptor.tickLower, a.decimals, b.decimals))} — ${displayPrice(tickPrice(quote.descriptor.tickUpper, a.decimals, b.decimals))}`,
-      initial:
-        quote.sqrtRatio === 0n
-          ? `Initial price: 1 ${a.symbol} unit = ${displayPrice(price)} ${b.symbol} units (tick ${quote.initialTick}).`
-          : "",
-      unavailable,
-      rows: quote.tokens.map((t, i) => ({
-        symbol: t.symbol,
-        amount: formatUnits(i === 0 ? quote.used0 : quote.used1, t.decimals),
-        insufficient: !!tokens && t.balance < maxes[i],
-        inactive: quote.inactive[i],
-      })),
-      liquidity: quote.liquidity.toString(),
-      minLiquidity: minLiquidity.toString(),
-      approvals,
-      blocked:
-        batch === undefined ||
-        !tokens ||
-        minLiquidity === 0n ||
-        quote.tokens.some((t, i) => (!batch && t.allowance < maxes[i]) || t.balance < maxes[i]),
-    };
+    return { ...base, ...quoteView(quote, form, !!tokens, batch) };
   } catch (error) {
     return { ...NO_QUOTE, route, error: errorMessage(error) };
   }
 }
 
-export async function createBalance(chain: number, address: string, revision: number) {
+export async function createBalance(
+  chain: number,
+  address: string,
+  revision: number,
+) {
   const account = await connectedAccount();
   if (!account) return NO_BALANCE;
   await ready();
   const settings = configuredNetwork(chain);
   await loadTokenCatalog(chain);
-  const currency = networkCurrencies(settings).find((t) => sameAddress(t.address, address));
+  const currency = networkCurrencies(settings).find((t) =>
+    sameAddress(t.address, address),
+  );
   // A catalog token's balance comes from the shared batched read.
   if (!currency) return balanceView(settings, account, address, "", revision);
   try {
     const { balances } = await walletSnapshot(settings, account, revision);
-    return balanceOf(currency, balances.get(currency.address.toLowerCase()) ?? 0n);
+    return balanceOf(
+      currency,
+      balances.get(currency.address.toLowerCase()) ?? 0n,
+    );
   } catch (error) {
     return { ...NO_BALANCE, state: "failed", symbol: errorMessage(error) };
   }
 }
 
-export async function createMax(route: string, revision: number, retry: number, side: number) {
+export async function createMax(
+  route: string,
+  revision: number,
+  retry: number,
+  side: number,
+) {
   try {
     const result = await quoteFor(route, revision, retry);
     const settings = result.network;
     const quote = "quote" in result ? result.quote : undefined;
     let calls: ReturnType<typeof createCalls> = [];
     try {
-      if (quote && settings) calls = createCalls(settings, quote, result.form.slippage);
+      if (quote && settings)
+        calls = createCalls(settings, quote, result.form.slippage);
     } catch {
       calls = [];
     }
     const token = result.tokens?.[side];
     if (!settings || !token)
-      return { ok: false, amount: "", message: "Enter an amount first to estimate a gas reserve for Max." };
-    return await nativeMax(settings, token.balance, token.decimals, token.symbol, calls);
+      return {
+        ok: false,
+        amount: "",
+        message: "Enter an amount first to estimate a gas reserve for Max.",
+      };
+    return await nativeMax(
+      settings,
+      token.balance,
+      token.decimals,
+      token.symbol,
+      calls,
+    );
   } catch (error) {
     return { ok: false, amount: "", message: errorMessage(error) };
   }
@@ -857,39 +1216,70 @@ export async function createMax(route: string, revision: number, retry: number, 
 // Pool state older than this is read again before creating.
 const FRESH_MS = 30_000;
 
-export async function createPosition(route: string, revision: number, retry: number, age: number): Promise<TxReply> {
+async function creatable(route: string, revision: number, retry: number) {
+  const result = await quoteFor(route, revision, retry);
+  const quote = resultQuote(result);
+  if (!quote || !result.tokens || !result.account || !result.network)
+    throw new Error(
+      "Connect a wallet and refresh balances and allowances before creating.",
+    );
+  const slippage = result.form.slippage;
+  if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
+    throw new Error("Slippage must be between 0 and 1000 basis points.");
+  return { quote, account: result.account, settings: result.network, slippage };
+}
+
+export async function createPosition(
+  route: string,
+  revision: number,
+  retry: number,
+  age: number,
+): Promise<TxReply> {
   try {
     if (age > FRESH_MS)
       return {
         ok: false,
-        error: "Refreshing the pool and balances. Review the updated deposit preview before creating.",
+        error:
+          "Refreshing the pool and balances. Review the updated deposit preview before creating.",
         hash: "stale",
       };
-    const result = await quoteFor(route, revision, retry);
-    const quote = "quote" in result ? result.quote : undefined;
-    if (!quote || !result.tokens || !result.account || !result.network)
-      throw new Error("Connect a wallet and refresh balances and allowances before creating.");
-    const slippage = result.form.slippage;
-    if (!Number.isInteger(slippage) || slippage < 0 || slippage > 1000)
-      throw new Error("Slippage must be between 0 and 1000 basis points.");
-    const settings = result.network;
-    const batch = await batchSupported(result.account, settings);
+    const { quote, account, settings, slippage } = await creatable(
+      route,
+      revision,
+      retry,
+    );
+    const batch = await batchSupported(account, settings);
     const transaction = createDepositTransaction(settings, quote, slippage);
     return await execute(
       settings.chainId,
-      batch ? depositCalls(quote.tokens, [quote.max0, quote.max1], settings.manager, transaction) : transaction,
+      batch
+        ? depositCalls(
+            quote.tokens,
+            [quote.max0, quote.max1],
+            settings.manager,
+            transaction,
+          )
+        : transaction,
     );
   } catch (error) {
     return { ok: false, error: errorMessage(error), hash: "" };
   }
 }
 
-export async function createApprove(route: string, revision: number, retry: number, side: number): Promise<TxReply> {
+export async function createApprove(
+  route: string,
+  revision: number,
+  retry: number,
+  side: number,
+): Promise<TxReply> {
   try {
     const result = await quoteFor(route, revision, retry);
     const quote = "quote" in result ? result.quote : undefined;
     const token = result.tokens?.[side];
-    if (!quote || !token || !result.network) throw new Error("Load or refresh balances and allowances before creating.");
+    if (!quote || !token || !result.network)
+      throw new Error(
+        "Load or refresh balances and allowances before creating.",
+      );
     const required = side === 0 ? quote.max0 : quote.max1;
     const reset = token.allowance !== 0n;
     return await execute(

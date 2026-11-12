@@ -36,7 +36,7 @@ test("navigation and liquidity preview use bundled assets and exact configured R
   await page.goto(
     "/#/create?chain=8453&a=0x0000000000000000000000000000000000000000&b=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   );
-  await expect(page.locator(".range-section")).toBeVisible();
+  await expect(page.getByTestId("range-section")).toBeVisible();
   await page.getByTestId("deposit-amount-0").fill("0.1");
   await expect(page.getByTestId("deposit-amount-1")).not.toHaveValue("");
   expect(unexpected).toEqual([]);

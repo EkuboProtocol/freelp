@@ -14,7 +14,6 @@ CI retains raw accessibility and Lighthouse JSON reports with each release. It r
 
 Web Interface Guidelines findings resolved in this revision:
 
-- src/styles.css: network overview subtitle contrast; touch targets; reduced motion; numeric alignment.
 - src/App.tsx: skip link, active navigation, and executable distribution guidance. IPFS preview links are supplied by CI, outside the app.
 - src/CurrencySelect.tsx: explicit dialog name and search-field metadata.
 - src/PositionsPage.tsx: setup/empty-state actions, readable pairs, and stale-state action gating.
