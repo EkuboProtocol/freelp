@@ -1,0 +1,33 @@
+diff --git i/host/web/native-glue.js w/host/web/native-glue.js
+index d035190a..7a3bb765 100644
+--- i/host/web/native-glue.js
++++ w/host/web/native-glue.js
+@@ -34,21 +34,13 @@ const artifact = () => globalThis.exact.nativeArtifact ??= new Promise((resolve,
+   // Failed module fetches are cached by the browser too. A retry gets a fresh
+   // URL; a late result from an older attempt cannot answer the new one.
+   if (attempt) url.searchParams.set('exact-native-retry', attempt);
+-  const script = document.createElement('script');
+-  const finish = (error, table) => {
+-    clearTimeout(timer); removeEventListener('error', failed); script.remove();
+-    if (globalThis.exact.nativeTable === loaded) globalThis.exact.nativeTable = null;
+-    if (error) reject(error); else resolve(table);
+-  };
+-  const loaded = (token, table) => { if (token === attempt) finish(null, table); };
+-  const failed = e => { if (e.filename === url.href) finish(new Error(`${url}: ${e.message}`)); };
+-  const timer = setTimeout(() => finish(new Error(`the module artifact ${url} did not load in 10 s`)), 10000);
+-  script.type = 'module';
+-  globalThis.exact.nativeTable = loaded;
+-  script.textContent = `import * as table from ${JSON.stringify(url.href)}; globalThis.exact.nativeTable?.(${attempt}, table);`;
+-  script.onerror = () => finish(new Error(`the module artifact ${url} did not load`));
+-  addEventListener('error', failed);
+-  document.head.append(script);
++  // A dynamic import, not an inline module script: a page served with a
++  // `script-src 'self'` policy (most IPFS gateways) refuses inline scripts.
++  const timer = setTimeout(() => reject(new Error(`the module artifact ${url} did not load in 10 s`)), 10000);
++  import(url.href).then(
++    (table) => { clearTimeout(timer); resolve(table); },
++    (error) => { clearTimeout(timer); reject(new Error(`${url}: ${error?.message ?? error}`)); },
++  );
+ }).catch(error => { globalThis.exact.nativeArtifact = null; throw error; });
+ 
+ // The artifact itself, for the page module's hatches (LLP 1075.003.000).
