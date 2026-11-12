@@ -33,22 +33,22 @@ test("pool key changes make one automatic pool read; invalid amounts make no RPC
     }
   });
   await page.goto(`/#/create?${pair}&price0=2000&price1=3000&price2=2500`);
-  await expect(page.locator(".range-controls")).toBeVisible();
+  await expect(page.getByTestId("range-controls")).toBeVisible();
   expect(configs).toHaveLength(1);
   await expect(
     page.getByRole("button", { name: "Find pools on chain" }),
   ).toHaveCount(0);
   await expect(
     page
-      .locator(".pool-picker")
+      .getByTestId("pool-picker")
       .getByRole("group", { name: "Price range", exact: true }),
   ).toHaveCount(0);
   await page
-    .locator(".pool-options button")
+    .getByTestId("pool-options").getByRole("button")
     .filter({ hasText: "0.05%" })
     .click();
   await expect.poll(() => configs.length).toBe(2);
-  await expect(page.locator(".range-controls")).toBeVisible();
+  await expect(page.getByTestId("range-controls")).toBeVisible();
   expect(configs[1]).not.toBe(configs[0]);
   const count = requests.length;
   await page.getByTestId("deposit-amount-0").fill("nonsense");
@@ -70,10 +70,10 @@ test("URL values display snapped values without replacing the original URL", asy
   await mockPoolData(page);
   const hash = `#/create?${pair}&spacing=777.4&price0=2345.6789&price1=3456.789&price2=2500&center=31&amplification=99`;
   await page.goto("/" + hash);
-  const lower = page.locator(".range-controls");
+  const lower = page.getByTestId("range-controls");
   await expect(lower).toBeVisible();
   expect(new URL(page.url()).hash).toBe(hash);
-  await expect(page.locator(".snapped-value:visible").first()).toBeVisible();
+  await expect(page.getByTestId("snapped-value").locator("visible=true").first()).toBeVisible();
   await page.getByRole("switch", { name: "Advanced", exact: true }).click();
   await page.getByLabel("Pool type", { exact: true }).selectOption("stable");
   await expect(page.getByLabel("Amplification exponent")).toHaveValue("26");
@@ -88,7 +88,7 @@ test("initialized pools hide initial price and show range controls outside pool 
   await mockDeployments(page);
   await mockPoolData(page, true);
   await page.goto(`/#/create?${pair}`);
-  await expect(page.locator(".range-section")).toBeVisible();
+  await expect(page.getByTestId("range-section")).toBeVisible();
   await expect(page.getByLabel("Initial price")).toHaveCount(0);
-  await expect(page.locator(".pool-picker .liquidity-chart")).toHaveCount(0);
+  await expect(page.getByTestId("pool-picker").getByTestId("liquidity-chart")).toHaveCount(0);
 });

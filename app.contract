@@ -8,6 +8,7 @@ use AboutPage, TermsPage from "./ui/static.contract"
 use NetworksPage, Catalog from "./ui/networks.contract"
 use DeployPage from "./ui/deploy.contract"
 use PositionsPage from "./ui/positions.contract"
+use CreateHead, PairButtons, TokenPicker, PoolPicker, GateStatus, PoolStatus, DepthChart, RangeFields, DepositPanel, WalletDialog, item from "./ui/create.contract"
 
 routes nav
   home "/"
@@ -18,6 +19,7 @@ component App
   members "./ui/networks.members.contract"
   members "./ui/deploy.members.contract"
   members "./ui/positions.members.contract"
+  members "./ui/create.members.contract"
   derive route = fragment(top(nav))
   derive page = pageOf(route)
   view
@@ -38,6 +40,35 @@ component App
           TermsPage()
         if page == "build"
           AboutPage(version=session.version, contracts=session.contracts, contractsUrl=session.contractsUrl, copy=copyCommand, copied=commandCopied)
+        if page == "create"
+          section max-width=1108 width="100%" margin="32px auto 48px" font-size=15
+            CreateHead(setup=createSetup, chain=cf.chain, busy=busy, pick=pickNetwork)
+            if not createTokens.loaded
+              text "Loading the token list…" role="status"
+            else
+              if not createTokens.enabled
+                text "Enable this network in Networks before using this link." role="alert"
+              else
+                column
+                  PairButtons(snap=createSnap, open=openPicker, narrow=(createViewport.width <= 600))
+                  TokenPicker(tokens=createTokens, balances=pickerBalances, connected=(session.account != ""), search=pickerSearch, setSearch=setPickerSearch, refresh=refreshPicker, choose=choose, close=closePicker, key=pickerKey, focused=pickerFocus, read=readCandidate, reading=pending(tokenRead), error=pickerError, candidate=candidate, showCandidate=showCandidate, importIt=importCandidate, chainName=createTokens.network)
+                  PoolPicker(form=cf, snap=createSnap, registry=createRegistry, loading=pending(createRegistry), advanced=advanced, setAdvanced=toggleCreateAdvanced, rawFee=rawFee, setRawFee=toggleRawFee, summaryOpen=summaryOpen, toggleSummary=toggleSummary, pickPool=pickPool, retry=retryRegistry, more=moreRegistry, editing=fieldEditing, draft=fieldDraft, edit=editField, done=endEdit, setFeeInput=setFeeInput, setKind=setKind, setExtension=setExtension, setAmplification=setAmplification, setCenter=setCenter, spacingOpen=spacingOpen, toggleSpacing=toggleSpacing, rawSpacing=rawSpacing, setRawSpacing=toggleRawSpacing, spacingValue=(rawSpacing ? spacingTicks : spacingDraft), setSpacingDraft=setSpacingDraft, candidate=createSpacing, applySpacing=applySpacing, narrow=(createViewport.width <= 600))
+                  GateStatus(gate=createGate, pending=pending(createGate), chain=cf.chain, retry=retryGate)
+                  if createGate.state == "ready" and not pending(createGate)
+                    PoolStatus(pool=createPool, loading=(cf.a != "" and cf.b != "" and (pending(createPool) or createPool.state == "idle")), updated=formatTime(createTime.epochAtZero + poolStamp, createTime.utcOffset, "short"), refresh=refreshPool, narrow=(createViewport.width <= 600))
+                    if createPool.state == "ready"
+                      view display="grid" grid-template-columns=(createViewport.width > 900 ? "minmax(0, 1.45fr) minmax(320px, 1fr)" : "1fr") gap=32 align-items="start"
+                        section aria-labelledby="range-heading" testId="range-section" min-width=0 padding-top=(createViewport.width > 900 ? 24 : 0)
+                          text "Price range and liquidity" id="range-heading" role="heading" aria-level=3 font-size=20 font-weight=600 letter-spacing=-0.35
+                          if not createPool.initialized
+                            text "New pool: you set its first price. An incorrect price can cause immediate loss of your deposit. Enter and verify the initial price before depositing." border-left="3px solid #111" padding=12 margin-top=12
+                          if createPool.chart.shown
+                            DepthChart(chart=createPool.chart, symbols=createSnap.symbols, zoom=zoom, zoomIn=zoomIn, zoomOut=zoomOut, select=chartRange, depthOpen=depthOpen, toggleDepth=toggleDepth)
+                          else
+                            text "This pool is not initialized. Set its initial price when creating the first position." margin="20px 0 24px"
+                          RangeFields(form=cf, snap=createSnap, pool=createPool, stable=(cf.kind == "stable"), editing=fieldEditing, draft=fieldDraft, edit=editField, done=endEdit, setBound=setBound, setInitial=setInitial, toggleFull=toggleFull, toggleMode=toggleRangeMode, preset=presetRange, error=rangeError)
+                        DepositPanel(form=cf, snap=createSnap, quote=createQuote, route=route, session=session, busy=busy, balance0=createBalance0, balance1=createBalance1, editing=fieldEditing, draft=fieldDraft, edit=editField, done=endEdit, setAmount=setAmount, fill=fillAmount, retryBalance=retryBalance, max=estimateMax, maxMessages=maxMessages, maxPending=pending(maxEstimated), setSlippage=setSlippage, detailsOpen=detailsOpen, toggleDetails=toggleDetails, limitsOpen=limitsOpen, toggleLimits=toggleLimits, approve=approve, create=create, creating=pending(positionCreated), connect=connectCreate, narrow=(createViewport.width <= 600), mid=(createViewport.width <= 900 and createViewport.width > 600))
+                  WalletDialog(session=session, connect=connectWallet)
         if page == "positions"
           PositionsPage(kind=positionPage, account=session.account, wallets=session.wallets, busy=busy, txStatus=tx.status, networks=positionNets, chains=positionChains, allCount=allCards.length, cards=shownCards, pageIndex=activePage, pageCount=pageCount, checking=checkingChains, filter=chainFilter, setFilter=setChainFilter, previous=previousPage, next=nextPage, refresh=refreshPositions, retry=retryChain, openPools=openPools, togglePool=togglePool, connect=connectEmpty, pick=pickWallet, dismiss=closeWalletDialog, v=positionView, ready=detailReady, loading=pending(positionView), updated=updatedAt, refreshPosition=refreshPosition, retryPosition=retryPosition, mode=dialogMode, openAdd=openAdd, openWithdraw=openWithdraw, closeDialog=closePositionDialog, dialogCancelled=dialogCancelled, collect=collectNow, review=withdrawal, portionText=portionText, portion=portion, recipient=recipient, setPortionText=setPortionText, setPortionRange=setPortionRange, presetPortion=presetPortion, setRecipient=setRecipient, withdraw=withdrawNow, d=deposit, depositLoading=pending(deposit), balances=depositBalances, side=depositSide, value=depositValue, setAmount=setDeposit, retryBalance=retryBalances, max=maxFor, maxMessage=maxMessage, maxPending=pending(maxSent), retryReads=retryTokenReads, approve=approveNow, add=addNow, advancedOpen=advancedOpen, toggleAdvanced=toggleAdvanced, slippageText=slippageText, setSlippage=setSlippageText)
       Footer(version=session.version)

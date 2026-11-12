@@ -69,7 +69,7 @@ test("picker batches balances only on the selected network, caches reads, and su
   await page.getByRole("button", { name: "Select first token" }).click();
   const dialog = page.getByRole("dialog");
   await expect(
-    dialog.locator(".token-row-balance strong", { hasText: "12.5" }),
+    dialog.getByTestId("token-row-balance").filter({ hasText: "12.5" }),
   ).toHaveCount(1);
   await expect(
     dialog.getByRole("heading", { name: /Your tokens|Other tokens/ }),
@@ -97,13 +97,13 @@ test("picker batches balances only on the selected network, caches reads, and su
   await expect(search).toBeFocused();
   await search.fill("Ethereum");
   await search.press("ArrowDown");
-  await expect(dialog.locator(".token-option").first()).toBeFocused();
+  await expect(dialog.getByTestId("token-option").first()).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(dialog).not.toBeVisible();
   await page.getByRole("button", { name: "Select second token" }).click();
   await search.fill("USDC");
-  await dialog.locator(".token-option").first().click();
-  await expect(page.locator(".balance-actions").first()).toContainText(
+  await dialog.getByTestId("token-option").first().click();
+  await expect(page.getByTestId("balance-actions").first()).toContainText(
     "12.5 ETH",
   );
   for (const [percent, amount] of [
@@ -111,7 +111,7 @@ test("picker batches balances only on the selected network, caches reads, and su
     [50, "6.25"],
   ] as const) {
     await page
-      .locator(".balance-actions")
+      .getByTestId("balance-actions")
       .first()
       .getByRole("button", { name: `${percent}%`, exact: true })
       .click();
@@ -119,7 +119,7 @@ test("picker batches balances only on the selected network, caches reads, and su
   }
   await expect(
     page
-      .locator(".balance-actions")
+      .getByTestId("balance-actions")
       .first()
       .getByRole("button", { name: "100%", exact: true }),
   ).toHaveCount(0);

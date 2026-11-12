@@ -47,7 +47,7 @@ test("create links restore all pool parameters and amounts on reload and history
   await expect(
     page.getByLabel("Calculate the matching token amount"),
   ).toHaveCount(0);
-  await expect(page.locator(".pool-options")).toBeHidden();
+  await expect(page.getByTestId("pool-options")).toBeHidden();
   await page.getByLabel("Amplification exponent").fill("26");
   await expect
     .poll(() => readCreateForm(new URL(page.url()).hash, 1).amplification)
@@ -95,7 +95,7 @@ test("pool fee editors stay synchronized and deposit amounts follow pool configu
   await page.getByLabel("Enter exact amount").check();
   await expect(exact).toHaveValue("9223372036854775");
   const amount = page.getByTestId("deposit-amount-0");
-  const range = page.locator(".range-section");
+  const range = page.getByTestId("range-section");
   expect(
     await range.evaluate((element) => {
       const amount = document.querySelector(

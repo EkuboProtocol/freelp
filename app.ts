@@ -7,6 +7,7 @@ import * as shell from "./src/sources/shell";
 import * as tx from "./src/sources/tx";
 import * as deploy from "./src/sources/deploy";
 import * as positions from "./src/sources/positions";
+import * as create from "./src/sources/create";
 
 // Reads go to whichever RPC the person configures, and to a local node.
 export const grants = "net.fetch https:\nnet.fetch http:";
@@ -64,6 +65,33 @@ const sources: Sources = {
       slippage,
       index,
     ),
+  createSetup: () => create.createSetup(),
+  selectNetwork: ([chain]) => create.selectNetwork(chain),
+  createTokens: ([chain]) => create.createTokens(chain),
+  pickerBalances: ([chain, revision, refresh]) =>
+    create.pickerBalances(chain, revision * 1000 + refresh),
+  readToken: ([chain, address]) => create.readToken(chain, address),
+  importToken: ([chain, address, symbol, name, decimals]) =>
+    create.importToken(chain, address, symbol, name, decimals),
+  createGate: ([chain]) => create.createGate(chain),
+  createRegistry: ([chain, a, b, revision, retry, pages]) =>
+    create.createRegistry(chain, a, b, revision, retry, pages),
+  createSnap: ([route]) => create.createSnap(route),
+  spacingCandidate: ([value, raw]) => create.spacingCandidate(value, raw),
+  createPool: ([route, retry, zoom]) => create.createPool(route, retry, zoom),
+  createRangeAt: ([route, retry, lower, upper, spacings]) =>
+    create.createRangeAt(route, retry, lower, upper, spacings),
+  createRangeMode: ([route, retry]) => create.createRangeMode(route, retry),
+  createQuote: ([route, revision, retry]) =>
+    create.createQuote(route, revision, retry),
+  createBalance: ([chain, address, revision, retry]) =>
+    create.createBalance(chain, address, revision * 1000 + retry),
+  createMax: ([route, revision, retry, side]) =>
+    create.createMax(route, revision, retry, side),
+  createPosition: ([route, revision, retry, age]) =>
+    create.createPosition(route, revision, retry, age),
+  createApprove: ([route, revision, retry, side]) =>
+    create.createApprove(route, revision, retry, side),
 };
 
 export const answer: Answer = (source, args, store, storage, native) => {

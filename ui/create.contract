@@ -1,0 +1,921 @@
+// Create position: shapes app.ts answers, the form in the URL and the
+// screen's parts. The root holds the state (create.members.contract).
+use Session, TextLink from "./shapes.contract"
+use Balance, TokenBalance from "./tokens.contract"
+
+// The form, as the URL after `#/create?` holds it.
+shape CForm
+  chain: number
+  a: string
+  b: string
+  maxA: string
+  maxB: string
+  specified: number
+  fee: string
+  exactFee: string
+  extension: string
+  kind: string
+  amplification: string
+  center: string
+  slippage: string
+  raw: bool
+  full: bool
+  spacing: string
+  price0: string
+  price1: string
+  price2: string
+  tick0: string
+  tick1: string
+  tick2: string
+
+shape NetOption
+  id: number
+  name: string
+
+shape CreateSetup
+  active: number
+  networks: NetOption[]
+
+shape TokenRow
+  key: string
+  address: string
+  symbol: string
+  name: string
+  network: string
+  short: string
+  imported: bool
+
+shape CreateTokens
+  loaded: bool
+  enabled: bool
+  network: string
+  rows: TokenRow[]
+
+shape RowBalance
+  key: string
+  display: string
+  exact: string
+
+shape PickerBalances
+  connected: bool
+  failed: bool
+  held: string[]
+  rows: RowBalance[]
+
+shape Candidate
+  ok: bool
+  error: string
+  address: string
+  symbol: string
+  name: string
+  decimals: number
+
+shape Imported
+  ok: bool
+  error: string
+  address: string
+
+shape Issue
+  kind: string
+  message: string
+
+shape Gate
+  state: string
+  issues: Issue[]
+
+shape PoolCard
+  id: string
+  config: string
+  title: string
+  detail: string
+  extensionLabel: string
+  exactFee: string
+  fee: string
+  extension: string
+  kind: string
+  spacing: number
+  center: string
+  amplification: string
+
+shape Registry
+  valid: bool
+  pools: PoolCard[]
+  scanned: string
+  total: string
+  block: string
+  hasMore: bool
+  error: string
+
+shape PairLabel
+  text: string
+  title: string
+  network: string
+
+shape Preset
+  n: number
+  label: string
+
+shape Summary
+  type: string
+  fee: string
+  parameter: string
+  extension: string
+
+shape Snap
+  pair: PairLabel[]
+  symbols: string[]
+  fee: string
+  exact: string
+  amplification: string
+  center: string
+  spacing: number
+  spacingLabel: string
+  spacingPercent: string
+  spacingPresets: Preset[]
+  rangePresets: Preset[]
+  slippage: string
+  maxA: string
+  maxB: string
+  config: string
+  summary: Summary
+
+shape Bar
+  key: string
+  x: number
+  y: number
+  width: number
+  height: number
+  fill: string
+
+shape DepthRow
+  key: string
+  range: string
+  amount0: string
+  amount1: string
+
+shape Chart
+  shown: bool
+  hypothetical: bool
+  price: string
+  lower: string
+  upper: string
+  tick: number
+  bars: Bar[]
+  rows: DepthRow[]
+  selected: bool
+  selectionLeft: number
+  selectionWidth: number
+  selectionLower: string
+  selectionUpper: string
+  coverage: string
+  empty: bool
+  outside: bool
+  lowerTick: number
+  upperTick: number
+  spacing: number
+  selectable: bool
+
+shape PoolView
+  state: string
+  error: string
+  key: string
+  initialized: bool
+  prices: string[]
+  ticks: string[]
+  chart: Chart
+
+shape QuoteRow
+  symbol: string
+  amount: string
+  insufficient: bool
+  inactive: bool
+
+shape Approval
+  side: number
+  label: string
+
+shape Quote
+  route: string
+  ok: bool
+  error: string
+  matching: string
+  inactive: bool[]
+  connected: bool
+  ready: bool
+  batch: string
+  price: string
+  range: string
+  initial: string
+  unavailable: bool
+  rows: QuoteRow[]
+  liquidity: string
+  minLiquidity: string
+  approvals: Approval[]
+  blocked: bool
+
+shape SpacingCandidate
+  spacing: number
+  label: string
+  error: string
+
+shape ModeReply
+  ok: bool
+  error: string
+  v0: string
+  v1: string
+  v2: string
+
+shape RangeReply
+  ok: bool
+  v0: string
+  v1: string
+  v2: string
+
+shape CreateViewport
+  width: number
+
+// --- The URL ---------------------------------------------------------------
+
+fn createQuery(route: string): string = route.indexOf("?") >= 0 ? route.slice(route.indexOf("?") + 1) : ""
+
+fn decodeParam(s: string): string = s.replaceAll("+", " ").replaceAll("%20", " ").replaceAll("%2C", ",").replaceAll("%3A", ":").replaceAll("%2F", "/").replaceAll("%2B", "+").replaceAll("%25", "%")
+
+fn param(route: string, name: string, fallback: string): string = match first(createQuery(route).split("&").filter(p => p.startsWith(`${name}=`))) { case some(p) => decodeParam(p.slice(name.length + 1)), case none => fallback }
+
+fn parseForm(route: string, chain: number): CForm = CForm(chain=match parseNumber(param(route, "chain", "")) { case some(n) => n, case none => chain }, a=param(route, "a", ""), b=param(route, "b", ""), maxA=param(route, "maxA", ""), maxB=param(route, "maxB", ""), specified=(param(route, "specified", "0") == "1" ? 1 : 0), fee=param(route, "fee", "0.3"), exactFee=param(route, "exactFee", ""), extension=param(route, "extension", "0x0000000000000000000000000000000000000000"), kind=(param(route, "kind", "") == "stable" ? "stable" : "concentrated"), amplification=param(route, "amplification", "10"), center=param(route, "center", "0"), slippage=param(route, "slippage", "50"), raw=(param(route, "raw", "") == "true"), full=(param(route, "full", "") == "true"), spacing=param(route, "spacing", "5982"), price0=param(route, "price0", ""), price1=param(route, "price1", ""), price2=param(route, "price2", ""), tick0=param(route, "tick0", "-10000"), tick1=param(route, "tick1", "10000"), tick2=param(route, "tick2", "0"))
+
+fn enc(s: string): string = encodeURIComponent(s)
+
+// The order createFormHash (src/createForm.ts) writes.
+fn formHash(f: CForm): string = `/create?chain=${f.chain}&a=${enc(f.a)}&b=${enc(f.b)}&maxA=${enc(f.maxA)}&maxB=${enc(f.maxB)}&specified=${f.specified}&fee=${enc(f.fee)}&exactFee=${enc(f.exactFee)}&extension=${enc(f.extension)}&kind=${f.kind}&amplification=${enc(f.amplification)}&center=${enc(f.center)}&slippage=${enc(f.slippage)}&raw=${f.raw ? "true" : "false"}&full=${f.full ? "true" : "false"}&spacing=${enc(f.spacing)}&price0=${enc(f.price0)}&price1=${enc(f.price1)}&price2=${enc(f.price2)}&tick0=${enc(f.tick0)}&tick1=${enc(f.tick1)}&tick2=${enc(f.tick2)}`
+
+fn item(xs: string[], i: number): string = match xs.at(i) { case some(x) => x, case none => "" }
+
+fn flag(xs: bool[], i: number): bool = match xs.at(i) { case some(x) => x, case none => false }
+
+// A bound typed against the range shown (defaults included), as RangeFields' updateBound.
+fn withRange(f: CForm, prices: string[], ticks: string[], index: number, v: string): CForm = f.raw ? CForm(f, price0=item(prices, 0), price1=item(prices, 1), price2=item(prices, 2), tick0=(index == 0 ? v : item(ticks, 0)), tick1=(index == 1 ? v : item(ticks, 1)), tick2=item(ticks, 2)) : CForm(f, tick0=item(ticks, 0), tick1=item(ticks, 1), tick2=item(ticks, 2), price0=(index == 0 ? v : item(prices, 0)), price1=(index == 1 ? v : item(prices, 1)), price2=item(prices, 2))
+
+// A new token for one side; the pair is kept in address order.
+fn pairOf(f: CForm, side: number, address: string): CForm = side == 0 ? (f.b != "" and address.toLowerCase() > f.b.toLowerCase() ? CForm(f, a=f.b, b=address) : CForm(f, a=address)) : (f.a != "" and f.a.toLowerCase() > address.toLowerCase() ? CForm(f, a=address, b=f.a) : CForm(f, b=address))
+
+fn chooseToken(f: CForm, side: number, address: string): CForm = CForm(pairOf(f, side, address), maxA="", maxB="", specified=0, full=false, raw=false, price0="", price1="", price2="", tick0="", tick1="", tick2="")
+
+fn sameToken(f: CForm, side: number, address: string): bool = (side == 0 ? f.a : f.b).toLowerCase() == address.toLowerCase()
+
+fn otherToken(f: CForm, side: number, address: string): bool = (side == 0 ? f.b : f.a).toLowerCase() == address.toLowerCase()
+
+fn matches(r: TokenRow, q: string): bool = `${r.symbol} ${r.name} ${r.address} ${r.network}`.toLowerCase().includes(q.toLowerCase())
+
+fn isAddress(s: string): bool = s.length == 42 and s.startsWith("0x") and s.slice(2).toLowerCase().split("").filter(c => "0123456789abcdef".includes(c)).length == 40
+
+fn pickerStatus(busy: bool, error: string, address: bool, candidate: bool, count: number): string = busy ? "Reading token metadata from the selected network…" : error != "" ? "Token metadata could not be read." : address and not candidate ? "Paste an address and choose a network to read its metadata." : count > 0 ? `${count} token${count == 1 ? "" : "s"} found.` : "No matching tokens."
+
+// --- Parts -----------------------------------------------------------------
+
+// A field that shows the snapped value until it is edited, then the draft.
+component Snapped
+  props
+    field: string
+    label: string
+    raw: string
+    shown: string
+    editing: string
+    draft: string
+    edit: action
+    done: action
+    change: action
+    mode: string
+    disabled: bool
+    test: string
+    big: bool
+  view
+    column gap=4 min-width=0
+      input value=(editing == field ? draft : shown) input=change focus=edit(field, shown) blur=done aria-label=label inputmode=mode placeholder=(big ? "0" : "") disabled=disabled testId=test class=(big ? BigField : Field)
+      if raw != "" and raw != shown
+        text "Adjusted to nearest valid value" aria-hidden="true" testId="snapped-value" visibility=(editing == field ? "hidden" : "visible") class=Small
+
+component CreateHead
+  props
+    setup: CreateSetup
+    chain: number
+    busy: bool
+    pick: action
+  view
+    column
+      row margin-bottom=20
+        link href="#/positions" class=TextLink font-size=14 color="#595959"
+          text "All positions"
+      row class=Heading
+        text "Create position" role="heading" aria-level=2 class=Title
+        column gap=6 flex="0 1 220px" min-width=0
+          text "Network" font-size=14
+          select value=`${chain}` change=pick aria-label="Network" disabled=busy class=NetworkSelect
+            for n in setup.networks key=`${n.id}`
+              option n.name value=`${n.id}`
+
+component PairButtons
+  props
+    snap: Snap
+    open: action
+    narrow: bool
+  view
+    view display="grid" grid-template-columns="repeat(2, minmax(0, 1fr))" gap=(narrow ? 12 : 16) margin-bottom=32
+      for i in [0, 1] key=`${i}`
+        button press=open(i) aria-label=(i == 0 ? "Select first token" : "Select second token") class=(narrow ? PairNarrow : Pair)
+          row gap=8 align-items="baseline" min-width=0 flex=1 flex-wrap="wrap"
+            for p in snap.pair.slice(i, i + 1) key=p.text
+              text p.text title=p.title overflow-wrap="anywhere"
+              text p.network class=Small
+          text "⌄" aria-hidden="true"
+
+component TokenPicker
+  props
+    tokens: CreateTokens
+    balances: PickerBalances
+    connected: bool
+    search: string
+    setSearch: action
+    refresh: action
+    choose: action
+    close: action
+    key: action
+    focused: action
+    read: action
+    reading: bool
+    error: string
+    candidate: Candidate
+    showCandidate: bool
+    importIt: action
+    chainName: string
+  view
+    dialog id="token-picker" aria-labelledby="token-picker-title" cancel=close key=key class=Dialog
+      column gap=12
+        row justify-content="space-between" align-items="center"
+          text "Select a token" id="token-picker-title" role="heading" aria-level=2 font-size=21 font-weight=700
+          button press=close aria-label="Close token selector" class=Plain
+            text "×"
+        row gap=8
+          input id="token-search" value=search input=setSearch aria-label="Search tokens or paste an address" placeholder="Search tokens or paste an address" autocomplete="off" flex=1 min-width=0 class=Field
+          if connected
+            button press=refresh aria-label="Refresh balances" class=Plain
+              text "Refresh"
+        text pickerStatus(reading, error, isAddress(search), showCandidate, tokens.rows.filter(r => matches(r, search)).length) role="status" aria-live="polite" font-size=13
+        if connected and balances.failed
+          text "Some balances could not be loaded. Refresh or check your RPC settings." font-size=13
+        column max-height="50vh" overflow-y="auto" gap=4
+          for r, i in tokens.rows.filter(r => matches(r, search) and balances.held.includes(r.key)).concat(tokens.rows.filter(r => matches(r, search) and not balances.held.includes(r.key))) key=r.key
+            button id=`token-option-${i}` press=choose(r.address) focus=focused(i) aria-label=`${r.name}, ${r.symbol}, ${r.network}, ${r.address}` title=r.address testId="token-option" class=TokenOption
+              column min-width=0 flex=1 gap=2
+                text r.name title=r.name font-weight=700
+                row gap=8 flex-wrap="wrap"
+                  text r.symbol font-size=13
+                  text r.network testId="token-network" font-size=13
+                  text r.short title=`Full address: ${r.address}` font-family="monospace" font-size=12
+                  if r.imported
+                    text "Imported metadata" font-size=12
+              if not connected
+                text r.short title=r.address font-family="monospace" font-size=12
+              else
+                if balances.rows.length == 0 and not balances.failed
+                  text "…" aria-label="Loading balance" font-size=13
+                else
+                  if balances.failed
+                    text "—" title="Balance unavailable"
+                  for b in balances.rows.filter(x => x.key == r.key) key=b.key
+                    text b.display title=`Balance: ${b.exact}` font-weight=700 testId="token-row-balance"
+          if tokens.rows.filter(r => matches(r, search)).length == 0
+            text "No matching tokens. Paste a contract address to import one."
+        if isAddress(search)
+          row
+            button press=read disabled=reading class=Plain
+              text `Read token on ${chainName}`
+        if showCandidate
+          column gap=6 class=Panel
+            text candidate.symbol font-weight=700
+            text `${candidate.name} · ${candidate.decimals} decimals`
+            text candidate.address font-family="monospace" overflow-wrap="anywhere"
+            text "Name, symbol, and decimals were read from this token contract. Review them before importing; decimals are never inferred." font-size=13
+            button press=importIt(candidate.address, candidate.symbol, candidate.name, candidate.decimals) class=Plain align-self="start"
+              text "Import token"
+        if error != ""
+          text `Error: ${error}` role="alert"
+
+component PoolPicker
+  props
+    form: CForm
+    snap: Snap
+    registry: Registry
+    loading: bool
+    advanced: bool
+    setAdvanced: action
+    rawFee: bool
+    setRawFee: action
+    summaryOpen: bool
+    toggleSummary: action
+    pickPool: action
+    retry: action
+    more: action
+    editing: string
+    draft: string
+    edit: action
+    done: action
+    setFeeInput: action
+    setKind: action
+    setExtension: action
+    setAmplification: action
+    setCenter: action
+    spacingOpen: bool
+    toggleSpacing: action
+    rawSpacing: bool
+    setRawSpacing: action
+    spacingValue: string
+    setSpacingDraft: action
+    candidate: SpacingCandidate
+    applySpacing: action
+    narrow: bool
+  view
+    section aria-labelledby="pool-picker-title" testId="pool-picker"
+      column
+        row justify-content="space-between" align-items="center" gap=16
+          text "Choose a pool" id="pool-picker-title" role="heading" aria-level=3 class=H3
+          row gap=8 align-items="center"
+            text "Advanced" font-size=14
+            input type="checkbox" role="switch" checked=advanced change=setAdvanced aria-label="Advanced" aria-controls="advanced-pool"
+        if not advanced
+          column margin-top=16 testId="pool-options"
+            if registry.valid
+              column gap=16 aria-label="Registered pools"
+                text "Registered pools for this pair. Use Advanced to configure a pool not listed here." font-size=14 color="#595959"
+                if loading
+                  text "Loading registered pools…" role="status"
+                else
+                  if registry.error == "" and registry.block != "" and registry.pools.length == 0
+                    text "No registered pools found for this pair. Use Advanced to configure a pool." role="status"
+                view display="grid" grid-template-columns="repeat(auto-fit, minmax(min(100%, 260px), 1fr))" gap=12
+                  for p in registry.pools key=p.id
+                    button press=pickPool(p.exactFee, p.fee, p.extension, p.kind, p.spacing, p.center, p.amplification) aria-pressed=(p.config == snap.config ? "true" : "false") testId="registered-pool-card" class=(p.config == snap.config ? PoolCardOn : PoolCardOff)
+                      text p.title font-size=20 font-weight=600
+                      text p.detail class=Small
+                      text p.extensionLabel class=Small overflow-wrap="anywhere"
+                row justify-content="space-between" align-items="center" flex-wrap="wrap" gap=12
+                  text `Loaded ${registry.scanned} of ${registry.total} registered pools for this pair.${registry.block != "" ? ` Snapshot block ${registry.block}.` : ""}` class=Small
+                  row gap=8 flex-wrap="wrap"
+                    button press=retry disabled=loading class=Plain
+                      text (registry.error != "" ? "Retry pools" : "Refresh pools")
+                    if registry.hasMore
+                      button press=more disabled=loading class=Plain
+                        text "Load more registered pools"
+                if registry.error != ""
+                  text registry.error role="alert"
+            else
+              text "Select two tokens to discover registered pools for the pair."
+        column margin-top=16 font-size=14
+          button press=toggleSummary aria-expanded=summaryOpen aria-label="Selected pool configuration" class=Disclosure
+            text `${summaryOpen ? "▾" : "▸"} Selected pool details`
+          if summaryOpen
+            column gap=6 padding="12px 0"
+              text `Type: ${snap.summary.type}`
+              text `Fee: ${snap.summary.fee}`
+              text snap.summary.parameter
+              text `Extension: ${snap.summary.extension}` font-family="monospace" overflow-wrap="anywhere"
+        column id="advanced-pool" display=(advanced ? "flex" : "none") class=(narrow ? AdvancedNarrow : Advanced)
+          view display="grid" grid-template-columns=(narrow ? "1fr" : "repeat(2, minmax(0, 1fr))") gap="24px 16px" align-items="start"
+            column gap=6
+              text (rawFee ? "Exact fee (uint64)" : "Pool fee (%)") font-size=14
+              Snapped(field=(rawFee ? "exactFee" : "fee"), label=(rawFee ? "Exact fee (uint64)" : "Pool fee (%)"), raw=(rawFee ? (form.exactFee != "" ? form.exactFee : snap.exact) : form.fee), shown=(rawFee ? snap.exact : snap.fee), editing=editing, draft=draft, edit=edit, done=done, change=setFeeInput(rawFee), mode=(rawFee ? "numeric" : "decimal"), disabled=false, test="pool-fee", big=false)
+              row gap=8 align-items="center" margin-top=12
+                input type="checkbox" checked=rawFee change=setRawFee aria-label="Enter exact amount"
+                text "Enter exact amount" font-size=14
+            column gap=6
+              text "Pool type" font-size=14
+              select value=form.kind change=setKind aria-label="Pool type" class=Field
+                option "Concentrated liquidity" value="concentrated"
+                option "Stableswap" value="stable"
+            column gap=6 grid-column="1 / -1"
+              text "Extension address" font-size=14
+              input value=form.extension input=setExtension aria-label="Extension address" autocomplete="off" class=Field
+            if form.kind == "stable"
+              column gap=6
+                text "Amplification exponent" font-size=14
+                Snapped(field="amplification", label="Amplification exponent", raw=form.amplification, shown=snap.amplification, editing=editing, draft=draft, edit=edit, done=done, change=setAmplification, mode="numeric", disabled=false, test="amplification", big=false)
+              column gap=6
+                text "Center tick (multiple of 16)" font-size=14
+                Snapped(field="center", label="Center tick (multiple of 16)", raw=form.center, shown=snap.center, editing=editing, draft=draft, edit=edit, done=done, change=setCenter, mode="numeric", disabled=false, test="center", big=false)
+          if form.kind == "concentrated"
+            column margin-top=16 gap=10 testId="tick-spacing-control"
+              button press=toggleSpacing aria-expanded=spacingOpen class=Disclosure
+                text `${spacingOpen ? "▾" : "▸"} Tick spacing · ${snap.spacingLabel}%`
+              if spacingOpen
+                column gap=10
+                  if form.spacing != `${snap.spacing}`
+                    text "Adjusted to nearest valid value" testId="snapped-value" class=Small
+                  text "Spacing is the price change between adjacent usable ticks. It is independent of the pool fee."
+                  row gap=8 flex-wrap="wrap"
+                    for p in snap.spacingPresets key=`${p.n}`
+                      button press=applySpacing(p.n) aria-pressed=(p.n == snap.spacing ? "true" : "false") class=Plain
+                        text p.label
+                  text (rawSpacing ? "Tick spacing (ticks)" : "Tick spacing (%)") font-size=14
+                  input value=spacingValue input=setSpacingDraft inputmode=(rawSpacing ? "numeric" : "decimal") aria-label=(rawSpacing ? "Tick spacing (ticks)" : "Tick spacing (%)") class=Field
+                  row gap=8 align-items="center"
+                    input type="checkbox" checked=rawSpacing change=setRawSpacing aria-label="Enter exact ticks"
+                    text "Enter exact ticks" font-size=14
+                  if candidate.label != ""
+                    text candidate.label
+                  if candidate.error != ""
+                    text `Error: ${candidate.error}` role="alert"
+                  button press=applySpacing(candidate.spacing) disabled=(candidate.spacing == 0) class=Plain align-self="start"
+                    text "Apply tick spacing"
+
+component GateStatus
+  props
+    gate: Gate
+    pending: bool
+    chain: number
+    retry: action
+  view
+    if pending or gate.state == ""
+      text "Checking required contracts…" role="status"
+    else
+      if gate.state != "ready"
+        column role="alert" gap=10 class=Panel
+          text (gate.state == "missing" ? "Deploy contracts to create positions" : "Unable to verify this network") role="heading" aria-level=3 class=H3
+          text "Core, PoolKeyIndex, the metadata renderer, FreeLPDataFetcher, and the position manager must match this build before you can create a position on this network."
+          column gap=4
+            for i in gate.issues key=i.kind
+              row gap=8
+                text "•" aria-hidden="true"
+                text i.message overflow-wrap="anywhere"
+          row gap=12 align-items="center" flex-wrap="wrap"
+            if gate.state == "missing"
+              link href=`#/deploy/${chain}` class=PrimaryLink
+                text "Go to Deploy"
+            else
+              link href="#/networks" class=TextLink
+                text "Review network RPC"
+            button press=retry class=Plain
+              text "Check again"
+
+component PoolStatus
+  props
+    pool: PoolView
+    loading: bool
+    updated: string
+    refresh: action
+    narrow: bool
+  view
+    row class=StatusBar flex-wrap=(narrow ? "wrap" : "nowrap")
+      column
+        if loading
+          text "Loading pool…" role="status"
+        if pool.state == "ready"
+          text `Pool updated at ${updated}.` color="#595959"
+        if pool.error != ""
+          text `Error: ${pool.error}` role="alert"
+      button press=refresh class=Plain flex="none" font-size=13
+        text "Refresh pool and balances"
+
+component DepthChart
+  props
+    chart: Chart
+    symbols: string[]
+    zoom: number
+    zoomIn: action
+    zoomOut: action
+    select: action
+    depthOpen: bool
+    toggleDepth: action
+  state from = 0
+  state to = 0
+  state dragging = false
+  action down(e: PointerEvent)
+    if chart.selectable
+      let g = frame("depth-chart")
+      let t = round((chart.lowerTick + max(0, min(1, e.offsetX / max(1, g.width))) * (chart.upperTick - chart.lowerTick)) / chart.spacing) * chart.spacing
+      from = t
+      to = t
+      dragging = true
+  action move(e: PointerEvent)
+    if dragging
+      let g = frame("depth-chart")
+      to = round((chart.lowerTick + max(0, min(1, e.offsetX / max(1, g.width))) * (chart.upperTick - chart.lowerTick)) / chart.spacing) * chart.spacing
+  action up(e: PointerEvent)
+    if dragging
+      let g = frame("depth-chart")
+      let t = round((chart.lowerTick + max(0, min(1, e.offsetX / max(1, g.width))) * (chart.upperTick - chart.lowerTick)) / chart.spacing) * chart.spacing
+      dragging = false
+      if t != from
+        select(min(from, t), max(from, t))
+  action cancel(k: string)
+    if k == "Escape"
+      dragging = false
+  view
+    column margin="20px 0 24px" testId="liquidity-chart"
+      row justify-content="space-between" align-items="center"
+        row gap=6 align-items="center" class=Small
+          view width=10 height=10 background-color="#111"
+          text item(symbols, 0)
+          view width=10 height=10 background-color="#999"
+          text item(symbols, 1)
+        row gap=6
+          button press=zoomOut aria-label="Zoom out" disabled=(zoom >= 256) class=Plain
+            text "−"
+          button press=zoomIn aria-label="Zoom in" disabled=(zoom <= 4) class=Plain
+            text "+"
+      text chart.price font-size=13 color="#595959"
+      svg id="depth-chart" viewBox="0 0 800 210" preserveAspectRatio="none" role="img" aria-label="Pool token amounts by price" width="100%" height=240 margin="16px 0" tabindex=(chart.selectable ? 0 : -1) pointerdown=down pointermove=move pointerup=up key=cancel touch-action="none"
+        if dragging
+          rect x=(max(0, min(800, (min(from, to) - chart.lowerTick) / max(1, chart.upperTick - chart.lowerTick) * 800))) width=(max(0, abs800(from, to, chart))) height=210 fill="#000" opacity=0.08
+        else
+          if chart.selected
+            rect x=chart.selectionLeft width=chart.selectionWidth height=210 fill="#000" opacity=0.08
+        for b in chart.bars key=b.key
+          rect x=b.x y=b.y width=b.width height=b.height fill=b.fill
+        line x1=chart.tick x2=chart.tick y1=0 y2=210 stroke="#111" stroke-dasharray="4 4"
+      row justify-content="space-between" font-size=13
+        text chart.lower
+        text chart.upper
+      row role="status"
+        text "Hover for token amounts. Drag to select a range, or edit its bounds in the fields below. Press Escape to cancel a drag." class=Small
+      if chart.selected
+        row justify-content="space-between"
+          text chart.selectionLower
+          text "Selected range" class=Small
+          text chart.selectionUpper
+      column color="#595959"
+        text chart.coverage class=Small
+        if chart.empty
+          text "No liquidity was found within this coverage." font-size=13
+        if chart.outside
+          text "Part of your selected range is outside the displayed depth window. Its bounds remain unchanged; liquidity beyond the read coverage is unknown." font-size=13
+      column font-size=13
+        button press=toggleDepth aria-expanded=depthOpen class=Disclosure
+          text `${depthOpen ? "▾" : "▸"} Read depth values`
+        if depthOpen
+          column tabindex=0 role="region" aria-label="Exact liquidity depth values" max-height=240 overflow="auto"
+            table
+              thead
+                tr
+                  th scope="col"
+                    text "Price range"
+                  th scope="col"
+                    text item(symbols, 0)
+                  th scope="col"
+                    text item(symbols, 1)
+              tbody
+                for r in chart.rows key=r.key
+                  tr
+                    th scope="row"
+                      text r.range
+                    td
+                      text r.amount0
+                    td
+                      text r.amount1
+
+fn abs800(from: number, to: number, chart: Chart): number = (max(from, to) - min(from, to)) / max(1, chart.upperTick - chart.lowerTick) * 800
+
+component RangeFields
+  props
+    form: CForm
+    snap: Snap
+    pool: PoolView
+    stable: bool
+    editing: string
+    draft: string
+    edit: action
+    done: action
+    setBound: action
+    setInitial: action
+    toggleFull: action
+    toggleMode: action
+    preset: action
+    error: string
+  view
+    column gap=16 testId="range-controls"
+      column gap=12
+        if stable
+          text "Stableswap bounds are determined by its center and amplification." class=Small
+        else
+          row gap=8 flex-wrap="wrap" align-items="center"
+            button press=toggleFull aria-pressed=(form.full ? "true" : "false") class=Plain font-size=13
+              text (form.full ? "Custom range" : "Full range")
+            button press=toggleMode aria-pressed=(form.raw ? "true" : "false") class=Plain font-size=13
+              text (form.raw ? "Use prices" : "Edit exact ticks")
+            if error != ""
+              text error role="alert" class=Small
+          view display="grid" grid-template-columns="repeat(4, minmax(0, 1fr))" gap=8
+            for p in snap.rangePresets key=`${p.n}`
+              button press=preset(p.n) disabled=(item(pool.prices, 2) == "" or item(pool.prices, 2) == "0") class=Preset
+                text p.label
+      text `Prices in ${item(snap.symbols, 1)} per ${item(snap.symbols, 0)}.` class=Small
+      if not form.full and not stable
+        view display="grid" grid-template-columns="repeat(2, minmax(0, 1fr))" gap=16
+          for i in [0, 1] key=`${i}`
+            column gap=6 min-width=0
+              text (form.raw ? (i == 0 ? "Minimum tick" : "Maximum tick") : (i == 0 ? "Minimum price" : "Maximum price")) font-size=14
+              Snapped(field=`bound${i}`, label=(form.raw ? (i == 0 ? "Minimum tick" : "Maximum tick") : (i == 0 ? "Minimum price" : "Maximum price")), raw=(form.raw ? (i == 0 ? form.tick0 : form.tick1) : (i == 0 ? form.price0 : form.price1)), shown=(form.raw ? item(pool.ticks, i) : item(pool.prices, i)), editing=editing, draft=draft, edit=edit, done=done, change=setBound(i), mode=(form.raw ? "numeric" : "decimal"), disabled=false, test=`bound-${i}`, big=false)
+      text (form.full ? "The range spans the protocol's supported tick bounds." : form.raw ? "Ticks use base 1.000001 and must be multiples of the selected spacing." : "Prices are snapped to the selected spacing. The minimum must be below the maximum.") class=Small
+      if not pool.initialized
+        column gap=6
+          text "Initial price" font-size=14
+          Snapped(field="initial", label="Initial price", raw=(form.raw ? form.tick2 : form.price2), shown=(form.raw ? item(pool.ticks, 2) : item(pool.prices, 2)), editing=editing, draft=draft, edit=edit, done=done, change=setInitial, mode=(form.raw ? "numeric" : "decimal"), disabled=false, test="initial-price", big=false)
+
+component DepositPanel
+  props
+    form: CForm
+    snap: Snap
+    quote: Quote
+    route: string
+    session: Session
+    busy: bool
+    balance0: Balance
+    balance1: Balance
+    editing: string
+    draft: string
+    edit: action
+    done: action
+    setAmount: action
+    fill: action
+    retryBalance: action
+    max: action
+    maxMessages: string[]
+    maxPending: bool
+    setSlippage: action
+    detailsOpen: bool
+    toggleDetails: action
+    limitsOpen: bool
+    toggleLimits: action
+    approve: action
+    create: action
+    creating: bool
+    connect: action
+    narrow: bool
+    mid: bool
+  view
+    section aria-labelledby="deposit-heading" testId="create-deposit" class=(narrow ? DepositNarrow : Deposit)
+      text "Deposit amounts" id="deposit-heading" role="heading" aria-level=3 margin-bottom=24 class=H3
+      view display="grid" grid-template-columns=(mid ? "repeat(2, minmax(0, 1fr))" : "1fr") gap=12
+        for i in [0, 1] key=`${i}`
+          column class=DepositInput
+            text item(snap.symbols, i) padding="12px 16px 4px" font-size=14 font-weight=600
+            column margin="0 16px 12px"
+              Snapped(field=`amount${i}`, label=`${item(snap.symbols, i)} amount`, raw=(i == 0 ? form.maxA : form.maxB), shown=(form.specified != i and quote.ok and quote.route == route ? quote.matching : (i == 0 ? snap.maxA : snap.maxB)), editing=editing, draft=draft, edit=edit, done=done, change=setAmount(i), mode="decimal", disabled=flag(quote.inactive, i), test=`deposit-amount-${i}`, big=true)
+            column margin="0 16px 12px" testId="balance-actions"
+              TokenBalance(balance=(i == 0 ? balance0 : balance1), pick=fill(i), retry=retryBalance, max=max(i), maxMessage=item(maxMessages, i), maxPending=maxPending, disabled=flag(quote.inactive, i))
+      view display="grid" grid-template-columns="minmax(0, 1fr) 80px" align-items="center" gap=12 margin-top=20
+        text "Slippage (basis points)" font-size=14
+        Snapped(field="slippage", label="Slippage (basis points)", raw=form.slippage, shown=snap.slippage, editing=editing, draft=draft, edit=edit, done=done, change=setSlippage, mode="numeric", disabled=false, test="slippage", big=false)
+      if quote.error != ""
+        text `Error: ${quote.error}` role="alert" margin-top=12
+      if quote.ok and quote.route == route
+        column margin-top=24 border-top="1px solid #d6d6d6" padding-top=24
+          text "Deposit preview" role="heading" aria-level=3 font-size=16 font-weight=600 margin-bottom=12
+          column font-size=13
+            button press=toggleDetails aria-expanded=detailsOpen class=Disclosure
+              text `${detailsOpen ? "▾" : "▸"} Price and pool details`
+            if detailsOpen
+              column gap=8 overflow-wrap="anywhere"
+                if quote.unavailable
+                  text "Pool state is unavailable."
+                else
+                  if quote.initial != ""
+                    text quote.initial role="note"
+                  text quote.price
+                  text quote.range
+          dl display="grid" gap=12 margin="16px 0"
+            for r in quote.rows key=r.symbol
+              view display="grid" grid-template-columns="minmax(0, 1fr) minmax(0, 2fr)" gap=16 align-items="baseline"
+                dt color="#595959"
+                  text r.symbol
+                dd margin=0 text-align="right" overflow-wrap="anywhere"
+                  text r.amount
+                  if quote.ready and r.insufficient
+                    text `Insufficient ${r.symbol} balance` font-weight=700
+                  if r.inactive
+                    text "This token is not needed for the selected range." class=Small
+          column font-size=13 margin-bottom=20
+            button press=toggleLimits aria-expanded=limitsOpen class=Disclosure
+              text `${limitsOpen ? "▾" : "▸"} Liquidity limits`
+            if limitsOpen
+              dl display="grid" gap=12 margin="16px 0"
+                view display="grid" grid-template-columns="minmax(0, 1fr) minmax(0, 2fr)" gap=16
+                  dt color="#595959"
+                    text "Estimated liquidity"
+                  dd margin=0 text-align="right" overflow-wrap="anywhere"
+                    text quote.liquidity
+                view display="grid" grid-template-columns="minmax(0, 1fr) minmax(0, 2fr)" gap=16
+                  dt color="#595959"
+                    text "Minimum liquidity"
+                  dd margin=0 text-align="right" overflow-wrap="anywhere"
+                    text quote.minLiquidity
+          if quote.minLiquidity == "0"
+            text "Increase the amount or reduce slippage so minimum liquidity stays positive." role="alert"
+          if session.account == ""
+            button press=connect class=Primary
+              text "Connect wallet"
+          if not quote.ready and session.account != ""
+            text "Load or refresh balances and allowances before creating." role="status"
+          column gap=8 margin-top=8
+            for a in quote.approvals key=`${a.side}`
+              button press=approve(a.side) disabled=busy class=Primary
+                text a.label
+            if session.account != ""
+              button press=create disabled=(quote.blocked or busy or creating) aria-busy=creating class=(quote.blocked or busy or creating ? PrimaryOff : Primary)
+                text (creating ? "Create position …" : "Create position")
+
+component WalletDialog
+  props
+    session: Session
+    connect: action
+  view
+    dialog id="create-wallet" aria-labelledby="create-wallet-title" class=Dialog
+      column gap=12
+        row justify-content="space-between" align-items="center"
+          text "Connect wallet" id="create-wallet-title" role="heading" aria-level=2 font-size=21 font-weight=700
+          button commandfor="create-wallet" command="close" aria-label="Close wallet dialog" class=Plain
+            text "×"
+        for w in session.wallets key=w.uuid
+          button press=connect(w.uuid) commandfor="create-wallet" command="close" class=Plain
+            text `Connect ${w.name}`
+        if session.wallets.length == 0
+          text "Open this app in your wallet’s browser or enable a browser wallet to connect."
+
+// --- Styles ----------------------------------------------------------------
+
+style Heading
+  display="flex" align-items="end" justify-content="space-between" gap=24 margin-bottom=32 flex-wrap="wrap"
+
+style Title
+  margin=0 font-size=32 line-height=1.2 letter-spacing=-1 font-weight=650
+
+style H3
+  font-size=20 font-weight=600 letter-spacing=-0.35 margin=0
+
+style Small
+  color="#595959" font-size=12 line-height=1.5
+
+style NetworkSelect
+  min-height=48 border="1px solid #d6d6d6" border-radius=8 background-color="#fff" padding="0 12px" font="inherit"
+
+style Pair
+  display="flex" align-items="center" justify-content="space-between" gap=12 min-height=84 border="1px solid #d6d6d6" border-radius=12 padding="16px 20px" font-size=24 background-color="#fff" text-align="start" min-width=0
+
+style PairNarrow
+  display="flex" align-items="center" justify-content="space-between" gap=8 min-height=76 border="1px solid #d6d6d6" border-radius=12 padding=12 font-size=18 background-color="#fff" text-align="start" min-width=0
+
+style Field
+  border="1px solid #666" padding="8px 12px" background-color="#fff" font="inherit" min-height=44 border-radius=8 min-width=0 box-sizing="border-box"
+
+style BigField
+  border="0" padding=0 background-color="transparent" font="inherit" font-size=28 font-weight=500 min-width=0 width="100%"
+
+style Plain
+  border="1px solid #666" padding="8px 12px" background-color="#fff"
+
+style Preset
+  border="1px solid #666" padding="8px 4px" background-color="#fff" font-size=13 white-space="nowrap"
+
+style Disclosure
+  border="0" background-color="transparent" padding="8px 0" color="#595959" text-align="start" align-self="start"
+
+style Panel
+  border="1px solid #111" padding=16 background-color="#fff"
+
+style PrimaryLink
+  border="1px solid #111" padding="8px 12px" background-color="#111" color="#fff" text-decoration="none"
+
+style PoolCardOff
+  display="grid" gap=4 text-align="start" padding="16px 20px" border="1px solid #d6d6d6" border-radius=8 background-color="#fff" min-width=0 overflow-wrap="anywhere"
+
+style PoolCardOn
+  display="grid" gap=4 text-align="start" padding="16px 20px" border="1px solid #000" border-radius=8 background-color="#fff" box-shadow="inset 3px 0 #000" min-width=0 overflow-wrap="anywhere"
+
+style Advanced
+  margin-top=16 padding=24 background-color="#fff" border-radius=12
+
+style AdvancedNarrow
+  margin-top=16 padding=16 background-color="#fff" border-radius=12
+
+style StatusBar
+  display="flex" justify-content="space-between" align-items="center" gap=16 margin="24px 0 32px" padding-top=24 border-top="1px solid #d6d6d6" font-size=13
+
+style Deposit
+  position="sticky" top=24 min-width=0 padding=24 border-radius=16 background-color="#fff"
+
+style DepositNarrow
+  min-width=0 padding="20px 16px" border-radius=16 background-color="#fff"
+
+style DepositInput
+  border="1px solid #d6d6d6" border-radius=8 background-color="#f3f3f3" min-width=0
+
+style Primary
+  width="100%" min-height=48 border-radius=8 border="1px solid #000" background-color="#000" color="#fff"
+
+style PrimaryOff
+  width="100%" min-height=48 border-radius=8 border="1px solid #999" background-color="#fff" color="#595959"
+
+style TokenOption
+  display="flex" align-items="center" justify-content="space-between" gap=12 padding="10px 12px" border="1px solid #ddd" background-color="#fff" text-align="start" min-width=0
+
+style Dialog
+  width="min(560px, calc(100vw - 32px))" background-color="#fff" border="1px solid #111" padding=20 box-sizing="border-box"
