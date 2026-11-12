@@ -19,7 +19,7 @@ component Shell
         link href="#/networks" aria-current=(page == "networks" ? "page" : "false") class=NavLink border-bottom=(page == "networks" ? "2px solid #111" : "2px solid transparent")
           text "Networks"
       if session.account != ""
-        column position="relative"
+        column position="relative" testId="account-control"
           button commandfor="account-menu" command="show-modal" aria-label=`Connected wallet: ${session.account}` class=AccountButton
             row gap=8 align-items="center"
               Identicon(cells=session.identicon)

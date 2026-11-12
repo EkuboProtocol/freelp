@@ -50,7 +50,7 @@ style Toast
   position="sticky" bottom=24 margin-left="auto" max-width=420 gap=8 align-items="start" background-color="#fff" border="1px solid #111" padding=4 z-index=10
 
 style Status
-  border-left="3px solid #111" padding=12 overflow-wrap="anywhere" white-space="pre-wrap"
+  border-left="3px solid #111" padding=12 overflow-wrap="anywhere" white-space="pre-wrap" max-height="calc(100vh - 96px)" overflow-y="auto"
 
 style PageTitle
   font-size=27 font-weight=700 letter-spacing=-0.7 margin="0 0 20px"
