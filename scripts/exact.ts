@@ -1,10 +1,13 @@
 // Exact toolchain for FreeLP: `setup` checks out the pinned Exact commit into
-// .exact-sdk, `build` compiles the app into dist as a static, relative site.
+// .exact-sdk and applies patches/exact, `build` compiles the app into dist as a static, relative site.
 import { existsSync } from "node:fs";
-import { cp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import pkg from "../package.json" with { type: "json" };
 
 const SDK = ".exact-sdk";
+// Fixes FreeLP needs before they land upstream, applied to the pinned commit.
+const PATCHES = "patches/exact";
 const { repository, commit } = pkg.exact;
 const env = { ...process.env, EXACT: SDK, EXACT_FEEDBACK: "0" };
 
@@ -33,6 +36,9 @@ async function setup() {
     await run(["git", "fetch", "-q", "--depth", "1", "origin", commit], SDK);
     await run(["git", "checkout", "-q", "--detach", commit], SDK);
   }
+  await run(["git", "checkout", "-q", "--", "."], SDK);
+  for (const name of (await readdir(PATCHES)).sort())
+    await run(["git", "apply", resolve(PATCHES, name)], SDK);
   await run(["bun", "install", "--frozen-lockfile"], SDK);
 }
 

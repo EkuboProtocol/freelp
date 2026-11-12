@@ -44,11 +44,12 @@ export async function sendCalls(
         atomicRequired: false,
         chainId: numberToHex(settings.chainId),
         from: account,
-        calls: calls.map((call) => ({
-          to: call.to,
-          data: call.data,
-          value: call.value ? numberToHex(call.value) : undefined,
-        })),
+        // Absent values are omitted: requests cross to the page as JSON.
+        calls: calls.map((call) =>
+          call.value
+            ? { to: call.to, data: call.data, value: numberToHex(call.value) }
+            : { to: call.to, data: call.data },
+        ),
       },
     ],
   })) as { id?: unknown } | null;

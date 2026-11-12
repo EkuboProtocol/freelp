@@ -16,8 +16,8 @@ members App
   resource createSnap = createSnap(route, revision, tokenImports) when page == "create" as shape Snap else empty()
   resource createGate = createGate(cf.chain, revision, gateRetry) when page == "create" as shape Gate else empty()
   resource createRegistry = createRegistry(cf.chain, cf.a, cf.b, revision, registryRetry, registryPages) when page == "create" as shape Registry else empty()
-  resource createPool = createPool(route, poolRetry, zoom, tokenImports) when page == "create" and cf.a != "" and cf.b != "" as shape PoolView else empty()
-  resource createQuote = createQuote(route, revision * 1000 + balanceRetry, poolRetry) when page == "create" and cf.a != "" and cf.b != "" as shape Quote else empty()
+  resource createPool = createPool(route, poolEpoch, zoom, tokenImports) when page == "create" and cf.a != "" and cf.b != "" as shape PoolView else empty()
+  resource createQuote = createQuote(route, revision * 1000 + balanceRetry, poolEpoch) when page == "create" and cf.a != "" and cf.b != "" as shape Quote else empty()
   resource createBalance0 = createBalance(cf.chain, cf.a, revision, balanceRetry) when page == "create" and session.account != "" as shape Balance else empty()
   resource createBalance1 = createBalance(cf.chain, cf.b, revision, balanceRetry) when page == "create" and session.account != "" as shape Balance else empty()
   resource pickerBalances = pickerBalances(cf.chain, revision, pickerRefresh) when page == "create" and pickerSide >= 0 and session.account != "" as shape PickerBalances else empty()
@@ -32,6 +32,8 @@ members App
   state registryRetry = 0
   state registryPages = 1
   state poolRetry = 0
+  // Pool state is read again on retry and after every confirmed write.
+  derive poolEpoch = revision * 1000 + poolRetry
   state balanceRetry = 0
   state tokenImports = 0
   state zoom = 50
@@ -48,6 +50,7 @@ members App
   state fieldEditing = ""
   state fieldDraft = ""
   state pickerSide = -1
+  state importSide = -1
   state pickerSearch = ""
   state pickerRefresh = 0
   state pickerIndex = -1
@@ -156,7 +159,7 @@ members App
   action toggleFull
     nav = replace(nav, path("home") + "#" + formHash(CForm(cf, full=not cf.full)))
   action toggleRangeMode
-    send rangeMode = createRangeMode(route, poolRetry)
+    send rangeMode = createRangeMode(route, poolEpoch)
   action afterRangeMode
     match rangeMode
       case some(r)
@@ -169,9 +172,9 @@ members App
       case none
         rangeError = ""
   action presetRange(n: number)
-    send rangePicked = createRangeAt(route, poolRetry, 0, 0, n)
+    send rangePicked = createRangeAt(route, poolEpoch, 0, 0, n)
   action chartRange(lower: number, upper: number)
-    send rangePicked = createRangeAt(route, poolRetry, lower, upper, 0)
+    send rangePicked = createRangeAt(route, poolEpoch, lower, upper, 0)
   action afterRangePicked
     match rangePicked
       case some(r)
@@ -193,7 +196,7 @@ members App
   // The deposit.
   action estimateMax(side: number)
     maxSide = side
-    send maxEstimated = createMax(route, revision * 1000 + balanceRetry, poolRetry, side)
+    send maxEstimated = createMax(route, revision * 1000 + balanceRetry, poolEpoch, side)
   action afterCreateMax
     match maxEstimated
       case some(r)
@@ -206,11 +209,11 @@ members App
       case none
         maxSide = maxSide
   action approve(side: number)
-    send approvalSent = createApprove(route, revision * 1000 + balanceRetry, poolRetry, side)
+    send approvalSent = createApprove(route, revision * 1000 + balanceRetry, poolEpoch, side)
   action afterTx
     revision = revision + 1
   action create
-    send positionCreated = createPosition(route, revision * 1000 + balanceRetry, poolRetry, performanceNow() - poolStamp)
+    send positionCreated = createPosition(route, revision * 1000 + balanceRetry, poolEpoch, performanceNow() - poolStamp)
   action afterCreate
     match positionCreated
       case some(r)
@@ -246,13 +249,18 @@ members App
   action refreshPicker
     pickerRefresh = pickerRefresh + 1
   action choose(address: string)
-    if otherToken(cf, pickerSide, address)
+    chooseOn(pickerSide, address)
+  // An import's reply may land after the other picker opened: it fills the
+  // side the import started from.
+  action chooseOn(side: number, address: string)
+    if otherToken(cf, side, address)
       status = "Choose two different tokens for this position."
     else
-      if not sameToken(cf, pickerSide, address)
-        nav = replace(nav, path("home") + "#" + formHash(chooseToken(cf, pickerSide, address)))
-    pickerSide = -1
-    close("token-picker")
+      if not sameToken(cf, side, address)
+        nav = replace(nav, path("home") + "#" + formHash(chooseToken(cf, side, address)))
+    if pickerSide == side
+      pickerSide = -1
+      close("token-picker")
   action readCandidate
     pickerError = ""
     candidateFor = pickerSearch
@@ -264,13 +272,14 @@ members App
       case none
         pickerError = ""
   action importCandidate(address: string, symbol: string, name: string, decimals: number)
+    importSide = pickerSide
     send tokenImported = importToken(cf.chain, address, symbol, name, decimals)
   action afterImport
     match tokenImported
       case some(r)
         tokenImports = tokenImports + 1
         if r.ok
-          choose(r.address)
+          chooseOn(importSide, r.address)
         else
           pickerError = r.error
       case none

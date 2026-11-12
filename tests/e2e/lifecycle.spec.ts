@@ -772,13 +772,23 @@ async function checkPoolChart(
   await expect(
     page.getByRole("img", { name: "Pool token amounts by price" }),
   ).toBeVisible({ timeout: 30000 });
-  const heights = await page
-    .getByTestId("liquidity-chart")
-    .locator('rect[fill="#111"], rect[fill="#999"]')
-    .evaluateAll((nodes) =>
-      nodes.map((node) => Number(node.getAttribute("height"))),
-    );
-  expect(heights.some((height) => height > 0)).toBe(true);
+  // Exact writes SVG geometry and fill as inline styles, not attributes.
+  await expect
+    .poll(() =>
+      page
+        .getByTestId("liquidity-chart")
+        .locator("rect")
+        .evaluateAll((nodes) =>
+          nodes.some((node) => {
+            const style = getComputedStyle(node);
+            return (
+              ["rgb(17, 17, 17)", "rgb(153, 153, 153)"].includes(style.fill) &&
+              parseFloat(style.height) > 0
+            );
+          }),
+        ),
+    )
+    .toBe(true);
 }
 
 async function checkTokenImports(
@@ -811,6 +821,8 @@ async function checkTokenImports(
     await dialog
       .getByRole("button", { name: "Import token", exact: true })
       .click();
+    // The import replies asynchronously; the picker closes once it is chosen.
+    await expect(dialog).toHaveCount(0);
   }
   if (native) return;
   const saved = await page.evaluate(() =>

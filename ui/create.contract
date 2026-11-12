@@ -472,7 +472,9 @@ component PoolPicker
               text "Select two tokens to discover registered pools for the pair."
         column margin-top=16 font-size=14
           button press=toggleSummary aria-expanded=summaryOpen aria-label="Selected pool configuration" class=Disclosure
-            text `${summaryOpen ? "▾" : "▸"} Selected pool details`
+            row gap=4 align-items="center"
+              text (summaryOpen ? "▾" : "▸")
+              text `Selected pool details`
           if summaryOpen
             column gap=6 padding="12px 0"
               text `Type: ${snap.summary.type}`
@@ -505,7 +507,9 @@ component PoolPicker
           if form.kind == "concentrated"
             column margin-top=16 gap=10 testId="tick-spacing-control"
               button press=toggleSpacing aria-expanded=spacingOpen class=Disclosure
-                text `${spacingOpen ? "▾" : "▸"} Tick spacing · ${snap.spacingLabel}%`
+                row gap=4 align-items="center"
+                  text (spacingOpen ? "▾" : "▸")
+                  text `Tick spacing · ${snap.spacingLabel}%`
               if spacingOpen
                 column gap=10
                   if form.spacing != `${snap.spacing}`
@@ -650,7 +654,9 @@ component DepthChart
           text "Part of your selected range is outside the displayed depth window. Its bounds remain unchanged; liquidity beyond the read coverage is unknown." font-size=13
       column font-size=13
         button press=toggleDepth aria-expanded=depthOpen class=Disclosure
-          text `${depthOpen ? "▾" : "▸"} Read depth values`
+          row gap=4 align-items="center"
+            text (depthOpen ? "▾" : "▸")
+            text `Read depth values`
         if depthOpen
           column tabindex=0 role="region" aria-label="Exact liquidity depth values" max-height=240 overflow="auto"
             table
@@ -772,7 +778,9 @@ component DepositPanel
           text "Deposit preview" role="heading" aria-level=3 font-size=16 font-weight=600 margin-bottom=12
           column font-size=13
             button press=toggleDetails aria-expanded=detailsOpen class=Disclosure
-              text `${detailsOpen ? "▾" : "▸"} Price and pool details`
+              row gap=4 align-items="center"
+                text (detailsOpen ? "▾" : "▸")
+                text `Price and pool details`
             if detailsOpen
               column gap=8 overflow-wrap="anywhere"
                 if quote.unavailable
@@ -795,7 +803,9 @@ component DepositPanel
                     text "This token is not needed for the selected range." class=Small
           column font-size=13 margin-bottom=20
             button press=toggleLimits aria-expanded=limitsOpen class=Disclosure
-              text `${limitsOpen ? "▾" : "▸"} Liquidity limits`
+              row gap=4 align-items="center"
+                text (limitsOpen ? "▾" : "▸")
+                text `Liquidity limits`
             if limitsOpen
               dl display="grid" gap=12 margin="16px 0"
                 view display="grid" grid-template-columns="minmax(0, 1fr) minmax(0, 2fr)" gap=16
