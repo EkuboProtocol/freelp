@@ -414,7 +414,7 @@ component PositionDetail
             aside class=Side
               column margin=0 width="100%" max-width=480
                 if v.artwork != ""
-                  image v.artwork alt=`Position NFT artwork for position #${v.id}` width=640 height=640 class=Artwork
+                  image v.artwork alt=`Position NFT artwork for position #${v.id}` class=Artwork
                 else
                   text "Artwork unavailable." role="status" color="#666" font-size=13
             column min-width=0 flex="1 1 480px"
@@ -636,7 +636,7 @@ style Layout
   display="flex" flex-wrap="wrap" gap=32 align-items="start"
 
 style Side
-  display="flex" justify-content="center" flex="1 1 300px" max-width=380 position="sticky" top=16
+  display="flex" justify-content="center" flex="1 1 300px" min-width=0 max-width=380 position="sticky" top=16
 
 style Artwork
   display="block" width="100%" height="auto" aspect-ratio=1 border="1px solid #ddd" border-radius=16 background-color="#fff"
