@@ -6,7 +6,7 @@ import { DEFAULT_SETTINGS, loadSettings } from "../config";
 import { configuredNetwork, loadNetworks, networkName } from "../networks";
 import { networkCurrencies, importCurrency, type Currency } from "../tokens";
 import { loadTokenCatalog } from "../tokenCatalog";
-import { ready } from "../page";
+import { page, ready } from "../page";
 import { save } from "../storage";
 import { errorMessage } from "../errors";
 import { verifyNetworkDeployment } from "../networkVerification";
@@ -22,7 +22,7 @@ import { calculateDepositQuote } from "../calculateDepositQuote";
 import { createDepositTransaction } from "../depositTransaction";
 import { minimumLiquidity } from "../positionReview";
 import { depositCalls, supportsCalls } from "../walletCalls";
-import { tokenBalances, tokenSnapshot } from "../balances";
+import { tokenSnapshot } from "../balances";
 import { readTokenMetadata } from "../readTokenMetadata";
 import { approval, type Token } from "../contracts";
 import { parseAmount } from "../amounts";
@@ -62,6 +62,12 @@ function snapped(form: CreateForm, settings: Settings): CreateForm {
   return snapCreateForm(form, networkCurrencies(settings)) as CreateForm;
 }
 
+// A write the page has stored before the reply lands: a source's
+// fire-and-forget page requests may not outlive its answer.
+async function persist() {
+  await page("wallet");
+}
+
 // --- The page frame: networks and the token list -------------------------
 
 export async function createSetup() {
@@ -78,8 +84,10 @@ export async function createSetup() {
 export async function selectNetwork(chain: number): Promise<Reply> {
   await ready();
   const next = loadNetworks().find((n) => n.chainId === chain);
-  if (next && next.chainId !== loadSettings().chainId)
+  if (next && next.chainId !== loadSettings().chainId) {
     save("freelp:settings", next);
+    await persist();
+  }
   return { ok: true, error: "" };
 }
 
@@ -108,6 +116,40 @@ export async function createTokens(chain: number) {
   };
 }
 
+// One batched balance and allowance read per network, account and
+// revision, shared by the picker, the deposit fields and the preview.
+const snapshots = new Map<string, ReturnType<typeof tokenSnapshot>>();
+function walletSnapshot(settings: Settings, account: Address, revision: number) {
+  const tokens = networkCurrencies(settings).map((t) => t.address);
+  const key = JSON.stringify([settings, account, tokens, revision]);
+  let cached = snapshots.get(key);
+  if (!cached) {
+    cached = tokenSnapshot(settings, account, tokens, revision, 0);
+    snapshots.set(key, cached);
+    cached.catch(() => snapshots.delete(key));
+  }
+  return cached;
+}
+
+function balanceOf(token: Currency, balance: bigint) {
+  const native = token.address === zeroAddress;
+  return {
+    state: "ready",
+    address: token.address as string,
+    symbol: token.symbol,
+    decimals: token.decimals,
+    raw: balance.toString(),
+    exact: formatUnits(balance, token.decimals),
+    display: displayAmount(balance, token.decimals),
+    native,
+    allowance: "0",
+    fractions: (native ? [25, 50] : [25, 50, 100]).map((percent) => ({
+      label: `${percent}%`,
+      amount: formatUnits((balance * BigInt(percent)) / 100n, token.decimals),
+    })),
+  };
+}
+
 // The picker's balances: one batched read on the selected network.
 export async function pickerBalances(chain: number, refresh: number) {
   const account = await connectedAccount();
@@ -117,13 +159,7 @@ export async function pickerBalances(chain: number, refresh: number) {
   await loadTokenCatalog(chain);
   const tokens = networkCurrencies(network);
   try {
-    const balances = await tokenBalances(
-      network,
-      account,
-      tokens.map((t) => t.address),
-      refresh,
-      0,
-    );
+    const { balances } = await walletSnapshot(network, account, refresh);
     const rows = tokens.map((token) => {
       const balance = balances.get(token.address.toLowerCase()) ?? 0n;
       return {
@@ -178,6 +214,7 @@ export async function importToken(
       decimals,
       source: "onchain",
     });
+    await persist();
     return { ok: true, error: "", address: token.address as string };
   } catch (error) {
     return { ok: false, error: errorMessage(error), address: "" };
@@ -607,13 +644,7 @@ async function depositTokens(settings: Settings, account: Address, a: string, b:
     if (!currency) throw new Error("Import this token's on-chain metadata before creating a position.");
     return currency;
   });
-  const { balances, allowances } = await tokenSnapshot(
-    settings,
-    account,
-    metadata.map((t) => t.address),
-    revision,
-    0,
-  );
+  const { balances, allowances } = await walletSnapshot(settings, account, revision);
   return tokens.map((currency) => ({
     address: currency.address,
     symbol: currency.symbol,
@@ -789,7 +820,18 @@ export async function createQuote(route: string, revision: number, retry: number
 export async function createBalance(chain: number, address: string, revision: number) {
   const account = await connectedAccount();
   if (!account) return NO_BALANCE;
-  return balanceView(configuredNetwork(chain), account, address, "", revision);
+  await ready();
+  const settings = configuredNetwork(chain);
+  await loadTokenCatalog(chain);
+  const currency = networkCurrencies(settings).find((t) => sameAddress(t.address, address));
+  // A catalog token's balance comes from the shared batched read.
+  if (!currency) return balanceView(settings, account, address, "", revision);
+  try {
+    const { balances } = await walletSnapshot(settings, account, revision);
+    return balanceOf(currency, balances.get(currency.address.toLowerCase()) ?? 0n);
+  } catch (error) {
+    return { ...NO_BALANCE, state: "failed", symbol: errorMessage(error) };
+  }
 }
 
 export async function createMax(route: string, revision: number, retry: number, side: number) {

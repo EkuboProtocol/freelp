@@ -78,9 +78,13 @@ export function importCurrency(chainId: number, token: Currency) {
     next.decimals > 255
   )
     throw new Error("Enter a symbol and decimals between 0 and 255.");
+  // Bundled entries come from the catalog on every load; storing them
+  // would send the whole catalog through the page bridge on each import.
   save(`freelp:tokens:${chainId}`, [
     ...currencies(chainId).filter(
-      (entry) => entry.address.toLowerCase() !== next.address.toLowerCase(),
+      (entry) =>
+        entry.source !== "bundled" &&
+        entry.address.toLowerCase() !== next.address.toLowerCase(),
     ),
     next,
   ]);

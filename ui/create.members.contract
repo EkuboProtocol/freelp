@@ -17,7 +17,7 @@ members App
   resource createGate = createGate(cf.chain, revision, gateRetry) when page == "create" as shape Gate else empty()
   resource createRegistry = createRegistry(cf.chain, cf.a, cf.b, revision, registryRetry, registryPages) when page == "create" as shape Registry else empty()
   resource createPool = createPool(route, poolRetry, zoom, tokenImports) when page == "create" and cf.a != "" and cf.b != "" as shape PoolView else empty()
-  resource createQuote = createQuote(route, revision, poolRetry) when page == "create" and cf.a != "" and cf.b != "" as shape Quote else empty()
+  resource createQuote = createQuote(route, revision * 1000 + balanceRetry, poolRetry) when page == "create" and cf.a != "" and cf.b != "" as shape Quote else empty()
   resource createBalance0 = createBalance(cf.chain, cf.a, revision, balanceRetry) when page == "create" and session.account != "" as shape Balance else empty()
   resource createBalance1 = createBalance(cf.chain, cf.b, revision, balanceRetry) when page == "create" and session.account != "" as shape Balance else empty()
   resource pickerBalances = pickerBalances(cf.chain, revision, pickerRefresh) when page == "create" and pickerSide >= 0 and session.account != "" as shape PickerBalances else empty()
@@ -192,7 +192,7 @@ members App
   // The deposit.
   action estimateMax(side: number)
     maxSide = side
-    send maxEstimated = createMax(route, revision, poolRetry, side)
+    send maxEstimated = createMax(route, revision * 1000 + balanceRetry, poolRetry, side)
   action afterMax
     match maxEstimated
       case some(r)
@@ -205,11 +205,11 @@ members App
       case none
         maxSide = maxSide
   action approve(side: number)
-    send approvalSent = createApprove(route, revision, poolRetry, side)
+    send approvalSent = createApprove(route, revision * 1000 + balanceRetry, poolRetry, side)
   action afterTx
     revision = revision + 1
   action create
-    send positionCreated = createPosition(route, revision, poolRetry, performanceNow() - poolStamp)
+    send positionCreated = createPosition(route, revision * 1000 + balanceRetry, poolRetry, performanceNow() - poolStamp)
   action afterCreate
     match positionCreated
       case some(r)

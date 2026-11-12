@@ -479,54 +479,53 @@ component PoolPicker
               text `Fee: ${snap.summary.fee}`
               text snap.summary.parameter
               text `Extension: ${snap.summary.extension}` font-family="monospace" overflow-wrap="anywhere"
-        if advanced
-          column id="advanced-pool" class=(narrow ? AdvancedNarrow : Advanced)
-            view display="grid" grid-template-columns=(narrow ? "1fr" : "repeat(2, minmax(0, 1fr))") gap="24px 16px" align-items="start"
+        column id="advanced-pool" display=(advanced ? "flex" : "none") class=(narrow ? AdvancedNarrow : Advanced)
+          view display="grid" grid-template-columns=(narrow ? "1fr" : "repeat(2, minmax(0, 1fr))") gap="24px 16px" align-items="start"
+            column gap=6
+              text (rawFee ? "Exact fee (uint64)" : "Pool fee (%)") font-size=14
+              Snapped(field=(rawFee ? "exactFee" : "fee"), label=(rawFee ? "Exact fee (uint64)" : "Pool fee (%)"), raw=(rawFee ? (form.exactFee != "" ? form.exactFee : snap.exact) : form.fee), shown=(rawFee ? snap.exact : snap.fee), editing=editing, draft=draft, edit=edit, done=done, change=setFeeInput(rawFee), mode=(rawFee ? "numeric" : "decimal"), disabled=false, test="pool-fee", big=false)
+              row gap=8 align-items="center" margin-top=12
+                input type="checkbox" checked=rawFee change=setRawFee aria-label="Enter exact amount"
+                text "Enter exact amount" font-size=14
+            column gap=6
+              text "Pool type" font-size=14
+              select value=form.kind change=setKind aria-label="Pool type" class=Field
+                option "Concentrated liquidity" value="concentrated"
+                option "Stableswap" value="stable"
+            column gap=6 grid-column="1 / -1"
+              text "Extension address" font-size=14
+              input value=form.extension input=setExtension aria-label="Extension address" autocomplete="off" class=Field
+            if form.kind == "stable"
               column gap=6
-                text (rawFee ? "Exact fee (uint64)" : "Pool fee (%)") font-size=14
-                Snapped(field=(rawFee ? "exactFee" : "fee"), label=(rawFee ? "Exact fee (uint64)" : "Pool fee (%)"), raw=(rawFee ? (form.exactFee != "" ? form.exactFee : snap.exact) : form.fee), shown=(rawFee ? snap.exact : snap.fee), editing=editing, draft=draft, edit=edit, done=done, change=setFeeInput(rawFee), mode=(rawFee ? "numeric" : "decimal"), disabled=false, test="pool-fee", big=false)
-                row gap=8 align-items="center" margin-top=12
-                  input type="checkbox" checked=rawFee change=setRawFee aria-label="Enter exact amount"
-                  text "Enter exact amount" font-size=14
+                text "Amplification exponent" font-size=14
+                Snapped(field="amplification", label="Amplification exponent", raw=form.amplification, shown=snap.amplification, editing=editing, draft=draft, edit=edit, done=done, change=setAmplification, mode="numeric", disabled=false, test="amplification", big=false)
               column gap=6
-                text "Pool type" font-size=14
-                select value=form.kind change=setKind aria-label="Pool type" class=Field
-                  option "Concentrated liquidity" value="concentrated"
-                  option "Stableswap" value="stable"
-              column gap=6 grid-column="1 / -1"
-                text "Extension address" font-size=14
-                input value=form.extension input=setExtension aria-label="Extension address" autocomplete="off" class=Field
-              if form.kind == "stable"
-                column gap=6
-                  text "Amplification exponent" font-size=14
-                  Snapped(field="amplification", label="Amplification exponent", raw=form.amplification, shown=snap.amplification, editing=editing, draft=draft, edit=edit, done=done, change=setAmplification, mode="numeric", disabled=false, test="amplification", big=false)
-                column gap=6
-                  text "Center tick (multiple of 16)" font-size=14
-                  Snapped(field="center", label="Center tick (multiple of 16)", raw=form.center, shown=snap.center, editing=editing, draft=draft, edit=edit, done=done, change=setCenter, mode="numeric", disabled=false, test="center", big=false)
-            if form.kind == "concentrated"
-              column margin-top=16 gap=10 testId="tick-spacing-control"
-                button press=toggleSpacing aria-expanded=spacingOpen class=Disclosure
-                  text `${spacingOpen ? "▾" : "▸"} Tick spacing · ${snap.spacingLabel}%`
-                if spacingOpen
-                  column gap=10
-                    if form.spacing != `${snap.spacing}`
-                      text "Adjusted to nearest valid value" testId="snapped-value" class=Small
-                    text "Spacing is the price change between adjacent usable ticks. It is independent of the pool fee."
-                    row gap=8 flex-wrap="wrap"
-                      for p in snap.spacingPresets key=`${p.n}`
-                        button press=applySpacing(p.n) aria-pressed=(p.n == snap.spacing ? "true" : "false") class=Plain
-                          text p.label
-                    text (rawSpacing ? "Tick spacing (ticks)" : "Tick spacing (%)") font-size=14
-                    input value=spacingValue input=setSpacingDraft inputmode=(rawSpacing ? "numeric" : "decimal") aria-label=(rawSpacing ? "Tick spacing (ticks)" : "Tick spacing (%)") class=Field
-                    row gap=8 align-items="center"
-                      input type="checkbox" checked=rawSpacing change=setRawSpacing aria-label="Enter exact ticks"
-                      text "Enter exact ticks" font-size=14
-                    if candidate.label != ""
-                      text candidate.label
-                    if candidate.error != ""
-                      text `Error: ${candidate.error}` role="alert"
-                    button press=applySpacing(candidate.spacing) disabled=(candidate.spacing == 0) class=Plain align-self="start"
-                      text "Apply tick spacing"
+                text "Center tick (multiple of 16)" font-size=14
+                Snapped(field="center", label="Center tick (multiple of 16)", raw=form.center, shown=snap.center, editing=editing, draft=draft, edit=edit, done=done, change=setCenter, mode="numeric", disabled=false, test="center", big=false)
+          if form.kind == "concentrated"
+            column margin-top=16 gap=10 testId="tick-spacing-control"
+              button press=toggleSpacing aria-expanded=spacingOpen class=Disclosure
+                text `${spacingOpen ? "▾" : "▸"} Tick spacing · ${snap.spacingLabel}%`
+              if spacingOpen
+                column gap=10
+                  if form.spacing != `${snap.spacing}`
+                    text "Adjusted to nearest valid value" testId="snapped-value" class=Small
+                  text "Spacing is the price change between adjacent usable ticks. It is independent of the pool fee."
+                  row gap=8 flex-wrap="wrap"
+                    for p in snap.spacingPresets key=`${p.n}`
+                      button press=applySpacing(p.n) aria-pressed=(p.n == snap.spacing ? "true" : "false") class=Plain
+                        text p.label
+                  text (rawSpacing ? "Tick spacing (ticks)" : "Tick spacing (%)") font-size=14
+                  input value=spacingValue input=setSpacingDraft inputmode=(rawSpacing ? "numeric" : "decimal") aria-label=(rawSpacing ? "Tick spacing (ticks)" : "Tick spacing (%)") class=Field
+                  row gap=8 align-items="center"
+                    input type="checkbox" checked=rawSpacing change=setRawSpacing aria-label="Enter exact ticks"
+                    text "Enter exact ticks" font-size=14
+                  if candidate.label != ""
+                    text candidate.label
+                  if candidate.error != ""
+                    text `Error: ${candidate.error}` role="alert"
+                  button press=applySpacing(candidate.spacing) disabled=(candidate.spacing == 0) class=Plain align-self="start"
+                    text "Apply tick spacing"
 
 component GateStatus
   props
