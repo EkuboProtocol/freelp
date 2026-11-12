@@ -1,0 +1,19 @@
+// Records app.ts answers with, shared by the pages.
+shape WalletOption
+  uuid: string
+  name: string
+
+shape Session
+  wallets: WalletOption[]
+  connected: string
+  account: string
+  short: string
+  identicon: number[]
+  notice: string
+  version: string
+  contracts: string
+  contractsUrl: string
+
+shape Reply
+  ok: bool
+  error: string

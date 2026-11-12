@@ -5,8 +5,8 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "bun run check-ts && vite build && bun run build:cli",
+    "dev": "bun scripts/exact.ts build && bun exact.mjs serve dist",
+    "build": "bun scripts/exact.ts build && bun run check-ts && bun run build:cli",
     "check-ts": "bun node_modules/@typescript/native/bin/tsc -b",
     "lint": "bun scripts/lint.ts",
     "test": "bun test tests/unit",
@@ -20,7 +20,8 @@
     "test:lighthouse": "bun scripts/lighthouse.ts",
     "lint:prune": "bun scripts/lint.ts --prune",
     "format": "oxfmt",
-    "format:check": "oxfmt --check"
+    "format:check": "oxfmt --check",
+    "exact:setup": "bun scripts/exact.ts setup"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
@@ -28,10 +29,7 @@
     "@ipld/car": "^5.4.7",
     "@playwright/test": "1.62.1",
     "@types/bun": "1.4.0",
-    "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.3",
     "@typescript/native": "npm:typescript@7.0.2",
-    "@vitejs/plugin-react": "6.1.1",
     "blockstore-core": "^7.0.1",
     "chrome-launcher": "1.2.1",
     "ipfs-unixfs-importer": "^17.1.1",
@@ -39,11 +37,10 @@
     "oxfmt": "0.73.0",
     "oxlint": "1.88.0",
     "oxlint-tsgolint": "7.0.2004",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
     "typescript": "6.0.3",
     "viem": "2.55.19",
-    "vite": "8.2.2"
+    "vite": "8.2.2",
+    "isows": "file:./shims/isows"
   },
   "bin": {
     "freelp": "cli-dist/main.js"
@@ -62,8 +59,6 @@
     "@ipld/car",
     "blockstore-core",
     "ipfs-unixfs-importer",
-    "react",
-    "react-dom",
     "viem",
     "@ekubo/sdk"
   ],
@@ -72,5 +67,12 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "exact": {
+    "repository": "https://github.com/expo/exact",
+    "commit": "5d7b0d7bc243e5e72f7d48364a399368908cce2b"
+  },
+  "overrides": {
+    "isows": "file:./shims/isows"
   }
 }

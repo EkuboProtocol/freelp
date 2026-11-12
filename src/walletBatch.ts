@@ -1,6 +1,6 @@
 import { type Address } from "viem";
 import { rpc } from "./rpc";
-import { walletClient } from "./walletCalls";
+import { sendCalls, waitForCallsStatus, type CallsStatus } from "./walletCalls";
 import {
   assertWallet,
   executeTransaction,
@@ -37,11 +37,11 @@ export async function executeBatch(
     return { ...call, to: call.to };
   });
   await assertWallet(provider, account, settings.chainId);
-  const wallet = walletClient(provider, account, settings);
-  return submitBatch(wallet, settings, batch, observer);
+  return submitBatch(provider, account, settings, batch, observer);
 }
 async function submitBatch(
-  wallet: ReturnType<typeof walletClient>,
+  provider: Provider,
+  account: Address,
   settings: Settings,
   batch: { to: Address; data: `0x${string}`; value?: bigint }[],
   observer?: TransactionObserver,
@@ -49,7 +49,7 @@ async function submitBatch(
   observer?.({ state: "awaiting wallet" });
   let id: string;
   try {
-    ({ id } = await wallet.sendCalls({ calls: batch }));
+    ({ id } = await sendCalls(provider, account, settings, batch));
   } catch (error) {
     const state = walletRejected(error) ? "rejected" : "unknown";
     observer?.({ state });
@@ -62,12 +62,9 @@ async function submitBatch(
   }
   observer?.({ state: "submitted", batchId: id });
   // Never resubmit a pending or partially completed batch as separate calls.
-  const result = await waitForBatch(wallet, id, observer);
+  const result = await waitForBatch(provider, id, observer);
   return finalizeBatch(settings, result, id, observer);
 }
-type CallsStatus = Awaited<
-  ReturnType<ReturnType<typeof walletClient>["waitForCallsStatus"]>
->;
 async function finalizeBatch(
   settings: Settings,
   result: CallsStatus,
@@ -90,12 +87,12 @@ async function finalizeBatch(
   return outcome.receipt;
 }
 async function waitForBatch(
-  wallet: ReturnType<typeof walletClient>,
+  provider: Provider,
   id: string,
   observer?: TransactionObserver,
 ) {
   try {
-    return await wallet.waitForCallsStatus({ id, throwOnFailure: false });
+    return await waitForCallsStatus(provider, id);
   } catch (error) {
     observer?.({ state: "unknown", batchId: id });
     throw new Error(

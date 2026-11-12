@@ -1,11 +1,11 @@
-import type { GetCallsStatusReturnType } from "viem";
+import type { CallsStatus } from "./walletCalls";
 import { rpc } from "./rpc";
 import type { Settings } from "./types";
 import { isTransactionHash, type TransactionState } from "./transactionStatus";
 
 export async function batchOutcome(
   settings: Settings,
-  result: GetCallsStatusReturnType,
+  result: CallsStatus,
 ) {
   const client = rpc(settings);
   if ((await client.getChainId()) !== settings.chainId)

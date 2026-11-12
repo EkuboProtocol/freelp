@@ -1,4 +1,3 @@
-import { useEffect, useSyncExternalStore } from "react";
 import { isAddress, type Address } from "viem";
 
 export type BundledToken = {
@@ -10,12 +9,10 @@ export type BundledToken = {
 
 const catalog = new Map<number, BundledToken[]>();
 const pending = new Map<number, Promise<void>>();
-const listeners = new Set<() => void>();
 let version = 0;
-
+export const catalogVersion = () => version;
 function notify() {
   version++;
-  for (const listener of listeners) listener();
 }
 
 export function bundledTokens(chainId: number) {
@@ -46,20 +43,23 @@ function validateTokens(input: unknown): BundledToken[] {
   );
 }
 
-export function tokenCatalogUrl(chainId: number) {
-  return new URL(`tokens/${chainId}.json`, document.baseURI);
+export type CatalogFetch = (
+  path: string,
+) => Promise<{ status: number; type: string; text: string }>;
+let fetchAsset: CatalogFetch | undefined;
+// The app's own files are the page's, fetched relative to the document.
+export function setCatalogFetch(next: CatalogFetch) {
+  fetchAsset = next;
 }
 
 export function loadTokenCatalog(chainId: number): Promise<void> {
-  if (catalog.has(chainId) || typeof document === "undefined")
-    return Promise.resolve();
+  if (catalog.has(chainId) || !fetchAsset) return Promise.resolve();
   const existing = pending.get(chainId);
   if (existing) return existing;
-  const request = fetch(tokenCatalogUrl(chainId), { redirect: "error" })
-    .then(async (response) => {
-      const type = response.headers.get("content-type") ?? "";
-      if (!response.ok || !type.includes("json")) return [];
-      return validateTokens(await response.json());
+  const request = fetchAsset(`tokens/${chainId}.json`)
+    .then((response) => {
+      if (response.status !== 200 || !response.type.includes("json")) return [];
+      return validateTokens(JSON.parse(response.text));
     })
     .catch((error: unknown): BundledToken[] => {
       console.warn(`Token catalog for chain ${chainId} unavailable.`, error);
@@ -72,23 +72,4 @@ export function loadTokenCatalog(chainId: number): Promise<void> {
     .finally(() => pending.delete(chainId));
   pending.set(chainId, request);
   return request;
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-export function useTokenCatalog(chainId: number) {
-  useSyncExternalStore(
-    subscribe,
-    () => version,
-    () => version,
-  );
-  useEffect(() => {
-    void loadTokenCatalog(chainId);
-  }, [chainId]);
-  return catalog.has(chainId);
 }

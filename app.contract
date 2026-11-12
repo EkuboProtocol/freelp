@@ -1,0 +1,52 @@
+// FreeLP: the pages. app.ts answers every resource and mutation; the page
+// module (modules/web/index.js) holds the wallets and browser storage.
+// Pages live after the hash (#/positions), so the site works from any path:
+// a content address, a gateway's /ipfs/<cid>/ or the local launcher.
+use Session, Reply from "./ui/shapes.contract"
+use Shell, Footer from "./ui/shell.contract"
+use AboutPage, TermsPage from "./ui/static.contract"
+use NetworksPage, Catalog from "./ui/networks.contract"
+
+routes nav
+  home "/"
+  notfound
+
+component App
+  members "./ui/session.members.contract"
+  members "./ui/networks.members.contract"
+  derive route = fragment(top(nav))
+  derive page = pageOf(route)
+  view
+    main testId="app" class=Page
+      head title="FreeLP" description="Manage EVM liquidity positions with your wallet and RPC endpoints. No application fees, indexers, or hosted metadata."
+      Shell(page=page, session=session, busy=busy, connect=connectWallet, disconnect=disconnectWallet, copy=copyAccount, copied=copied)
+      if status != "" or session.notice != ""
+        row aria-label="Notification" class=Toast
+          text (status != "" ? status : session.notice) role="status" tabindex=0 class=Status flex=1
+          button press=dismissStatus aria-label="Dismiss notification"
+            text "×"
+      column id="main-content" tabindex=-1
+        if page == "networks"
+          NetworksPage(catalog=catalog, search=networkSearch, setSearch=setNetworkSearch, busy=busy, checking=checking, toggle=toggleNetwork, restore=restoreNetworks, edit=openRpc, editing=editing, rpcDraft=rpcDraft, setRpcDraft=setRpcDraft, rpcError=rpcError, rpcBusy=pending(rpcSaved) or pending(rpcReset), saveRpc=saveRpc, defaultRpc=useDefaultRpc, closeRpc=closeRpc, blocked=blocked, dismissBlocked=dismissBlocked)
+        if page == "terms"
+          TermsPage()
+        if page == "build"
+          AboutPage(version=session.version, contracts=session.contracts, contractsUrl=session.contractsUrl)
+        if page == "positions"
+          column
+            text "Your FreeLP positions" role="heading" aria-level=2 class=PageTitle
+      Footer(version=session.version)
+
+fn pageOf(route: string): string = route == "/networks" or route == "/settings" ? "networks" : route == "/terms" ? "terms" : route == "/build" ? "build" : route.startsWith("/create") ? "create" : route.startsWith("/deploy") ? "deploy" : "positions"
+
+style Page
+  max-width=1180 margin="0 auto" padding="28px 36px" font-family="system-ui, sans-serif" line-height=1.5 color="#171717" background-color="#f6f6f6" min-height="100vh" box-sizing="border-box"
+
+style Toast
+  position="sticky" bottom=24 margin-left="auto" max-width=420 gap=8 align-items="start" background-color="#fff" border="1px solid #111" padding=4 z-index=10
+
+style Status
+  border-left="3px solid #111" padding=12 overflow-wrap="anywhere" white-space="pre-wrap"
+
+style PageTitle
+  font-size=27 font-weight=700 letter-spacing=-0.7 margin="0 0 20px"

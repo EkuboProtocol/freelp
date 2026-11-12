@@ -1,0 +1,1 @@
+{ "name": "isows", "version": "1.0.7", "type": "module", "sideEffects": false, "exports": { ".": { "types": "./index.d.ts", "default": "./index.js" } } }

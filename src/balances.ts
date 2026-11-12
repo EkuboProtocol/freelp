@@ -6,7 +6,6 @@ import type { Settings } from "./types";
 const cache = new Map<
   string,
   {
-    expires: number;
     value: Promise<{
       balances: Map<string, bigint>;
       allowances: Map<string, bigint>;
@@ -31,13 +30,13 @@ export function tokenSnapshot(
     refresh,
   ]);
   const cached = cache.get(key);
-  if (cached && cached.expires > Date.now()) return cached.value;
+  // Concurrent reads of the same balances share one request.
+  if (cached) return cached.value;
   const value = readBalances(settings, owner, tokens);
-  cache.set(key, { expires: Date.now() + 30000, value });
-  if (cache.size > 64) cache.delete(cache.keys().next().value!);
-  void value.catch(() => {
+  cache.set(key, { value });
+  void value.finally(() => {
     if (cache.get(key)?.value === value) cache.delete(key);
-  });
+  }).catch(() => {});
   return value;
 }
 async function readBalances(

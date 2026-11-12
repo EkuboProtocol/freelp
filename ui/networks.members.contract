@@ -1,0 +1,87 @@
+// Networks page state: the search, the RPC dialog and the enable check.
+use Catalog, Blocked from "./networks.contract"
+use Reply from "./shapes.contract"
+
+shape EnableReply
+  ok: bool
+  error: string
+  chainId: number
+  name: string
+  state: string
+
+members App
+  state networkSearch = ""
+  state checking = 0
+  state editing = 0
+  state rpcDraft = ""
+  state rpcError = ""
+  state blocked = Blocked(chainId=0, name="", state="")
+  resource catalog = networkCatalog(revision) as shape Catalog else empty()
+  mutation networkEnabled as shape EnableReply then afterEnable
+  mutation networkDisabled as shape Reply then afterNetworkChange
+  mutation networksRestored as shape Reply then afterNetworkChange
+  mutation rpcSaved as shape Reply then afterRpc
+  mutation rpcReset as shape Reply then afterRpcReset
+  action setNetworkSearch(v: string)
+    networkSearch = v
+  action toggleNetwork(id: number, on: bool)
+    if on
+      checking = id
+      send networkEnabled = enableNetwork(id)
+    else
+      send networkDisabled = disableNetwork(id)
+  action afterEnable
+    checking = 0
+    revision = revision + 1
+    match networkEnabled
+      case some(r)
+        status = r.error
+        blocked = r.ok ? Blocked(chainId=0, name="", state="") : Blocked(chainId=r.chainId, name=r.name, state=r.state)
+        if not r.ok and r.error == ""
+          showModal("enable-blocked")
+      case none
+        status = ""
+  action afterNetworkChange
+    revision = revision + 1
+  action restoreNetworks
+    send networksRestored = restoreNetworks()
+  action openRpc(id: number)
+    editing = id
+    rpcError = ""
+    showModal("network-dialog")
+    rpcDraft = match first(catalog.rows.filter(r => r.id == id)) { case some(r) => r.rpcUrl, case none => "" }
+  action setRpcDraft(v: string)
+    rpcDraft = v
+  action saveRpc
+    rpcError = ""
+    send rpcSaved = saveRpc(editing, rpcDraft)
+  action useDefaultRpc
+    rpcError = ""
+    send rpcReset = saveRpc(editing, "")
+  action afterRpc
+    match rpcSaved
+      case some(r)
+        rpcError = r.error
+        if r.ok
+          editing = 0
+          close("network-dialog")
+          revision = revision + 1
+      case none
+        rpcError = ""
+  action afterRpcReset
+    match rpcReset
+      case some(r)
+        rpcError = r.error
+        if r.ok
+          rpcDraft = ""
+          editing = 0
+          close("network-dialog")
+          revision = revision + 1
+      case none
+        rpcError = ""
+  action closeRpc
+    editing = 0
+    close("network-dialog")
+  action dismissBlocked
+    blocked = Blocked(chainId=0, name="", state="")
+    close("enable-blocked")
