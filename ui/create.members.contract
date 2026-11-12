@@ -133,9 +133,10 @@ members App
       spacingTicks = v
     else
       spacingDraft = v
+  // Applying closes the control, as the React control remounted closed.
   action applySpacing(n: number)
-    spacingDraft = createSnap.spacingPercent
-    spacingTicks = `${n}`
+    spacingOpen = false
+    rawSpacing = false
     nav = replace(nav, path("home") + "#" + formHash(CForm(cf, spacing=`${n}`)))
   // Registered pools.
   action pickPool(exactFee: string, fee: string, extension: string, kind: string, spacing: number, center: string, amplification: string)
@@ -220,7 +221,7 @@ members App
         else
           revision = revision + 1
           if r.ok
-            nav = replace(nav, path("home") + "#/positions")
+            nav = push(nav, path("home") + "#/positions")
           else
             status = r.error
       case none

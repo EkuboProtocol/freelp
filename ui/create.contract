@@ -1,6 +1,6 @@
 // Create position: shapes app.ts answers, the form in the URL and the
 // screen's parts. The root holds the state (create.members.contract).
-use Session from "./shapes.contract"
+use Session, TextLink from "./shapes.contract"
 use Balance, TokenBalance from "./tokens.contract"
 
 // The form, as the URL after `#/create?` holds it.
@@ -304,7 +304,7 @@ component CreateHead
   view
     column
       row margin-bottom=20
-        link href="#/positions" class=Back
+        link href="#/positions" class=TextLink font-size=14 color="#595959"
           text "All positions"
       row class=Heading
         text "Create position" role="heading" aria-level=2 class=Title
@@ -551,7 +551,7 @@ component GateStatus
               link href=`#/deploy/${chain}` class=PrimaryLink
                 text "Go to Deploy"
             else
-              link href="#/networks" color="inherit"
+              link href="#/networks" class=TextLink
                 text "Review network RPC"
             button press=retry class=Plain
               text "Check again"
@@ -841,9 +841,6 @@ component WalletDialog
           text "Open this app in your wallet’s browser or enable a browser wallet to connect."
 
 // --- Styles ----------------------------------------------------------------
-
-style Back
-  font-size=14 color="#595959" text-decoration="underline"
 
 style Heading
   display="flex" align-items="end" justify-content="space-between" gap=24 margin-bottom=32 flex-wrap="wrap"

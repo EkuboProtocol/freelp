@@ -773,9 +773,8 @@ async function checkPoolChart(
     page.getByRole("img", { name: "Pool token amounts by price" }),
   ).toBeVisible({ timeout: 30000 });
   const heights = await page
-    .locator(
-      '.liquidity-chart g rect[fill="#111"], .liquidity-chart g rect[fill="#999"]',
-    )
+    .getByTestId("liquidity-chart")
+    .locator('rect[fill="#111"], rect[fill="#999"]')
     .evaluateAll((nodes) =>
       nodes.map((node) => Number(node.getAttribute("height"))),
     );
@@ -798,7 +797,7 @@ async function checkTokenImports(
     await dialog.getByLabel("Search tokens or paste an address").fill(address);
     if (address === zeroAddress) {
       await dialog
-        .locator(".token-option")
+        .getByTestId("token-option")
         .filter({ hasText: chainDefinition(31337).name })
         .first()
         .click();
@@ -851,15 +850,16 @@ async function checkCustomSpacing(
 ) {
   if (missingDecimals || native) return;
   await page.getByRole("switch", { name: "Advanced", exact: true }).click();
-  const control = page.locator(".tick-spacing-control");
-  await control.locator("summary").click();
+  const control = page.getByTestId("tick-spacing-control");
+  const summary = control.getByRole("button", { name: /^. Tick spacing ·/ });
+  await summary.click();
   await control.getByLabel("Enter exact ticks").check();
   await control.getByLabel("Tick spacing (ticks)").fill("777");
   await control.getByRole("button", { name: "Apply tick spacing" }).click();
-  await expect(control.locator("summary")).toContainText("0.0777%");
+  await expect(summary).toContainText("0.0777%");
   await expect(page.getByLabel("Initial price")).toBeVisible();
-  await expect(page.locator(".pool-options")).toBeHidden();
-  await control.locator("summary").click();
+  await expect(page.getByTestId("pool-options")).toBeHidden();
+  await summary.click();
   await control.getByRole("button", { name: "0.6%", exact: true }).click();
   await page.getByRole("switch", { name: "Advanced", exact: true }).click();
   await expect(
