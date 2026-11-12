@@ -1,6 +1,6 @@
 // Positions page state: the portfolio across enabled networks, one
 // position's detail, and its add, withdraw and collect dialog.
-use PositionNetwork, ChainPortfolio, PositionView, WithdrawView, DepositView, positionKind, routeSegment from "./positions.contract"
+use PositionClock, PositionNetwork, ChainPortfolio, PositionView, WithdrawView, DepositView, positionKind, routeSegment from "./positions.contract"
 use Balance, MaxReply from "./tokens.contract"
 use TxReply from "./shapes.contract"
 
@@ -23,6 +23,7 @@ members App
   state depositValue = ""
   state maxIndex = 0
   state maxMessage = ""
+  state updatedAt = ""
   derive positionPage = page == "positions" ? positionKind(route) : ""
   derive routeChain = match parseNumber(routeSegment(route, 2)) { case some(n) => n, case none => 0 }
   derive routeId = routeSegment(route, 3)
@@ -32,6 +33,9 @@ members App
   resource withdrawal = withdrawReview(routeChain, routeId, revision, detailTick, portion, recipient) when dialogMode == "withdraw" as shape WithdrawView else empty() transient
   resource deposit = depositView(routeChain, routeId, revision, detailTick, depositSide, depositValue, slippage) when dialogMode == "add" as shape DepositView else empty() transient
   resource depositBalances = positionBalance(routeChain, t.address, revision, balanceTick) for t in (dialogMode == "add" ? positionView.tokens : []) key=`${t.address}:${revision}:${balanceTick}` as shape Balance
+  resource positionClock = exactTime() as shape PositionClock transient
+  task positionStamp when detailReady and not pending(positionView) key=`${positionView.chainId}:${positionView.id}:${revision}:${detailTick}:${session.account}`
+    after(1, stampUpdated)
   mutation withdrawSent as shape TxReply then afterWithdraw
   mutation collectSent as shape TxReply then afterPositionTx
   mutation addSent as shape TxReply then afterAdd
@@ -43,6 +47,8 @@ members App
   derive activePage = min(portfolioPage, pageCount - 1)
   derive checkingChains = positionChains.filter(c => not c.loaded).length + (pending(positionNets) and positionNets.length == 0 ? 1 : 0)
   derive detailReady = positionView.state != "" and positionView.chainId == routeChain and positionView.id == routeId
+  action stampUpdated
+    updatedAt = formatTime(positionClock.epochAtZero + performanceNow(), positionClock.utcOffset, "short")
   action setChainFilter(v: string)
     chainFilter = v
     portfolioPage = 0

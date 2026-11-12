@@ -35,18 +35,31 @@ import { connectedAccount, execute, type TxReply } from "./tx";
 // and its add, withdraw and collect transactions. Reads are memoised by
 // their arguments so a re-render never repeats an RPC request.
 
-// Settled answers only: a request belongs to the answer that started it, so
-// another answer never awaits one in flight.
+// A request belongs to the answer that started it: its timers stop when
+// that answer is let go. Another answer reuses it in flight, but starts its
+// own when the shared one fails, and only good answers are kept.
 const memo = new Map<string, unknown>();
+const inflight = new Map<string, Promise<unknown>>();
 async function once<T>(
   key: string,
   load: () => Promise<T>,
   keep: (value: T) => boolean = () => true,
 ): Promise<T> {
   if (memo.has(key)) return memo.get(key) as T;
-  const value = await load();
-  if (keep(value)) memo.set(key, value);
-  return value;
+  const shared = inflight.get(key) as Promise<T> | undefined;
+  if (shared) {
+    const value = await shared.catch(() => undefined);
+    if (value !== undefined && keep(value)) return value;
+  }
+  const request = load();
+  inflight.set(key, request);
+  try {
+    const value = await request;
+    if (keep(value)) memo.set(key, value);
+    return value;
+  } finally {
+    if (inflight.get(key) === request) inflight.delete(key);
+  }
 }
 
 function enabledNetwork(chainId: number) {

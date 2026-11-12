@@ -4,6 +4,10 @@
 use WalletOption from "./shapes.contract"
 use Balance, TokenBalance from "./tokens.contract"
 
+shape PositionClock
+  epochAtZero: number
+  utcOffset: number
+
 shape PositionNetwork
   id: number
   name: string
@@ -267,9 +271,9 @@ component RouteState
         if connect
           WalletConnect(wallets=wallets, connect=connectAction, pick=pick, dismiss=dismiss)
         row gap=8
-          link href="#/positions"
+          link href="#/positions" class=TextLink
             text "All positions"
-          link href="#/networks"
+          link href="#/networks" class=TextLink
             text "Networks"
 
 component PortfolioList
@@ -302,7 +306,7 @@ component PortfolioList
           text "Your FreeLP positions" role="heading" aria-level=2 class=H2
           column class=Empty
             WalletConnect(wallets=wallets, connect=connect, pick=pick, dismiss=dismiss)
-            link href="#/create"
+            link href="#/create" class=TextLink
               text "Create position"
         else
           row justify-content="space-between" align-items="center" gap=12 flex-wrap="wrap"
@@ -376,6 +380,7 @@ component PositionDetail
     account: string
     busy: bool
     loading: bool
+    updated: string
     poolOpen: bool
     togglePool: action
     refresh: action
@@ -386,12 +391,12 @@ component PositionDetail
   view
     section
       column
-        link href="#/positions" align-self="start"
+        link href="#/positions" align-self="start" class=TextLink
           text "All positions"
         column aria-label="Manage position" aria-busy=loading margin="20px 0" min-width=0
           row class=DetailToolbar
             if v.fromPortfolio
-              text (loading ? "Updating…" : "Updated") role="status" aria-live="polite"
+              text (loading ? "Updating…" : `Updated ${updated}`) role="status" aria-live="polite"
               button press=refresh disabled=(busy or loading) class=Small
                 text "Refresh position"
             else
@@ -405,14 +410,14 @@ component PositionDetail
             text "This position is closed. It remains visible so you can review its final on-chain state; a fully burned NFT may not be discoverable here." max-width="70ch" margin="0 0 16px"
           if not v.owned
             text (account != "" ? "This position is owned by another wallet. Connect that wallet to add, withdraw, or collect." : "Connect the owning wallet to add, withdraw, or collect. Viewing needs no wallet.") role="status" max-width="70ch" margin="0 0 16px"
-          view class=Layout
+          row class=Layout
             aside class=Side
               column margin=0 width="100%" max-width=480
                 if v.artwork != ""
                   image v.artwork alt=`Position NFT artwork for position #${v.id}` width=640 height=640 class=Artwork
                 else
                   text "Artwork unavailable." role="status" color="#666" font-size=13
-            column min-width=0
+            column min-width=0 flex="1 1 480px"
               view class=Heading
                 column min-width=0
                   text v.title role="heading" aria-level=2 tabindex=-1 font-size=28 font-weight=700 margin=0
@@ -591,6 +596,9 @@ style CardBox
 style Grid
   display="grid" grid-template-columns="repeat(auto-fit, minmax(min(100%, 360px), 1fr))" gap=16 margin-top=16
 
+style TextLink
+  color="inherit" text-decoration="underline"
+
 style PrimaryLink
   background-color="#111" color="#fff" padding="10px 18px" border-radius=10 text-decoration="none"
 
@@ -628,10 +636,10 @@ style Dialog
   width="min(540px, calc(100vw - 32px))" max-height="calc(100dvh - 32px)" overflow-y="auto" padding=24 border="1px solid #ccc" border-radius=16 background-color="#fff" box-sizing="border-box"
 
 style Layout
-  display="grid" grid-template-columns="repeat(auto-fit, minmax(min(100%, 340px), auto))" gap=32 align-items="start"
+  display="flex" flex-wrap="wrap" gap=32 align-items="start"
 
 style Side
-  display="flex" justify-content="center"
+  display="flex" justify-content="center" flex="1 1 300px" max-width=380 position="sticky" top=16
 
 style Artwork
   display="block" width="100%" height="auto" aspect-ratio=1 border="1px solid #ddd" border-radius=16 background-color="#fff"
@@ -692,6 +700,7 @@ component PositionsPage
     v: PositionView
     ready: bool
     loading: bool
+    updated: string
     refreshPosition: action
     retryPosition: action
     mode: string
@@ -742,7 +751,7 @@ component PositionsPage
         else if v.state == "error"
           RouteState(heading="Position unavailable", message=v.message, retry=true, retryAction=retryPosition, connect=false, wallets=wallets, connectAction=connect, pick=pick, dismiss=dismiss)
         else
-          PositionDetail(v=v, account=account, busy=busy, loading=loading, poolOpen=openPools.includes("detail"), togglePool=togglePool("detail"), refresh=refreshPosition, retry=retryPosition, openAdd=openAdd, openWithdraw=openWithdraw, collect=collect)
+          PositionDetail(v=v, account=account, busy=busy, loading=loading, updated=updated, poolOpen=openPools.includes("detail"), togglePool=togglePool("detail"), refresh=refreshPosition, retry=retryPosition, openAdd=openAdd, openWithdraw=openWithdraw, collect=collect)
       dialog id="position-dialog" aria-labelledby="position-dialog-title" cancel=dialogCancelled class=Dialog
         column
           row justify-content="space-between" align-items="center" margin-bottom=24
