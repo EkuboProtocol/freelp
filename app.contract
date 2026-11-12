@@ -7,6 +7,7 @@ use Shell, Footer from "./ui/shell.contract"
 use AboutPage, TermsPage from "./ui/static.contract"
 use NetworksPage, Catalog from "./ui/networks.contract"
 use DeployPage from "./ui/deploy.contract"
+use PositionsPage from "./ui/positions.contract"
 
 routes nav
   home "/"
@@ -16,6 +17,7 @@ component App
   members "./ui/session.members.contract"
   members "./ui/networks.members.contract"
   members "./ui/deploy.members.contract"
+  members "./ui/positions.members.contract"
   derive route = fragment(top(nav))
   derive page = pageOf(route)
   view
@@ -37,8 +39,7 @@ component App
         if page == "build"
           AboutPage(version=session.version, contracts=session.contracts, contractsUrl=session.contractsUrl, copy=copyCommand, copied=commandCopied)
         if page == "positions"
-          column
-            text "Your FreeLP positions" role="heading" aria-level=2 class=PageTitle
+          PositionsPage(kind=positionPage, account=session.account, wallets=session.wallets, busy=busy, txStatus=tx.status, networks=positionNets, chains=positionChains, allCount=allCards.length, cards=shownCards, pageIndex=activePage, pageCount=pageCount, checking=checkingChains, filter=chainFilter, setFilter=setChainFilter, previous=previousPage, next=nextPage, refresh=refreshPositions, retry=retryChain, openPools=openPools, togglePool=togglePool, connect=connectEmpty, pick=pickWallet, dismiss=closeWalletDialog, v=positionView, ready=detailReady, loading=pending(positionView), updated=updatedAt, refreshPosition=refreshPosition, retryPosition=retryPosition, mode=dialogMode, openAdd=openAdd, openWithdraw=openWithdraw, closeDialog=closePositionDialog, dialogCancelled=dialogCancelled, collect=collectNow, review=withdrawal, portionText=portionText, portion=portion, recipient=recipient, setPortionText=setPortionText, setPortionRange=setPortionRange, presetPortion=presetPortion, setRecipient=setRecipient, withdraw=withdrawNow, d=deposit, depositLoading=pending(deposit), balances=depositBalances, side=depositSide, value=depositValue, setAmount=setDeposit, retryBalance=retryBalances, max=maxFor, maxMessage=maxMessage, maxPending=pending(maxSent), retryReads=retryTokenReads, approve=approveNow, add=addNow, advancedOpen=advancedOpen, toggleAdvanced=toggleAdvanced, slippageText=slippageText, setSlippage=setSlippageText)
       Footer(version=session.version)
 
 fn pageOf(route: string): string = route == "/networks" or route == "/settings" ? "networks" : route == "/terms" ? "terms" : route == "/build" ? "build" : route.startsWith("/create") ? "create" : route.startsWith("/deploy") ? "deploy" : "positions"

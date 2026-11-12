@@ -23,9 +23,7 @@ for (const missing of [
     ).toHaveCount(0);
     await page.getByRole("link", { name: "Go to Deploy" }).click();
     await expect(page).toHaveURL(/#\/deploy\/8453$/);
-    await expect(page.locator("p", { hasText: "Network:" })).toContainText(
-      "Base",
-    );
+    await expect(page.getByTestId("deploy-network")).toContainText("Base");
   });
 }
 

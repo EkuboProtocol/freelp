@@ -35,7 +35,7 @@ import {
 const rpcUrl = "http://127.0.0.1:18545";
 function transactionStatus(page: Page) {
   return page.locator(
-    "dialog[open] .status[role=status], body:not(:has(dialog[open])) .notification-toast .status[role=status]",
+    "dialog[open] [data-testid=dialog-status], body:not(:has(dialog[open])) [data-testid=notification-toast] [role=status]",
   );
 }
 // Anvil's documented public development key. Never use on a funded chain.
@@ -194,7 +194,7 @@ for (const { missingDecimals, native, batch } of [
         request.method() === "GET" &&
         parsed.origin === "http://127.0.0.1:14173" &&
         (parsed.pathname === "/" ||
-          /^\/(assets\/[^/]+\.(js|css)|tokens\/\d+\.json|favicon\.svg)$/.test(
+          /^\/((modules\/)?[\w.-]+\.(js|css)|tokens\/\d+\.json|favicon\.svg)$/.test(
             parsed.pathname,
           ))
       )
@@ -543,12 +543,12 @@ for (const { missingDecimals, native, batch } of [
     await page
       .getByRole("link", { name: "Manage position #1", exact: true })
       .click();
-    await expect(page.locator(".portfolio-positions")).not.toBeVisible();
+    await expect(page.getByTestId("portfolio-positions")).not.toBeVisible();
     await expect(
       page.getByRole("link", { name: "All positions", exact: true }),
     ).toBeVisible();
     await page.goBack();
-    await expect(page.locator(".portfolio-positions")).toBeVisible();
+    await expect(page.getByTestId("portfolio-positions")).toBeVisible();
     await page.goForward();
     await capturePosition(page);
     await expect(
@@ -723,7 +723,7 @@ async function openDeployPage(page: Page, batch: boolean) {
   await page.evaluate(() => {
     location.hash = "#/deploy/31337";
   });
-  await expect(page.locator("p", { hasText: "Network:" })).toContainText(
+  await expect(page.getByTestId("deploy-network")).toContainText(
     batch ? "Anvil (31337) · not enabled" : "Anvil (31337) · enabled",
   );
 }
@@ -743,7 +743,7 @@ async function enableAnvil(page: Page, batch: boolean) {
   await foundry.click();
   await expect(foundry).toBeChecked();
   await expect(
-    page.locator(".network-row", { hasText: "Anvil" }),
+    page.getByTestId("network-row").filter({ hasText: "Anvil" }),
   ).toContainText("Ready");
 }
 
@@ -954,7 +954,7 @@ async function capturePosition(page: Page) {
   await expect(artwork).toBeVisible();
   await expect(artwork).toHaveJSProperty("naturalWidth", 640);
   await expect(page.getByText("Exact amount")).toHaveCount(0);
-  await expect(page.locator(".current-price strong").last()).toBeVisible();
+  await expect(page.getByTestId("current-price").last()).toBeVisible();
   await expect(
     page.getByRole("button", { name: /Burn|Transfer NFT/ }),
   ).toHaveCount(0);

@@ -6,6 +6,7 @@ import { attach } from "./src/page";
 import * as shell from "./src/sources/shell";
 import * as tx from "./src/sources/tx";
 import * as deploy from "./src/sources/deploy";
+import * as positions from "./src/sources/positions";
 
 // Reads go to whichever RPC the person configures, and to a local node.
 export const grants = "net.fetch https:\nnet.fetch http:";
@@ -24,6 +25,45 @@ const sources: Sources = {
   deployView: ([route]) => deploy.deployView(route),
   deployContract: ([chainId, kind]) => deploy.deployContract(chainId, kind),
   deployAll: ([chainId]) => deploy.deployAll(chainId),
+  positionNetworks: () => positions.positionNetworks(),
+  chainPositions: ([id, revision, tick]) =>
+    positions.chainPositions(id, revision, tick),
+  positionDetail: ([chain, id, revision, tick]) =>
+    positions.positionDetail(chain, id, revision, tick),
+  withdrawReview: ([chain, id, revision, tick, portion, recipient]) =>
+    positions.withdrawReview(chain, id, revision, tick, portion, recipient),
+  depositView: ([chain, id, revision, tick, side, value, slippage]) =>
+    positions.depositView(chain, id, revision, tick, side, value, slippage),
+  positionBalance: ([chain, address, revision, tick]) =>
+    positions.positionBalance(chain, address, revision, tick),
+  withdrawPosition: ([chain, id, revision, tick, portion, recipient]) =>
+    positions.withdrawPosition(chain, id, revision, tick, portion, recipient),
+  collectFees: ([chain, id, revision, tick]) =>
+    positions.collectFees(chain, id, revision, tick),
+  addLiquidity: ([chain, id, revision, tick, side, value, slippage]) =>
+    positions.addLiquidity(chain, id, revision, tick, side, value, slippage),
+  approvePositionToken: ([chain, id, revision, tick, index, amount]) =>
+    positions.approvePositionToken(chain, id, revision, tick, index, amount),
+  positionNativeMax: ([
+    chain,
+    id,
+    revision,
+    tick,
+    side,
+    value,
+    slippage,
+    index,
+  ]) =>
+    positions.positionNativeMax(
+      chain,
+      id,
+      revision,
+      tick,
+      side,
+      value,
+      slippage,
+      index,
+    ),
 };
 
 export const answer: Answer = (source, args, store, storage, native) => {

@@ -49,10 +49,7 @@ component DeployPage
             link href="#/networks" class=TextLink
               text "Networks"
         if view.state == "chain"
-          row class=Inline
-            text "Network:"
-            text view.name font-weight=700
-            text `(${view.chainId}) · ${view.enabled ? "enabled" : "not enabled"}`
+          text `Network: ${view.name} (${view.chainId}) · ${view.enabled ? "enabled" : "not enabled"}` testId="deploy-network"
           text "Deploy missing contracts once for everyone on this network. Addresses depend on the fixed salt and contract code, never on your wallet. Existing contracts are detected before any deployment."
           if view.batch
             row gap=12 align-items="center" flex-wrap="wrap" margin="8px 0"

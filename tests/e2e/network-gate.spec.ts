@@ -121,7 +121,7 @@ test("deploy pages are scoped to a chain and invalid links point back to Network
   await expect(
     page.getByRole("heading", { name: "Deploy contracts" }),
   ).toBeVisible();
-  await expect(page.locator("p", { hasText: "Network:" })).toContainText(
+  await expect(page.getByTestId("deploy-network")).toContainText(
     "Base (8453) · enabled",
   );
   await expect(
@@ -130,7 +130,7 @@ test("deploy pages are scoped to a chain and invalid links point back to Network
   await expect(page.getByLabel("Deployment network")).toHaveCount(0);
 
   await page.goto("/#/deploy/43114");
-  await expect(page.locator("p", { hasText: "Network:" })).toContainText(
+  await expect(page.getByTestId("deploy-network")).toContainText(
     "Avalanche (43114) · not enabled",
   );
   await expect(
@@ -152,7 +152,7 @@ test("deploy pages are scoped to a chain and invalid links point back to Network
 
   await page.goto("/#/deploy");
   await expect(page).toHaveURL(/#\/deploy\/1$/);
-  await expect(page.locator("p", { hasText: "Network:" })).toContainText(
+  await expect(page.getByTestId("deploy-network")).toContainText(
     "Ethereum (1)",
   );
 });

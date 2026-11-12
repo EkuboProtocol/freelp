@@ -20,7 +20,7 @@ test("navigation and liquidity preview use bundled assets and exact configured R
       request.method() === "GET" &&
       url.origin === origin &&
       (url.pathname === "/" ||
-        /^\/(assets\/[^/]+\.(js|css)|tokens\/\d+\.json|favicon\.svg)$/.test(
+        /^\/((modules\/)?[\w.-]+\.(js|css)|tokens\/\d+\.json|favicon\.svg)$/.test(
           url.pathname,
         ))
     )

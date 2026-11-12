@@ -1,0 +1,770 @@
+// Positions: the portfolio across enabled networks and one position's
+// detail, with its add, withdraw and collect dialog. app.ts answers the
+// records (src/sources/positions.ts).
+use WalletOption, TextLink from "./shapes.contract"
+use Balance, TokenBalance from "./tokens.contract"
+
+shape PositionClock
+  epochAtZero: number
+  utcOffset: number
+
+shape PositionNetwork
+  id: number
+  name: string
+
+shape PoolFacts
+  feeLabel: string
+  feeTitle: string
+  kindLabel: string
+  token0: string
+  token1: string
+  poolType: string
+  fee: string
+  concentrated: bool
+  tickSpacing: string
+  centerTick: string
+  amplification: string
+  extension: string
+  config: string
+
+shape RangeView
+  lower: string
+  current: string
+  upper: string
+  unit: string
+  marker: number
+  label: string
+
+shape Card
+  key: string
+  chainId: number
+  id: string
+  title: string
+  network: string
+  status: string
+  principal: string
+  fees: string
+  pool: PoolFacts
+  hasRange: bool
+  range: RangeView
+
+shape ChainPortfolio
+  loaded: bool
+  chainId: number
+  name: string
+  availability: string
+  message: string
+  positions: Card[]
+
+shape AmountRow
+  symbol: string
+  note: string
+  display: string
+  title: string
+
+shape DetailToken
+  address: string
+  symbol: string
+  decimals: number
+  missing: bool
+
+shape PositionView
+  state: string
+  message: string
+  chainId: number
+  id: string
+  network: string
+  fromPortfolio: bool
+  owner: string
+  ownerShort: string
+  owned: bool
+  closed: bool
+  title: string
+  status: string
+  pool: PoolFacts
+  artwork: string
+  liquidity: AmountRow[]
+  fees: AmountRow[]
+  feesZero: bool
+  range: RangeView
+  tokens: DetailToken[]
+
+shape WithdrawView
+  ok: bool
+  error: string
+  recipientOk: bool
+  principal: string[]
+  fees: string[]
+  receipt: string[]
+  full: bool
+
+shape DepositSide
+  index: number
+  symbol: string
+  missing: bool
+  inactive: bool
+  amount: string
+
+shape Approval
+  index: number
+  label: string
+
+shape DepositView
+  sides: DepositSide[]
+  error: string
+  spendReady: bool
+  readError: string
+  insufficient: bool
+  approvalNeeded: bool
+  minZero: bool
+  canAdd: bool
+  approvals: Approval[]
+
+fn digitsOnly(s: string): bool = s.length > 0 and s.length < 80 and s.split("").filter(c => "0123456789".includes(c)).length == s.length
+fn routeSegment(route: string, i: number): string = route.split("/").slice(i, i + 1).join("")
+fn positionKind(route: string): string = route == "" or route == "/" or route == "/positions" ? "list" : route.startsWith("/positions/") and route.split("/").length == 4 and digitsOnly(routeSegment(route, 2)) and digitsOnly(routeSegment(route, 3)) ? "detail" : "invalid"
+fn statusLabel(status: string): string = status == "closed" ? "Closed" : status == "active" ? "In range" : "Out of range"
+
+component StatusBadge
+  props
+    status: string
+  view
+    text statusLabel(status) testId=`position-status-${status}` class=Badge background-color=(status == "active" ? "#111" : "#eee") color=(status == "active" ? "#fff" : "inherit") border=(status == "inactive" ? "1px solid #666" : "1px solid transparent")
+
+component PoolIdentity
+  props
+    pool: PoolFacts
+    open: bool
+    toggle: action
+  view
+    column gap=8 min-width=0
+      row class=Inline font-size=13 color="#555"
+        text pool.feeLabel title=pool.feeTitle
+        text "·"
+        text pool.kindLabel
+      button press=toggle aria-expanded=open class=Disclosure
+        text "Show full pool identity"
+      if open
+        dl class=Facts
+          dt color="#555"
+            text "Token 0"
+          dd class=Mono
+            text pool.token0
+          dt color="#555"
+            text "Token 1"
+          dd class=Mono
+            text pool.token1
+          dt color="#555"
+            text "Pool type"
+          dd margin=0
+            text pool.poolType
+          dt color="#555"
+            text "Fee (uint64 Q64)"
+          dd class=Mono
+            text pool.fee
+          if pool.concentrated
+            dt color="#555"
+              text "Tick spacing"
+            dd margin=0
+              text pool.tickSpacing
+          else
+            dt color="#555"
+              text "Center tick"
+            dd margin=0
+              text pool.centerTick
+            dt color="#555"
+              text "Amplification exponent"
+            dd margin=0
+              text pool.amplification
+          dt color="#555"
+            text "Extension"
+          dd class=Mono
+            text pool.extension
+          dt color="#555"
+            text "Config"
+          dd class=Mono
+            text pool.config
+
+component PositionRange
+  props
+    range: RangeView
+  view
+    column margin="16px 0" font-size=12
+      row class=RangePrices
+        column gap=4 min-width=0 flex=1
+          text "Min price" class=Muted
+          text range.lower class=Price
+        column gap=4 min-width=0 flex=1 text-align="center"
+          text "Current price" class=Muted
+          text range.current testId="current-price" class=Price text-decoration="underline"
+        column gap=4 min-width=0 flex=1 text-align="right"
+          text "Max price" class=Muted
+          text range.upper class=Price
+      text range.unit class=Muted text-align="center" margin="8px 0 16px"
+      view role="img" aria-label=range.label class=Track
+        view class=Marker left=`${range.marker}%`
+
+component PositionCard
+  props
+    c: Card
+    open: bool
+    toggle: action
+  view
+    article testId="portfolio-position" class=CardBox
+      column gap=12
+        row justify-content="space-between" align-items="center" gap=12 flex-wrap="wrap"
+          text c.title role="heading" aria-level=3 font-size=17 font-weight=700
+          text c.network
+        row
+          StatusBadge(status=c.status)
+        PoolIdentity(pool=c.pool, open=open, toggle=toggle)
+        text c.principal overflow-wrap="anywhere"
+        text c.fees overflow-wrap="anywhere"
+        if c.hasRange
+          PositionRange(range=c.range)
+        row
+          link href=`#/positions/${c.chainId}/${c.id}` aria-label=`Manage position #${c.id}` class=PrimaryLink
+            text "Manage position"
+
+component WalletConnect
+  props
+    wallets: WalletOption[]
+    connect: action
+    pick: action
+    dismiss: action
+  view
+    column align-items="center"
+      button press=connect class=BigButton
+        text "Connect wallet"
+      dialog id="wallet-dialog" aria-labelledby="wallet-dialog-title" cancel=dismiss class=Dialog
+        column gap=20
+          row justify-content="space-between" align-items="center"
+            text "Connect wallet" id="wallet-dialog-title" role="heading" aria-level=2 font-size=21 font-weight=700
+            button press=dismiss aria-label="Close wallet dialog" class=Plain
+              text "×"
+          column gap=12
+            for w in wallets key=w.uuid
+              button press=pick(w.uuid) class=Plain
+                text `Connect ${w.name}`
+          if wallets.length == 0
+            text "Open this app in your wallet’s browser or enable a browser wallet to connect."
+
+component RouteState
+  props
+    heading: string
+    message: string
+    retry: bool
+    retryAction: action
+    connect: bool
+    wallets: WalletOption[]
+    connectAction: action
+    pick: action
+    dismiss: action
+  view
+    section max-width=680 margin="40px auto"
+      column gap=16 align-items="start"
+        text heading role="heading" aria-level=2 tabindex=-1 class=H2
+        text message role="status" max-width="70ch"
+        if retry
+          button press=retryAction class=Plain
+            text "Retry network"
+        if connect
+          WalletConnect(wallets=wallets, connect=connectAction, pick=pick, dismiss=dismiss)
+        row gap=8
+          link href="#/positions" class=TextLink
+            text "All positions"
+          link href="#/networks" class=TextLink
+            text "Networks"
+
+component PortfolioList
+  props
+    account: string
+    wallets: WalletOption[]
+    busy: bool
+    networks: PositionNetwork[]
+    chains: ChainPortfolio[]
+    allCount: number
+    cards: Card[]
+    pageIndex: number
+    pageCount: number
+    checking: number
+    filter: string
+    setFilter: action
+    previous: action
+    next: action
+    refresh: action
+    retry: action
+    openPools: string[]
+    togglePool: action
+    connect: action
+    pick: action
+    dismiss: action
+  view
+    section
+      column
+        if account == ""
+          text "Your FreeLP positions" role="heading" aria-level=2 class=H2
+          column class=Empty
+            WalletConnect(wallets=wallets, connect=connect, pick=pick, dismiss=dismiss)
+            link href="#/create" class=TextLink
+              text "Create position"
+        else
+          row justify-content="space-between" align-items="center" gap=12 flex-wrap="wrap"
+            column
+              text "Your FreeLP positions" role="heading" aria-level=2 class=H2 margin=0
+              text "Official Ekubo Positions and Ve33 NFTs are managed separately." color="#555" margin="4px 0 0"
+            if allCount > 0
+              link href="#/create" class=PrimaryLink
+                text "Create position"
+          row class=Toolbar
+            row gap=8 align-items="center" flex-wrap="wrap"
+              text "Network" id="portfolio-network-label" font-size=14
+              select value=filter change=setFilter aria-labelledby="portfolio-network-label" class=Field min-width="12rem"
+                option "All enabled networks" value="all"
+                for n in networks key=`${n.id}`
+                  option n.name value=`${n.id}`
+            button press=refresh disabled=busy class=Plain
+              text "Refresh positions"
+          view testId="portfolio-positions" class=Grid
+            for c in cards.slice(pageIndex * 12, pageIndex * 12 + 12) key=c.key
+              PositionCard(c=c, open=openPools.includes(c.key), toggle=togglePool(c.key))
+          if checking > 0 and allCount == 0
+            text "Checking enabled networks for positions…" aria-busy=true color="#595959"
+          if checking == 0 and allCount == 0 and filter == "all"
+            column class=Empty
+              text (chains.filter(c => c.availability == "unavailable").length > 0 ? "Positions could not be checked on all enabled networks. Retry the unavailable networks below." : "No FreeLP positions found on the enabled networks.")
+              text "Positions from earlier contract deployments remain at their original manager and need a compatible pinned release." color="#555"
+              link href="#/create" class=PrimaryLink
+                text "Create position"
+          if checking == 0 and cards.length == 0 and not (allCount == 0 and filter == "all")
+            text "No positions to display for this filter. Check any network errors below or choose another filter." class=Empty
+          if cards.length > 12
+            row aria-label="Position pages" class=Toolbar justify-content="center"
+              button press=previous disabled=(pageIndex == 0) class=Plain
+                text "Previous"
+              text `Page ${pageIndex + 1} of ${pageCount}`
+              button press=next disabled=(pageIndex + 1 >= pageCount) class=Plain
+                text "Next"
+          if chains.filter(c => c.loaded and c.availability == "unavailable").length > 0
+            column aria-label="Unavailable networks" margin="1rem 0" overflow-wrap="anywhere"
+              text "Some networks unavailable" role="heading" aria-level=3 class=H3
+              for c in chains.filter(c => c.loaded and c.availability == "unavailable") key=`${c.chainId}`
+                row gap=8 align-items="center" flex-wrap="wrap" margin="0 0 8px"
+                  text `${c.name}` font-weight=700
+                  text `: ${c.message}`
+                  button press=retry(c.chainId) class=Plain
+                    text "Retry"
+          if checking > 0
+            text (checking == 1 ? "Checking 1 network…" : `Checking ${checking} networks…`) role="status"
+          for c in chains.filter(c => c.loaded and c.availability == "proven-not-deployed") key=`${c.chainId}`
+            text `${c.name}: FreeLP is not deployed.`
+
+component AmountList
+  props
+    rows: AmountRow[]
+  view
+    dl margin="20px 0 0"
+      for r in rows key=r.symbol
+        row justify-content="space-between" align-items="baseline" gap=16 margin="12px 0"
+          dt
+            column
+              text r.symbol
+              if r.note != ""
+                text r.note font-size=12 color="#555"
+          dd margin=0 font-size=22 text-align="right" overflow-wrap="anywhere"
+            text r.display title=r.title
+
+component PositionDetail
+  props
+    v: PositionView
+    account: string
+    busy: bool
+    loading: bool
+    updated: string
+    poolOpen: bool
+    togglePool: action
+    refresh: action
+    retry: action
+    openAdd: action
+    openWithdraw: action
+    collect: action
+  view
+    section
+      column
+        link href="#/positions" align-self="start" class=TextLink
+          text "All positions"
+        column aria-label="Manage position" aria-busy=loading margin="20px 0" min-width=0
+          row class=DetailToolbar
+            if v.fromPortfolio
+              text (loading ? "Updating…" : `Updated ${updated}`) role="status" aria-live="polite"
+              button press=refresh disabled=(busy or loading) class=Small
+                text "Refresh position"
+            else
+              text
+                text "Owner: "
+                text v.ownerShort font-family="monospace"
+                text (v.owned ? " · this wallet" : "")
+              button press=retry class=Small
+                text "Refresh position"
+          if v.fromPortfolio and v.closed
+            text "This position is closed. It remains visible so you can review its final on-chain state; a fully burned NFT may not be discoverable here." max-width="70ch" margin="0 0 16px"
+          if not v.owned
+            text (account != "" ? "This position is owned by another wallet. Connect that wallet to add, withdraw, or collect." : "Connect the owning wallet to add, withdraw, or collect. Viewing needs no wallet.") role="status" max-width="70ch" margin="0 0 16px"
+          row class=Layout
+            aside class=Side
+              column margin=0 width="100%" max-width=480
+                if v.artwork != ""
+                  image v.artwork alt=`Position NFT artwork for position #${v.id}` width=640 height=640 class=Artwork
+                else
+                  text "Artwork unavailable." role="status" color="#666" font-size=13
+            column min-width=0 flex="1 1 480px"
+              view class=Heading
+                column min-width=0
+                  text v.title role="heading" aria-level=2 tabindex=-1 font-size=28 font-weight=700 margin=0
+                  text `${v.network} · Position #${v.id}` color="#555" margin="4px 0 12px"
+                  row gap=12 align-items="start" flex-wrap="wrap"
+                    StatusBadge(status=v.status)
+                    PoolIdentity(pool=v.pool, open=poolOpen, toggle=togglePool)
+                row gap=12 flex-wrap="wrap" class=Actions
+                  button press=openAdd disabled=(busy or not v.owned) aria-label="Add liquidity to position" class=Rounded
+                    text "Add liquidity"
+                  button press=openWithdraw disabled=(busy or not v.owned) class=Rounded
+                    text "Withdraw"
+              view class=SummaryGrid
+                section class=Summary
+                  text "Liquidity" role="heading" aria-level=3 class=SummaryTitle
+                  AmountList(rows=v.liquidity)
+                section class=Summary
+                  row justify-content="space-between" align-items="center" gap=12 min-height=44
+                    text "Uncollected fees" role="heading" aria-level=3 class=SummaryTitle
+                    button press=collect disabled=(busy or not v.owned or v.feesZero or account == "") class=PrimarySmall
+                      text "Collect fees"
+                  AmountList(rows=v.fees)
+              section class=Summary
+                text "Price range" role="heading" aria-level=3 class=SummaryTitle
+                PositionRange(range=v.range)
+
+component WithdrawFields
+  props
+    review: WithdrawView
+    portionText: string
+    portion: number
+    recipient: string
+    busy: bool
+    readOnly: bool
+    setText: action
+    setRange: action
+    preset: action
+    setRecipient: action
+    submit: action
+  view
+    column
+      text "Withdraw percentage" font-size=14
+      row gap=8 align-items="center"
+        input type="number" min=1 max=100 value=portionText input=setText aria-label="Withdraw percentage" disabled=(busy or readOnly) font-size=32 width=130 border="0" padding-left=0
+        text "%"
+      input type="range" min=1 max=100 value=`${portion}` input=setRange aria-label="Withdrawal portion" disabled=(busy or readOnly) margin="16px 0" accent-color="#111"
+      row gap=8
+        for n in [25, 50, 75, 100] key=`${n}`
+          button press=preset(n) aria-pressed=(portion == n) disabled=(busy or readOnly) flex=1 border-radius=8 background-color=(portion == n ? "#111" : "#fff") color=(portion == n ? "#fff" : "inherit") border="1px solid #666" padding="8px 12px"
+            text `${n}%`
+      text "Recipient address" font-size=14 margin="16px 0 4px"
+      input value=recipient input=setRecipient aria-label="Recipient address" autocomplete="off" disabled=(busy or readOnly) class=Field font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size=14
+      text "Estimated amounts include all uncollected fees. Actual amounts may change before execution; withdrawals have no minimum-output limit." color="#555" margin="16px 0 0"
+      dl testId="withdrawal-review" class=Review
+        ReviewRow(label="Principal", lines=review.principal)
+        ReviewRow(label="Fees", lines=review.fees)
+        ReviewRow(label="Estimated receipt", lines=review.receipt)
+      if review.full
+        text "100% withdrawal burns the position NFT and closes this position." color="#555"
+      if review.error != ""
+        text review.error role="alert" class=Status
+      if not review.recipientOk
+        text "Enter a valid recipient address to withdraw." color="#555"
+      button press=submit disabled=(busy or readOnly or not review.ok or not review.recipientOk) class=PrimaryWide
+        text "Withdraw liquidity and fees"
+
+component ReviewRow
+  props
+    label: string
+    lines: string[]
+  view
+    row class=ReviewLine
+      dt color="#555" flex=1 min-width=120
+        text label
+      dd margin=0 flex=2 text-align="right"
+        column gap=4
+          for l in lines key=l
+            text l
+          if lines.length == 0
+            text "Unavailable"
+
+component DepositFields
+  props
+    d: DepositView
+    balances: Balance[]
+    account: string
+    busy: bool
+    loading: bool
+    side: number
+    value: string
+    setAmount: action
+    retryBalance: action
+    max: action
+    maxMessage: string
+    maxPending: bool
+    retryReads: action
+    approve: action
+    submit: action
+  view
+    column aria-label="Deposit amounts" min-width=0
+      column gap=16 margin="4px 0 0"
+        for s in d.sides key=`${s.index}`
+          column class=DepositBox
+            text s.symbol font-weight=700 padding="14px 16px 8px"
+            if s.missing
+              text "Enter raw base units: decimals could not be read." font-size=12 padding="0 16px"
+            input value=(s.inactive ? "0" : side == s.index ? value : s.amount) input=setAmount(s.index) aria-label=`Add token ${s.index} amount` testId=`position-amount-${s.index}` inputmode="decimal" placeholder="0" disabled=(s.inactive or busy) class=Field margin="0 16px 12px"
+            if s.inactive
+              text "This token is not needed for this range." font-size=12 padding="0 16px"
+            column padding="0 16px 12px"
+              for b in balances.slice(s.index, s.index + 1) key=b.address
+                TokenBalance(balance=b, pick=setAmount(s.index), retry=retryBalance, max=max(s.index), maxMessage=maxMessage, maxPending=maxPending, disabled=(s.inactive or busy))
+      if d.error != ""
+        text `Error: ${d.error}` role="alert" class=Status
+      if account == ""
+        text "Connect a wallet to add liquidity." role="status" font-size=13 color="#555"
+      if account != "" and not d.spendReady
+        text "Loading token metadata and spend readiness…" role="status" font-size=13 color="#555"
+      if d.readError != ""
+        row role="alert" class=Status gap=8
+          text d.readError
+          button press=retryReads class=Plain
+            text "Retry token reads"
+      if d.insufficient
+        text "Insufficient balance for this deposit." role="alert" class=Status
+      if d.approvalNeeded
+        text "Approve each token before adding liquidity." role="status" font-size=13 color="#555"
+      if d.minZero
+        text "Slippage would reduce minimum liquidity to zero." role="alert" class=Status
+      row gap=12 flex-wrap="wrap" margin="16px 0 0"
+        for a in d.approvals key=`${a.index}`
+          button press=approve(a.index) disabled=(busy or account == "") class=PrimarySmall
+            text a.label
+        button press=submit disabled=(busy or loading or account == "" or not d.canAdd) class=PrimarySmall
+          text "Add liquidity"
+
+style H2
+  font-size=27 font-weight=700 letter-spacing=-0.7 margin="0 0 20px"
+
+style H3
+  font-size=17 font-weight=700 margin="0 0 8px"
+
+style Muted
+  color="#555" font-size=13
+
+style Inline
+  display="flex" flex-wrap="wrap" column-gap="0.3em"
+
+style Mono
+  font-family="monospace" overflow-wrap="anywhere" margin=0
+
+style Facts
+  display="grid" grid-template-columns="max-content minmax(0, 1fr)" gap="4px 12px" margin=0 font-size=13
+
+style Disclosure
+  border="0" padding=0 background-color="transparent" text-decoration="underline" font-size=13 align-self="start"
+
+style Badge
+  border-radius=20 padding="3px 9px" font-size=12
+
+style RangePrices
+  display="flex" gap=12 margin="20px 0 8px"
+
+style Price
+  font-size=18 font-weight=700 overflow-wrap="anywhere"
+
+style Track
+  height=6 margin="0 5px 8px" background-color="#ddd" border-radius=5 position="relative"
+
+style Marker
+  position="absolute" width=10 height=14 top=-4 background-color="#111" transform="translateX(-50%)" border="2px solid white" border-radius=3 box-sizing="border-box"
+
+style CardBox
+  border="1px solid #999" padding=20 margin=0 min-width=0
+
+style Grid
+  display="grid" grid-template-columns="repeat(auto-fit, minmax(min(100%, 360px), 1fr))" gap=16 margin-top=16
+
+style PrimaryLink
+  background-color="#111" color="#fff" padding="10px 18px" border-radius=10 text-decoration="none"
+
+style BigButton
+  background-color="#111" color="#fff" border="1px solid #111" padding="14px 32px" font-size=18 border-radius=10
+
+style Empty
+  min-height=320 display="flex" flex-direction="column" align-items="center" justify-content="center" gap=16 text-align="center"
+
+style Toolbar
+  display="flex" align-items="center" justify-content="space-between" gap=12 flex-wrap="wrap" margin="16px 0"
+
+style DetailToolbar
+  display="flex" align-items="center" justify-content="space-between" gap=12 flex-wrap="wrap" margin="0 0 16px" border-bottom="1px solid #ddd" padding-bottom=12 color="#555" font-size=13
+
+style Field
+  border="1px solid #666" padding="8px 12px" background-color="#fff" font="inherit" min-width=0
+
+style Plain
+  border="1px solid #666" padding="8px 12px" background-color="#fff"
+
+style Small
+  border="1px solid #666" padding="4px 8px" background-color="#fff" font-size=13
+
+style Rounded
+  border="1px solid #666" padding="8px 12px" background-color="#fff" border-radius=8
+
+style PrimarySmall
+  background-color="#111" color="#fff" border="1px solid #111" padding="6px 12px" font-size=14
+
+style PrimaryWide
+  background-color="#111" color="#fff" border="1px solid #111" padding="10px 18px" margin-top=20 width="100%" box-sizing="border-box"
+
+style Dialog
+  width="min(540px, calc(100vw - 32px))" max-height="calc(100dvh - 32px)" overflow-y="auto" padding=24 border="1px solid #ccc" border-radius=16 background-color="#fff" box-sizing="border-box"
+
+style Layout
+  display="flex" flex-wrap="wrap" gap=32 align-items="start"
+
+style Side
+  display="flex" justify-content="center" flex="1 1 300px" max-width=380 position="sticky" top=16
+
+style Artwork
+  display="block" width="100%" height="auto" aspect-ratio=1 border="1px solid #ddd" border-radius=16 background-color="#fff"
+
+style Heading
+  display="flex" flex-wrap="wrap" justify-content="space-between" gap="16px 20px" align-items="start" margin="0 0 24px"
+
+style Actions
+  align-items="center"
+
+style SummaryGrid
+  display="grid" grid-template-columns="repeat(auto-fit, minmax(min(100%, 260px), 1fr))" column-gap=20
+
+style Summary
+  border="1px solid #ddd" border-radius=12 padding=24 margin-bottom=20 min-width=0
+
+style SummaryTitle
+  margin=0 font-weight=500 color="#555" font-size=17
+
+style Review
+  display="flex" flex-direction="column" gap=12 margin="16px 0"
+
+style ReviewLine
+  display="flex" gap=8 align-items="start"
+
+style Status
+  border-left="3px solid #111" padding=12 overflow-wrap="anywhere" white-space="pre-wrap"
+
+style DepositBox
+  border="1px solid #aaa"
+
+// The page `#/positions` and `#/positions/<chain>/<id>`.
+component PositionsPage
+  props
+    kind: string
+    account: string
+    wallets: WalletOption[]
+    busy: bool
+    txStatus: string
+    networks: PositionNetwork[]
+    chains: ChainPortfolio[]
+    allCount: number
+    cards: Card[]
+    pageIndex: number
+    pageCount: number
+    checking: number
+    filter: string
+    setFilter: action
+    previous: action
+    next: action
+    refresh: action
+    retry: action
+    openPools: string[]
+    togglePool: action
+    connect: action
+    pick: action
+    dismiss: action
+    v: PositionView
+    ready: bool
+    loading: bool
+    updated: string
+    refreshPosition: action
+    retryPosition: action
+    mode: string
+    openAdd: action
+    openWithdraw: action
+    closeDialog: action
+    dialogCancelled: action
+    collect: action
+    review: WithdrawView
+    portionText: string
+    portion: number
+    recipient: string
+    setPortionText: action
+    setPortionRange: action
+    presetPortion: action
+    setRecipient: action
+    withdraw: action
+    d: DepositView
+    depositLoading: bool
+    balances: Balance[]
+    side: number
+    value: string
+    setAmount: action
+    retryBalance: action
+    max: action
+    maxMessage: string
+    maxPending: bool
+    retryReads: action
+    approve: action
+    add: action
+    advancedOpen: bool
+    toggleAdvanced: action
+    slippageText: string
+    setSlippage: action
+  view
+    column
+      if kind == "list"
+        PortfolioList(account=account, wallets=wallets, busy=busy, networks=networks, chains=chains, allCount=allCount, cards=cards, pageIndex=pageIndex, pageCount=pageCount, checking=checking, filter=filter, setFilter=setFilter, previous=previous, next=next, refresh=refresh, retry=retry, openPools=openPools, togglePool=togglePool, connect=connect, pick=pick, dismiss=dismiss)
+      if kind == "invalid"
+        RouteState(heading="Position unavailable", message="This position link is invalid. Check its network and position number.", retry=false, retryAction=retryPosition, connect=false, wallets=wallets, connectAction=connect, pick=pick, dismiss=dismiss)
+      if kind == "detail"
+        if not ready
+          RouteState(heading="Position", message="Reading this position from the network…", retry=false, retryAction=retryPosition, connect=false, wallets=wallets, connectAction=connect, pick=pick, dismiss=dismiss)
+        else if v.state == "disabled"
+          RouteState(heading="Position unavailable", message="Enable this network in Networks to view the position.", retry=false, retryAction=retryPosition, connect=false, wallets=wallets, connectAction=connect, pick=pick, dismiss=dismiss)
+        else if v.state == "missing"
+          RouteState(heading="Position not found", message="No position with this number exists on this network. It may have been fully withdrawn and burned, or created with another position manager.", retry=false, retryAction=retryPosition, connect=(account == ""), wallets=wallets, connectAction=connect, pick=pick, dismiss=dismiss)
+        else if v.state == "error"
+          RouteState(heading="Position unavailable", message=v.message, retry=true, retryAction=retryPosition, connect=false, wallets=wallets, connectAction=connect, pick=pick, dismiss=dismiss)
+        else
+          PositionDetail(v=v, account=account, busy=busy, loading=loading, updated=updated, poolOpen=openPools.includes("detail"), togglePool=togglePool("detail"), refresh=refreshPosition, retry=retryPosition, openAdd=openAdd, openWithdraw=openWithdraw, collect=collect)
+      dialog id="position-dialog" aria-labelledby="position-dialog-title" cancel=dialogCancelled class=Dialog
+        column
+          row justify-content="space-between" align-items="center" margin-bottom=24
+            text (mode == "add" ? "Add liquidity" : "Withdraw liquidity") id="position-dialog-title" role="heading" aria-level=2 font-size=21 font-weight=700 margin=0
+            button press=closeDialog aria-label="Close position dialog" disabled=busy class=Plain
+              text "×"
+          if mode == "add"
+            DepositFields(d=d, balances=balances, account=account, busy=(busy or not v.owned), loading=depositLoading, side=side, value=value, setAmount=setAmount, retryBalance=retryBalance, max=max, maxMessage=maxMessage, maxPending=maxPending, retryReads=retryReads, approve=approve, submit=add)
+          if mode == "withdraw"
+            WithdrawFields(review=review, portionText=portionText, portion=portion, recipient=recipient, busy=busy, readOnly=(not v.owned), setText=setPortionText, setRange=setPortionRange, preset=presetPortion, setRecipient=setRecipient, submit=withdraw)
+          if txStatus != ""
+            text txStatus role="status" aria-live="polite" aria-busy=busy testId="dialog-status" class=Status margin-top=16
+          if mode == "add"
+            column border-top="1px solid #ddd" padding-top=16 margin-top=24 gap=12
+              button press=toggleAdvanced aria-expanded=advancedOpen class=Disclosure
+                text "Advanced"
+              if advancedOpen
+                text "Slippage (basis points)" font-size=14
+                input type="number" min=0 max=1000 value=slippageText input=setSlippage aria-label="Slippage (basis points)" class=Field max-width=140
