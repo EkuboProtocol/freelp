@@ -4,11 +4,6 @@
       "count": 1
     }
   },
-  "src/PositionsPage.tsx": {
-    "typescript(no-misused-promises)": {
-      "count": 3
-    }
-  },
   "src/createForm.ts": {
     "typescript(no-base-to-string)": {
       "count": 1

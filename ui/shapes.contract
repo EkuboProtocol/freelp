@@ -27,3 +27,6 @@ shape TxReply
   ok: bool
   error: string
   hash: string
+
+style TextLink
+  color="inherit" text-decoration="underline"

@@ -107,7 +107,9 @@ test("all networks load independently with exactly one portfolio RPC each", asyn
     "Uncollected fees: 0.01 ETH / 5 USDC",
   ]);
   await expect(page.getByTestId("portfolio-position")).toHaveCount(3);
-  await expect(page.getByTestId("position-status-active")).toHaveText("In range");
+  await expect(page.getByTestId("position-status-active")).toHaveText(
+    "In range",
+  );
   await expect(page.getByTestId("position-status-inactive")).toHaveText(
     "Out of range",
   );

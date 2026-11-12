@@ -188,15 +188,17 @@ test("the owner can withdraw while the RPC is busy, and the dialog reviews amoun
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText("Liquidity", { exact: true })).toHaveCount(0);
   await expect(dialog.getByTestId("withdrawal-review")).toContainText("1 ETH");
-  await expect(dialog.getByTestId("withdrawal-review")).toContainText("2000 USDC");
+  await expect(dialog.getByTestId("withdrawal-review")).toContainText(
+    "2000 USDC",
+  );
   await expect(dialog.getByLabel("Recipient address")).toHaveValue(owner);
   await expect(dialog.getByRole("button", { name: "Advanced" })).toHaveCount(0);
   await dialog
     .getByRole("button", { name: "Withdraw liquidity and fees" })
     .click();
-  await expect(page.locator("dialog[open]").getByTestId("dialog-status")).toContainText(
-    "rejected in the wallet",
-  );
+  await expect(
+    page.locator("dialog[open]").getByTestId("dialog-status"),
+  ).toContainText("rejected in the wallet");
   const walletCalls = await page.evaluate(
     () => (window as unknown as { walletCalls: string[] }).walletCalls,
   );

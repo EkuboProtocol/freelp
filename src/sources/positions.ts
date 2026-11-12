@@ -86,13 +86,11 @@ async function chainPortfolio(
   const result = await once(
     `portfolio:${scope}:${tick}`,
     () =>
-      loadPortfolio(settings, account).catch(
-        (error): PortfolioResult => ({
-          items: [],
-          availability: "unavailable",
-          error: errorMessage(error),
-        }),
-      ),
+      loadPortfolio(settings, account).catch((error): PortfolioResult => ({
+        items: [],
+        availability: "unavailable",
+        error: errorMessage(error),
+      })),
     (value) => value.availability !== "unavailable",
   );
   if (result.availability !== "unavailable") latest.set(scope, result);
@@ -261,8 +259,7 @@ async function findPosition(
     const owned = (
       await latestPortfolio(settings, account, revision)
     ).items.find((item) => item.id === id);
-    if (owned)
-      return { owner: account, position: owned, fromPortfolio: true };
+    if (owned) return { owner: account, position: owned, fromPortfolio: true };
   }
   const found = await loadPositionById(settings, id);
   return found && { ...found, fromPortfolio: false };
@@ -347,7 +344,12 @@ const EMPTY_DETAIL = {
   fees: [] as AmountRow[],
   feesZero: true,
   range: NO_RANGE,
-  tokens: [] as { address: string; symbol: string; decimals: number; missing: boolean }[],
+  tokens: [] as {
+    address: string;
+    symbol: string;
+    decimals: number;
+    missing: boolean;
+  }[],
 };
 type AmountRow = {
   symbol: string;
@@ -387,8 +389,14 @@ export async function positionDetail(
   const base = { ...EMPTY_DETAIL, chainId, id };
   if (result.state !== "found")
     return { ...base, state: result.state, message: result.message };
-  const { settings, position: p, owner, owned, fromPortfolio, reads } =
-    result.detail;
+  const {
+    settings,
+    position: p,
+    owner,
+    owned,
+    fromPortfolio,
+    reads,
+  } = result.detail;
   const tokens = reads.map((read) => read.token);
   return {
     ...base,
@@ -520,13 +528,14 @@ function quote(detail: Detail, side: number, value: string) {
         ? "0"
         : i === s
           ? value
-          : formatUnits(i === 0 ? result.max0 : result.max1, tokens[i].decimals),
+          : formatUnits(
+              i === 0 ? result.max0 : result.max1,
+              tokens[i].decimals,
+            ),
     );
     return { tokens, inactive, shown, result, error: "" };
   } catch (error) {
-    const shown = [0, 1].map((i) =>
-      inactive[i] ? "0" : i === s ? value : "",
-    );
+    const shown = [0, 1].map((i) => (inactive[i] ? "0" : i === s ? value : ""));
     return {
       tokens,
       inactive,
@@ -537,7 +546,11 @@ function quote(detail: Detail, side: number, value: string) {
   }
 }
 
-function addTransaction(detail: Detail, q: ReturnType<typeof quote>, slippage: number) {
+function addTransaction(
+  detail: Detail,
+  q: ReturnType<typeof quote>,
+  slippage: number,
+) {
   if (!detail.reads.every((read) => read.balanceReady && read.allowanceReady))
     throw new Error(
       "Token balances and allowances are still loading. Retry when ready.",
@@ -557,7 +570,11 @@ function addTransaction(detail: Detail, q: ReturnType<typeof quote>, slippage: n
   );
 }
 
-function gasCalls(detail: Detail, q: ReturnType<typeof quote>, slippage: number) {
+function gasCalls(
+  detail: Detail,
+  q: ReturnType<typeof quote>,
+  slippage: number,
+) {
   try {
     const transaction = addTransaction(detail, q, slippage);
     return depositCalls(
@@ -584,6 +601,57 @@ function approvalLabel(token: Token, amount: string) {
     : `Approve ${token.symbol}`;
 }
 
+type Quote = ReturnType<typeof quote>;
+
+// What the typed amounts ask of the wallet's balances and allowances.
+function spendCheck(detail: Detail, q: Quote, batch: boolean | undefined) {
+  const spendReady = detail.reads.every(
+    (read) => read.balanceReady && read.allowanceReady,
+  );
+  const requested = q.tokens.map((token, i) =>
+    parseRequested(q.shown[i], token.decimals),
+  );
+  const amounts = requested.filter((a): a is bigint => a !== undefined);
+  const reading =
+    !!q.result && spendReady && amounts.length === requested.length;
+  const exceeds = (limit: (token: Token) => bigint) =>
+    reading && amounts.some((a, i) => a > limit(q.tokens[i]));
+  return {
+    spendReady,
+    reading,
+    insufficient: exceeds((token) => token.balance),
+    approvalNeeded: batch === false && exceeds((token) => token.allowance),
+  };
+}
+
+function approvalsFor(q: Quote, batch: boolean | undefined, ready: boolean) {
+  if (batch !== false || !ready) return [];
+  return q.tokens
+    .map((token, i) => ({
+      index: i,
+      label: approvalLabel(token, q.shown[i] || "0"),
+    }))
+    .filter((a) => a.label !== "");
+}
+
+function canAdd(
+  detail: Detail & { account?: Address },
+  q: Quote,
+  batch: boolean | undefined,
+  minLiquidity: bigint,
+  check: ReturnType<typeof spendCheck>,
+) {
+  return [
+    !!detail.account,
+    batch !== undefined,
+    (q.result?.liquidity ?? 0n) > 0n,
+    minLiquidity > 0n,
+    check.reading,
+    !check.insufficient,
+    !check.approvalNeeded,
+  ].every(Boolean);
+}
+
 export async function depositView(
   chainId: number,
   id: string,
@@ -598,20 +666,7 @@ export async function depositView(
   const batch = detail.account
     ? await batchSupport(detail.account, detail.settings)
     : undefined;
-  const spendReady = detail.reads.every(
-    (read) => read.balanceReady && read.allowanceReady,
-  );
-  const requested = q.tokens.map((token, i) =>
-    parseRequested(q.shown[i], token.decimals),
-  );
-  const reading =
-    !!q.result && spendReady && requested.every((a) => a !== undefined);
-  const insufficient =
-    reading && requested.some((a, i) => a! > q.tokens[i].balance);
-  const approvalNeeded =
-    batch === false &&
-    reading &&
-    requested.some((a, i) => a! > q.tokens[i].allowance);
+  const check = spendCheck(detail, q, batch);
   const minLiquidity = safeMinimum(q.result?.liquidity, slippage);
   return {
     sides: q.tokens.map((token, i) => ({
@@ -622,32 +677,16 @@ export async function depositView(
       amount: q.shown[i],
     })),
     error: q.error,
-    spendReady,
+    spendReady: check.spendReady,
     readError: detail.reads
       .map((read) => read.error)
       .filter(Boolean)
       .join(" "),
-    insufficient,
-    approvalNeeded,
+    insufficient: check.insufficient,
+    approvalNeeded: check.approvalNeeded,
     minZero: !!q.result && minLiquidity === 0n,
-    canAdd:
-      !!detail.account &&
-      batch !== undefined &&
-      !!q.result &&
-      q.result.liquidity > 0n &&
-      minLiquidity > 0n &&
-      reading &&
-      !insufficient &&
-      !approvalNeeded,
-    approvals:
-      batch === false && spendReady
-        ? q.tokens
-            .map((token, i) => ({
-              index: i,
-              label: approvalLabel(token, q.shown[i] || "0"),
-            }))
-            .filter((a) => a.label !== "")
-        : [],
+    canAdd: canAdd(detail, q, batch, minLiquidity, check),
+    approvals: approvalsFor(q, batch, check.spendReady),
   };
 }
 

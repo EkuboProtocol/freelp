@@ -40,8 +40,26 @@ const sources: Sources = {
     positions.addLiquidity(chain, id, revision, tick, side, value, slippage),
   approvePositionToken: ([chain, id, revision, tick, index, amount]) =>
     positions.approvePositionToken(chain, id, revision, tick, index, amount),
-  positionNativeMax: ([chain, id, revision, tick, side, value, slippage, index]) =>
-    positions.positionNativeMax(chain, id, revision, tick, side, value, slippage, index),
+  positionNativeMax: ([
+    chain,
+    id,
+    revision,
+    tick,
+    side,
+    value,
+    slippage,
+    index,
+  ]) =>
+    positions.positionNativeMax(
+      chain,
+      id,
+      revision,
+      tick,
+      side,
+      value,
+      slippage,
+      index,
+    ),
 };
 
 export const answer: Answer = (source, args, store, storage, native) => {

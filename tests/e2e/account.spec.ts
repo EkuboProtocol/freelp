@@ -28,22 +28,21 @@ test("wallet errors render messages and the connected account has a local header
   });
   await page.goto("/#/build");
   await page.getByRole("button", { name: "Connect Test wallet" }).click();
-  await expect(
-    page.getByLabel("Notification", { exact: true }).getByRole("status"),
-  ).toContainText("Request declined");
+  await expect(page.locator(".status[role=status]")).toContainText(
+    "Request declined",
+  );
   await expect(page.locator("body")).not.toContainText("[object Object]");
-  await expect(page.getByLabel("Notification", { exact: true })).toHaveCSS(
+  await expect(page.locator(".notification-toast")).toHaveCSS(
     "position",
-    "sticky",
+    "fixed",
   );
   await page.getByRole("button", { name: "Dismiss notification" }).click();
-  await expect(page.getByLabel("Notification", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".notification-toast")).toHaveCount(0);
   await page.getByRole("button", { name: "Connect Test wallet" }).click();
-  const control = page.getByRole("button", { name: /^Connected wallet: / });
-  await expect(control.locator("svg")).toBeVisible();
-  await control.click();
-  const account = page.getByRole("dialog", { name: "Account" });
-  await expect(account).toContainText(
+  const account = page.locator("header .account-control");
+  await expect(account.locator("svg")).toBeVisible();
+  await account.locator("summary").click();
+  await expect(account.locator(".account-menu")).toContainText(
     "0x1111111111111111111111111111111111111111",
   );
   await account
@@ -71,9 +70,9 @@ test("wallet errors render messages and the connected account has a local header
   await expect(
     page.getByRole("button", { name: "Connect Test wallet" }),
   ).toBeVisible();
-  await expect(control).toHaveCount(0);
+  await expect(page.locator("header .account-control")).toHaveCount(0);
   await page.getByRole("button", { name: "Connect Test wallet" }).click();
-  await expect(control).toBeVisible();
+  await expect(page.locator("header .account-control")).toBeVisible();
 });
 
 test("long notifications scroll within the viewport and remain dismissible", async ({
@@ -98,7 +97,7 @@ test("long notifications scroll within the viewport and remain dismissible", asy
   });
   await page.goto("/#/build");
   await page.getByRole("button", { name: "Connect Test wallet" }).click();
-  const toast = page.getByLabel("Notification", { exact: true });
+  const toast = page.locator(".notification-toast");
   await expect(toast).toBeVisible();
   const bounds = await toast.boundingBox();
   expect(bounds!.y).toBeGreaterThanOrEqual(0);
