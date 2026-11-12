@@ -8,7 +8,8 @@ export function chainCatalog() {
   const seen = new Set<number>();
   return Object.values(chains)
     .filter((chain) => {
-      if (seen.has(chain.id) || !chain.rpcUrls.default.http.length) return false;
+      if (seen.has(chain.id) || !chain.rpcUrls.default.http.length)
+        return false;
       seen.add(chain.id);
       return true;
     })
@@ -16,7 +17,7 @@ export function chainCatalog() {
       id: chain.id,
       name: chain.name,
       nativeCurrency: chain.nativeCurrency,
-      rpcUrls: { default: { http: [chain.rpcUrls.default.http[0]] } },
+      rpcUrls: { default: { http: [chain.rpcUrls.default.http[0]!] } },
       testnet: chain.testnet === true,
     }))
     .sort((a, b) => a.id - b.id);

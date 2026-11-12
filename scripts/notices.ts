@@ -75,6 +75,21 @@ while (queue.length) {
     if (dependency) queue.push(dependency);
   }
 }
+// Exact's web runtime is compiled into the site from the pinned checkout
+// (scripts/exact.ts), not installed from npm.
+const exact = (
+  app as Package & { exact: { repository: string; commit: string } }
+).exact;
+packages.set("exact@" + exact.commit, {
+  info: { name: "exact", version: exact.commit, license: "MIT" },
+  text:
+    "Source: " +
+    exact.repository +
+    "/tree/" +
+    exact.commit +
+    "\n\n" +
+    (await readFile(join(root, ".exact-sdk", "LICENSE"), "utf8")),
+});
 let output =
   "Installed runtime dependency notices (including transitive dependencies).\nGenerated from the locked installation by scripts/notices.ts.\n";
 for (const [id, { info, text }] of [...packages].sort(([a], [b]) =>

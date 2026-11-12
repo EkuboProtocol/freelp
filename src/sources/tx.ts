@@ -24,6 +24,11 @@ export function txState() {
   return { busy: locked, status };
 }
 
+// A screen's own outcome after a transaction, replacing "Confirmed: …".
+export function report(next: string) {
+  if (!locked) setStatus(next);
+}
+
 export function clearStatus() {
   if (!locked) setStatus("");
 }
@@ -44,7 +49,8 @@ export async function execute(
   tx: Transaction | Transaction[],
 ): Promise<TxReply> {
   const account = await connectedAccount();
-  if (!account) return { ok: false, error: "Connect a wallet first.", hash: "" };
+  if (!account)
+    return { ok: false, error: "Connect a wallet first.", hash: "" };
   if (locked)
     return { ok: false, error: "A transaction is already pending.", hash: "" };
   const settings: Settings = configuredNetwork(chainId);

@@ -35,7 +35,7 @@ export async function page<T>(
   args: Record<string, unknown> = {},
 ): Promise<T> {
   if (!native) throw new PageError("The page is not connected.");
-  const reply = (await native.later({ op, ...args })) as T | Failure;
+  const reply: unknown = await native.later({ op, ...args });
   if (reply && typeof reply === "object" && "error" in reply) {
     const { code, message } = (reply as Failure).error;
     throw new PageError(message, code ?? undefined);

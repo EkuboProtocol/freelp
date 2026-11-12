@@ -13,7 +13,9 @@ test("viem mainnet catalog enables only the four deployed networks by default an
 }) => {
   await mockDeployments(page, undefined, [43114]);
   await page.goto("/#/settings");
-  await expect(page.locator(".network-row")).toHaveCount(MAINNET_CHAINS.length);
+  await expect(page.getByTestId("network-row")).toHaveCount(
+    MAINNET_CHAINS.length,
+  );
   await expect(
     page.getByRole("button", { name: "Add network", exact: true }),
   ).toHaveCount(0);
@@ -54,7 +56,9 @@ test("viem mainnet catalog enables only the four deployed networks by default an
     .getByRole("checkbox", { name: "Enable Ethereum", exact: true })
     .uncheck();
   await page.reload();
-  await expect(page.locator(".network-row")).toHaveCount(MAINNET_CHAINS.length);
+  await expect(page.getByTestId("network-row")).toHaveCount(
+    MAINNET_CHAINS.length,
+  );
   await expect(
     page.getByRole("checkbox", { name: "Enable Ethereum", exact: true }),
   ).not.toBeChecked();
@@ -64,7 +68,7 @@ test("viem mainnet catalog enables only the four deployed networks by default an
   expect(preferences.enabledChainIds).not.toContain(1);
   expect(preferences.rpcOverrides).toEqual({});
   await page.getByLabel("Search networks").fill("Sepolia");
-  await expect(page.locator(".network-row")).toHaveCount(0);
+  await expect(page.getByTestId("network-row")).toHaveCount(0);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 

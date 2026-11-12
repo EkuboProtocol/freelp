@@ -34,9 +34,11 @@ export function tokenSnapshot(
   if (cached) return cached.value;
   const value = readBalances(settings, owner, tokens);
   cache.set(key, { value });
-  void value.finally(() => {
-    if (cache.get(key)?.value === value) cache.delete(key);
-  }).catch(() => {});
+  void value
+    .finally(() => {
+      if (cache.get(key)?.value === value) cache.delete(key);
+    })
+    .catch(() => {});
   return value;
 }
 async function readBalances(

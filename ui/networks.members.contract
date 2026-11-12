@@ -18,7 +18,9 @@ members App
   state blocked = Blocked(chainId=0, name="", state="")
   resource catalog = networkCatalog(revision) as shape Catalog else empty()
   mutation networkEnabled as shape EnableReply then afterEnable
-  mutation networkDisabled as shape Reply then afterNetworkChange
+  // Each disable lands, in order; the row shows it off until the catalog agrees.
+  state turnedOff: number[] = []
+  mutation networkDisabled as shape Reply queue then afterNetworkChange
   mutation networksRestored as shape Reply then afterNetworkChange
   mutation rpcSaved as shape Reply then afterRpc
   mutation rpcReset as shape Reply then afterRpcReset
@@ -26,9 +28,11 @@ members App
     networkSearch = v
   action toggleNetwork(id: number, on: bool)
     if on
+      turnedOff = turnedOff.filter(x => x != id)
       checking = id
       send networkEnabled = enableNetwork(id)
     else
+      turnedOff = turnedOff.concat([id])
       send networkDisabled = disableNetwork(id)
   action afterEnable
     checking = 0

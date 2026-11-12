@@ -59,7 +59,10 @@ export function createBridge(win) {
         announced.some((w) => w.info.uuid === detail.info.uuid)
       )
         return;
-      announced.push({ info: { uuid: detail.info.uuid, name: detail.info.name }, provider: detail.provider });
+      announced.push({
+        info: { uuid: detail.info.uuid, name: detail.info.name },
+        provider: detail.provider,
+      });
       changed();
     });
     win.dispatchEvent(new win.Event("eip6963:requestProvider"));
@@ -90,7 +93,10 @@ export function createBridge(win) {
   const handlers = {
     async wallet() {
       return {
-        wallets: wallets().map((w) => ({ uuid: w.info.uuid, name: w.info.name })),
+        wallets: wallets().map((w) => ({
+          uuid: w.info.uuid,
+          name: w.info.name,
+        })),
         connected: connected?.info.uuid ?? "",
         account,
         chainId: connected && account ? await chainOf(connected.provider) : 0,
@@ -99,9 +105,12 @@ export function createBridge(win) {
     },
     async connect({ uuid }) {
       const selected = wallets().find((w) => w.info.uuid === uuid);
-      if (!selected) return failure(new Error("That wallet is no longer available."));
+      if (!selected)
+        return failure(new Error("That wallet is no longer available."));
       try {
-        const addresses = await selected.provider.request({ method: "eth_requestAccounts" });
+        const addresses = await selected.provider.request({
+          method: "eth_requestAccounts",
+        });
         if (!Array.isArray(addresses) || typeof addresses[0] !== "string")
           return failure(new Error("Wallet has no account."));
         unbind();
@@ -132,9 +141,15 @@ export function createBridge(win) {
     async request({ method, params }) {
       if (!WALLET_METHODS.has(method))
         return failure(new Error(`FreeLP does not send ${method} to wallets.`));
-      if (!connected || !account) return failure(new Error("Connect a wallet first."));
+      if (!connected || !account)
+        return failure(new Error("Connect a wallet first."));
       try {
-        return { result: (await connected.provider.request(params === undefined ? { method } : { method, params })) ?? null };
+        return {
+          result:
+            (await connected.provider.request(
+              params === undefined ? { method } : { method, params },
+            )) ?? null,
+        };
       } catch (error) {
         return failure(error);
       }
@@ -144,7 +159,8 @@ export function createBridge(win) {
       try {
         for (let i = 0; i < win.localStorage.length; i++) {
           const key = win.localStorage.key(i);
-          if (key?.startsWith(STORAGE_PREFIX)) values[key] = win.localStorage.getItem(key);
+          if (key?.startsWith(STORAGE_PREFIX))
+            values[key] = win.localStorage.getItem(key);
         }
         return { values };
       } catch {
@@ -152,7 +168,8 @@ export function createBridge(win) {
       }
     },
     async storageSet({ key, value }) {
-      if (typeof key !== "string" || !key.startsWith(STORAGE_PREFIX)) return failure(new Error("Invalid storage key."));
+      if (typeof key !== "string" || !key.startsWith(STORAGE_PREFIX))
+        return failure(new Error("Invalid storage key."));
       try {
         win.localStorage.setItem(key, value);
         return {};
@@ -161,18 +178,29 @@ export function createBridge(win) {
       }
     },
     async asset({ path }) {
-      if (typeof path !== "string" || !/^[a-z0-9/_.-]+$/i.test(path) || path.includes(".."))
+      if (
+        typeof path !== "string" ||
+        !/^[a-z0-9/_.-]+$/i.test(path) ||
+        path.includes("..")
+      )
         return failure(new Error("Invalid asset path."));
       try {
-        const response = await win.fetch(new URL(path, win.document.baseURI), { redirect: "error" });
-        return { status: response.status, type: response.headers.get("content-type") ?? "", text: response.ok ? await response.text() : "" };
+        const response = await win.fetch(new URL(path, win.document.baseURI), {
+          redirect: "error",
+        });
+        return {
+          status: response.status,
+          type: response.headers.get("content-type") ?? "",
+          text: response.ok ? await response.text() : "",
+        };
       } catch (error) {
         return failure(error);
       }
     },
     // The data module's own topics: a source that watched one reads again.
     async announce({ topic }) {
-      if (!["tx", "balances"].includes(topic)) return failure(new Error("Unknown topic."));
+      if (!["tx", "balances"].includes(topic))
+        return failure(new Error("Unknown topic."));
       notify(topic);
       return {};
     },
@@ -187,7 +215,9 @@ export function createBridge(win) {
   };
 
   async function later(request) {
-    const handler = Object.hasOwn(handlers, request?.op) ? handlers[request.op] : null;
+    const handler = Object.hasOwn(handlers, request?.op)
+      ? handlers[request.op]
+      : null;
     if (!handler) return failure(new Error("Unknown request."));
     return handler(request);
   }

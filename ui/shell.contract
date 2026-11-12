@@ -24,7 +24,7 @@ component Shell
             row gap=8 align-items="center"
               Identicon(cells=session.identicon)
               text session.short font-family="monospace"
-          dialog id="account-menu" aria-label="Account" closedby="any" class=Menu
+          dialog id="account-menu" aria-label="Account" closedby="any" class=Menu testId="account-menu"
             column gap=10
               text session.account font-family="monospace" overflow-wrap="anywhere"
               button press=copy class=Plain

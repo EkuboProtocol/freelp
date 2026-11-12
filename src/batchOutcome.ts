@@ -3,10 +3,7 @@ import { rpc } from "./rpc";
 import type { Settings } from "./types";
 import { isTransactionHash, type TransactionState } from "./transactionStatus";
 
-export async function batchOutcome(
-  settings: Settings,
-  result: CallsStatus,
-) {
+export async function batchOutcome(settings: Settings, result: CallsStatus) {
   const client = rpc(settings);
   if ((await client.getChainId()) !== settings.chainId)
     throw new Error("RPC chain ID does not match this transaction.");

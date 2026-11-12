@@ -6,6 +6,7 @@ members App
   state revision = 0
   state status = ""
   state copied = false
+  state commandCopied = false
   resource session = loadSession(revision) as shape Session else empty()
   mutation walletConnected as shape Reply then afterWallet
   mutation walletDisconnected as shape Reply then afterWallet
@@ -24,6 +25,13 @@ members App
   action copyAccount
     copyText(session.account)
     copied = true
+  task commandCopiedTimer when commandCopied
+    after(1500, uncopyCommand)
+  action copyCommand(text: string)
+    copyText(text)
+    commandCopied = true
+  action uncopyCommand
+    commandCopied = false
   action uncopy
     copied = false
   action dismissStatus

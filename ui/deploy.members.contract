@@ -1,0 +1,20 @@
+// Deploy page state: the network's contracts and the deployment requests.
+use DeployView from "./deploy.contract"
+use TxReply from "./shapes.contract"
+
+members App
+  state deployRefresh = 0
+  state deployDetails = false
+  resource deployment = deployView(page == "deploy" ? route : "", revision + deployRefresh) as shape DeployView else empty()
+  mutation deployed as shape TxReply then afterDeploy
+  mutation deployedAll as shape TxReply then afterDeploy
+  action deployContract(kind: string)
+    send deployed = deployContract(deployment.chainId, kind)
+  action deployAllContracts
+    send deployedAll = deployAll(deployment.chainId)
+  action afterDeploy
+    revision = revision + 1
+  action refreshDeployment
+    deployRefresh = deployRefresh + 1
+  action toggleDeployDetails
+    deployDetails = not deployDetails

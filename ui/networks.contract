@@ -29,6 +29,7 @@ component NetworksPage
     busy: bool
     checking: number
     toggle: action
+    turnedOff: number[]
     restore: action
     edit: action
     editing: number
@@ -54,9 +55,9 @@ component NetworksPage
         input value=search input=setSearch aria-label="Search networks" placeholder="Search networks" class=Field
         column
           for c in catalog.rows.filter(r => `${r.name} ${r.id}`.toLowerCase().includes(search.trim().toLowerCase())) key=`${c.id}`
-            row class=NetworkRow
+            row class=NetworkRow testId="network-row"
               row gap=12 align-items="center" flex=1 min-width=0
-                input type="checkbox" checked=c.enabled change=toggle(c.id) aria-label=`Enable ${c.name}` aria-busy=(checking == c.id) disabled=(busy or checking != 0)
+                input type="checkbox" checked=(c.enabled and not turnedOff.includes(c.id)) change=toggle(c.id) aria-label=`Enable ${c.name}` aria-busy=(checking == c.id) disabled=(busy or checking != 0)
                 column min-width=0
                   text c.name font-weight=700
                   text `${c.id} · ${c.symbol} · catalog · ${c.enabled ? "enabled" : "disabled"} · RPC ${c.custom ? "custom" : "default"} · ${checking == c.id ? "Checking…" : c.state}` font-size=12 color="#555"

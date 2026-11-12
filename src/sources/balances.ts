@@ -1,4 +1,10 @@
-import { formatUnits, getAddress, isAddress, zeroAddress, type Address } from "viem";
+import {
+  formatUnits,
+  getAddress,
+  isAddress,
+  zeroAddress,
+  type Address,
+} from "viem";
 import { token, type Token } from "../contracts";
 import { displayAmount } from "../displayAmount";
 import { errorMessage } from "../errors";
@@ -35,7 +41,11 @@ export const NO_BALANCE: Balance = {
   fractions: [],
 };
 
-function view(value: Pick<Token, "address" | "symbol" | "decimals" | "balance"> & { allowance?: bigint }): Balance {
+function view(
+  value: Pick<Token, "address" | "symbol" | "decimals" | "balance"> & {
+    allowance?: bigint;
+  },
+): Balance {
   const native = value.address === zeroAddress;
   return {
     state: "ready",
@@ -49,7 +59,10 @@ function view(value: Pick<Token, "address" | "symbol" | "decimals" | "balance"> 
     allowance: (value.allowance ?? 0n).toString(),
     fractions: (native ? [25, 50] : [25, 50, 100]).map((percent) => ({
       label: `${percent}%`,
-      amount: formatUnits((value.balance * BigInt(percent)) / 100n, value.decimals),
+      amount: formatUnits(
+        (value.balance * BigInt(percent)) / 100n,
+        value.decimals,
+      ),
     })),
   };
 }

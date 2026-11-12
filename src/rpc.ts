@@ -106,7 +106,8 @@ function receipt(value: unknown): Receipt {
 }
 
 export function rpc(settings: Settings) {
-  const send = transport(rpcEndpoint(settings));
+  const url = rpcEndpoint(settings);
+  const send = transport(url);
   const quantity = async (method: string, params: unknown[] = []) =>
     BigInt((await send(method, params)) as Hex);
   const call = async ({
@@ -140,6 +141,7 @@ export function rpc(settings: Settings) {
   }
   const client = {
     ccipRead: false as const,
+    transport: { url },
     getChainId: async () => Number(await quantity("eth_chainId")),
     getBlockNumber: (_options?: { cacheTime?: number }) =>
       quantity("eth_blockNumber"),
@@ -217,7 +219,10 @@ export function rpc(settings: Settings) {
     },
     // viem's default: the latest base fee with 20% headroom plus the RPC's tip.
     async estimateFeesPerGas() {
-      const latest = (await send("eth_getBlockByNumber", ["latest", false])) as {
+      const latest = (await send("eth_getBlockByNumber", [
+        "latest",
+        false,
+      ])) as {
         baseFeePerGas?: Hex | null;
       } | null;
       if (!latest?.baseFeePerGas) throw new Eip1559FeesNotSupportedError();

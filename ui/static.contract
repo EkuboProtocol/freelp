@@ -27,6 +27,8 @@ component AboutPage
     version: string
     contracts: string
     contractsUrl: string
+    copy: action
+    copied: bool
   view
     section aria-labelledby="about-title" max-width="76ch"
       column
@@ -38,8 +40,10 @@ component AboutPage
             text "freelp.ekubo.org"
           text "serves this release. Your wallet still signs transactions in the browser."
         text "Run locally" role="heading" aria-level=3 class=H3
-        row class=Command
+        row class=Command testId="command"
           text "bunx @ekubo/freelp@latest" font-family="monospace" flex=1
+          button press=copy("bunx @ekubo/freelp@latest") class=CopyButton
+            text (copied ? "Copied" : "Copy command")
         text class=Para
           text "npx @ekubo/freelp@latest" font-family="monospace"
           text " works the same way. Add a version suffix such as "
@@ -75,7 +79,10 @@ style Para
   margin="0 0 16px"
 
 style Command
-  border="1px solid #999" padding="8px 12px" background-color="#fff" margin-bottom=8
+  display="flex" align-items="center" gap=12 border="1px solid #999" padding="8px 12px" background-color="#fff" margin-bottom=8
 
 style Inline
   display="flex" flex-wrap="wrap" column-gap="0.3em" margin="0 0 16px"
+
+style CopyButton
+  border="1px solid #666" padding="4px 10px" background-color="#fff"

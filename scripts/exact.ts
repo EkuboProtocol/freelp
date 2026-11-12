@@ -9,7 +9,12 @@ const { repository, commit } = pkg.exact;
 const env = { ...process.env, EXACT: SDK, EXACT_FEEDBACK: "0" };
 
 async function run(cmd: string[], cwd = ".") {
-  const child = Bun.spawn(cmd, { cwd, env, stdout: "inherit", stderr: "inherit" });
+  const child = Bun.spawn(cmd, {
+    cwd,
+    env,
+    stdout: "inherit",
+    stderr: "inherit",
+  });
   if (await child.exited) throw new Error(`Failed: ${cmd.join(" ")}`);
 }
 async function output(cmd: string[], cwd = ".") {
@@ -18,7 +23,8 @@ async function output(cmd: string[], cwd = ".") {
 }
 
 async function setup() {
-  if (!/^[0-9a-f]{40}$/.test(commit)) throw new Error("Pin a full Exact commit.");
+  if (!/^[0-9a-f]{40}$/.test(commit))
+    throw new Error("Pin a full Exact commit.");
   if (!existsSync(`${SDK}/.git`)) {
     await run(["git", "init", "-q", SDK]);
     await run(["git", "remote", "add", "origin", repository], SDK);

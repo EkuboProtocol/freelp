@@ -6,6 +6,7 @@ use Session, Reply from "./ui/shapes.contract"
 use Shell, Footer from "./ui/shell.contract"
 use AboutPage, TermsPage from "./ui/static.contract"
 use NetworksPage, Catalog from "./ui/networks.contract"
+use DeployPage from "./ui/deploy.contract"
 
 routes nav
   home "/"
@@ -14,6 +15,7 @@ routes nav
 component App
   members "./ui/session.members.contract"
   members "./ui/networks.members.contract"
+  members "./ui/deploy.members.contract"
   derive route = fragment(top(nav))
   derive page = pageOf(route)
   view
@@ -21,17 +23,19 @@ component App
       head title="FreeLP" description="Manage EVM liquidity positions with your wallet and RPC endpoints. No application fees, indexers, or hosted metadata."
       Shell(page=page, session=session, busy=busy, connect=connectWallet, disconnect=disconnectWallet, copy=copyAccount, copied=copied)
       if notification != ""
-        row aria-label="Notification" class=Toast
+        row aria-label="Notification" class=Toast testId="notification-toast"
           text notification role="status" tabindex=0 class=Status flex=1
           button press=dismissStatus aria-label="Dismiss notification"
             text "×"
       column id="main-content" tabindex=-1
         if page == "networks"
-          NetworksPage(catalog=catalog, search=networkSearch, setSearch=setNetworkSearch, busy=busy, checking=checking, toggle=toggleNetwork, restore=restoreNetworks, edit=openRpc, editing=editing, rpcDraft=rpcDraft, setRpcDraft=setRpcDraft, rpcError=rpcError, rpcBusy=pending(rpcSaved) or pending(rpcReset), saveRpc=saveRpc, defaultRpc=useDefaultRpc, closeRpc=closeRpc, blocked=blocked, dismissBlocked=dismissBlocked)
+          NetworksPage(catalog=catalog, search=networkSearch, setSearch=setNetworkSearch, busy=busy, checking=checking, toggle=toggleNetwork, turnedOff=turnedOff, restore=restoreNetworks, edit=openRpc, editing=editing, rpcDraft=rpcDraft, setRpcDraft=setRpcDraft, rpcError=rpcError, rpcBusy=pending(rpcSaved) or pending(rpcReset), saveRpc=saveRpc, defaultRpc=useDefaultRpc, closeRpc=closeRpc, blocked=blocked, dismissBlocked=dismissBlocked)
+        if page == "deploy"
+          DeployPage(view=deployment, loading=pending(deployment), disabled=(busy or session.account == ""), deploy=deployContract, deployAll=deployAllContracts, refresh=refreshDeployment, details=deployDetails, toggleDetails=toggleDeployDetails)
         if page == "terms"
           TermsPage()
         if page == "build"
-          AboutPage(version=session.version, contracts=session.contracts, contractsUrl=session.contractsUrl)
+          AboutPage(version=session.version, contracts=session.contracts, contractsUrl=session.contractsUrl, copy=copyCommand, copied=commandCopied)
         if page == "positions"
           column
             text "Your FreeLP positions" role="heading" aria-level=2 class=PageTitle
