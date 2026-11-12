@@ -1,5 +1,6 @@
 // Deploy contracts: the fixed-address contracts this build needs on a
 // network, each checked against the bundled artifacts before any deployment.
+use TextLink from "./shapes.contract"
 
 shape DeployCard
   kind: string
@@ -45,7 +46,7 @@ component DeployPage
         if view.state == "none" and not loading
           row gap=6
             text "Choose a network in Networks to deploy contracts."
-            link href="#/networks" color="inherit"
+            link href="#/networks" class=TextLink
               text "Networks"
         if view.state == "chain"
           row class=Inline
@@ -90,7 +91,7 @@ component DeployPage
           if view.complete
             row role="status" class=Panel gap=6 flex-wrap="wrap"
               text (view.enabled ? "All contracts are deployed and this network is enabled." : "All contracts are deployed. Now enable this network in Networks.")
-              link href="#/networks" color="inherit"
+              link href="#/networks" class=TextLink
                 text "Networks"
           button press=toggleDetails aria-expanded=details aria-controls="deploy-details" class=Disclosure
             text `${details ? "▾" : "▸"} Deterministic deployment details`

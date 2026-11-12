@@ -1,8 +1,9 @@
 // The static pages: Terms of Service and About FreeLP.
+use TextLink from "./shapes.contract"
 
 component TermsPage
   view
-    section aria-labelledby="terms-title" max-width="76ch" margin="0 auto"
+    section aria-labelledby="terms-title" max-width="47.5rem" margin="0 auto"
       column
         text "Terms of Service" id="terms-title" role="heading" aria-level=2 class=H2
         text "Entirely at your own risk" role="heading" aria-level=3 class=H3
@@ -19,7 +20,7 @@ component TermsPage
         text "To the maximum extent permitted by applicable law, no author, copyright holder, contributor, maintainer, distributor, deployer, or host accepts liability for any claim, loss, damage, cost, or other liability arising from your use of, inability to use, or reliance on this application, website, software, information, or any connected contract or system. This includes lost assets, profits, data, opportunities, and direct, indirect, incidental, consequential, special, exemplary, or punitive damages, under contract, tort including negligence, or any other legal theory, even if advised of the possibility. You bear the consequences of what you do with this software. No statement here excludes liability or rights that applicable law does not permit to be excluded." class=Para
         text "MIT license" role="heading" aria-level=3 class=H3
         text "FreeLP software is licensed under the MIT license. These notices do not narrow the permissions granted by that license, waive copyright, or replace the licenses of included components. The MIT warranty disclaimer and limitation of liability continue to apply. Preserve required copyright and license notices when copying or distributing the software." class=Para
-        link href="./licenses/freelp.txt"
+        link href="./licenses/freelp.txt" class=TextLink
           text "Read the MIT license"
 
 component AboutPage
@@ -30,13 +31,13 @@ component AboutPage
     copy: action
     copied: bool
   view
-    section aria-labelledby="about-title" max-width="76ch"
+    section aria-labelledby="about-title" max-width="47.5rem"
       column
         text "About FreeLP" id="about-title" role="heading" aria-level=2 class=H2
         text "FreeLP is an ownerless liquidity position manager for Ekubo on EVM networks. It charges no application fees and talks only to the RPC endpoints you configure and the wallet you connect." class=Para
         text "Hosted version" role="heading" aria-level=3 class=H3
         row class=Inline
-          link href="https://freelp.ekubo.org/"
+          link href="https://freelp.ekubo.org/" class=TextLink
             text "freelp.ekubo.org"
           text "serves this release. Your wallet still signs transactions in the browser."
         text "Run locally" role="heading" aria-level=3 class=H3
@@ -52,21 +53,21 @@ component AboutPage
         text "Version and source" role="heading" aria-level=3 class=H3
         row class=Inline
           text `FreeLP ${version} · contracts pinned to`
-          link href=contractsUrl
+          link href=contractsUrl class=TextLink
             text contracts
           text "·"
-          link href="https://github.com/EkuboProtocol/freelp"
+          link href="https://github.com/EkuboProtocol/freelp" class=TextLink
             text "source repository"
         text "Contract addresses are fixed by this build. Each network's Deploy page shows them next to a code check against the bundled artifacts." class=Para
         text "Data and privacy" role="heading" aria-level=3 class=H3
         text "Everything on-chain comes from the RPC endpoints configured in Networks. Network preferences and imported token metadata stay in this browser. Loading the hosted site involves distribution traffic; nothing else leaves the browser." class=Para
         text "Licenses" role="heading" aria-level=3 class=H3
         row gap=12 flex-wrap="wrap"
-          link href="./licenses/freelp.txt"
+          link href="./licenses/freelp.txt" class=TextLink
             text "MIT license"
-          link href="./licenses/contracts.txt"
+          link href="./licenses/contracts.txt" class=TextLink
             text "Contract license"
-          link href="./licenses/dependencies.txt"
+          link href="./licenses/dependencies.txt" class=TextLink
             text "Dependency notices"
 
 style H2
@@ -79,10 +80,10 @@ style Para
   margin="0 0 16px"
 
 style Command
-  display="flex" align-items="center" gap=12 border="1px solid #999" padding="8px 12px" background-color="#fff" margin-bottom=8
+  display="flex" align-items="center" gap=12 border="1px solid #e1e1e1" border-radius=14 padding="16px" background-color="#fff" margin-bottom=8 font-size=14
 
 style Inline
   display="flex" flex-wrap="wrap" column-gap="0.3em" margin="0 0 16px"
 
 style CopyButton
-  border="1px solid #666" padding="4px 10px" background-color="#fff"
+  border="1px solid #ddd" border-radius=10 padding="8px 12px" background-color="#fff"
