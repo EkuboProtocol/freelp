@@ -170,6 +170,12 @@ export function createBridge(win) {
         return failure(error);
       }
     },
+    // The data module's own topics: a source that watched one reads again.
+    async announce({ topic }) {
+      if (!["tx", "balances"].includes(topic)) return failure(new Error("Unknown topic."));
+      notify(topic);
+      return {};
+    },
     async copy({ text }) {
       try {
         await win.navigator.clipboard.writeText(String(text));

@@ -20,9 +20,9 @@ component App
     main testId="app" class=Page
       head title="FreeLP" description="Manage EVM liquidity positions with your wallet and RPC endpoints. No application fees, indexers, or hosted metadata."
       Shell(page=page, session=session, busy=busy, connect=connectWallet, disconnect=disconnectWallet, copy=copyAccount, copied=copied)
-      if status != "" or session.notice != ""
+      if notification != ""
         row aria-label="Notification" class=Toast
-          text (status != "" ? status : session.notice) role="status" tabindex=0 class=Status flex=1
+          text notification role="status" tabindex=0 class=Status flex=1
           button press=dismissStatus aria-label="Dismiss notification"
             text "×"
       column id="main-content" tabindex=-1

@@ -17,3 +17,13 @@ shape Session
 shape Reply
   ok: bool
   error: string
+
+shape TxState
+  busy: bool
+  status: string
+
+// A transaction's outcome: the hash once it confirmed, else why not.
+shape TxReply
+  ok: bool
+  error: string
+  hash: string

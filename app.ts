@@ -4,12 +4,14 @@
 import type { Answer, Sources } from "./app.contract.d.ts";
 import { attach } from "./src/page";
 import * as shell from "./src/sources/shell";
+import * as tx from "./src/sources/tx";
 
 // Reads go to whichever RPC the person configures, and to a local node.
 export const grants = "net.fetch https:\nnet.fetch http:";
 
 const sources: Sources = {
   loadSession: () => shell.session(),
+  txState: async () => tx.txState(),
   connectWallet: ([uuid]) => shell.connectWallet(uuid),
   disconnectWallet: () => shell.disconnectWallet(),
   dismissNotice: () => shell.dismissNotice(),

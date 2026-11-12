@@ -15,6 +15,7 @@ import {
   type NetworkIssueState,
 } from "../networkVerification";
 import { page, ready, watch } from "../page";
+import { clearStatus } from "./tx";
 import { rpc } from "../rpc";
 import { save, storageWarning } from "../storage";
 import { ensureNativeCurrency } from "../tokens";
@@ -69,6 +70,7 @@ export async function disconnectWallet(): Promise<Reply> {
   return page("disconnect").then(() => ok, failed);
 }
 export async function dismissNotice(): Promise<Reply> {
+  clearStatus();
   return page("dismiss").then(() => ok, failed);
 }
 export async function copyText(text: string): Promise<Reply> {
