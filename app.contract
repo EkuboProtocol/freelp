@@ -23,9 +23,9 @@ component App
   derive route = fragment(top(nav))
   derive page = pageOf(route)
   view
-    main testId="app" class=Page
+    main testId="app" class=Page padding=(createViewport.width <= 750 ? "20px" : "28px 36px")
       head title="FreeLP" description="Manage EVM liquidity positions with your wallet and RPC endpoints. No application fees, indexers, or hosted metadata."
-      Shell(page=page, session=session, busy=busy, connect=connectWallet, disconnect=disconnectWallet, copy=copyAccount, copied=copied)
+      Shell(page=page, session=session, busy=busy, connect=connectWallet, disconnect=disconnectWallet, copy=copyAccount, copied=copied, narrow=(createViewport.width <= 600))
       if notification != ""
         row aria-label="Notification" class=Toast testId="notification-toast"
           text notification role="status" tabindex=0 class=Status flex=1
@@ -76,7 +76,7 @@ component App
 fn pageOf(route: string): string = route == "/networks" or route == "/settings" ? "networks" : route == "/terms" ? "terms" : route == "/build" ? "build" : route.startsWith("/create") ? "create" : route.startsWith("/deploy") ? "deploy" : "positions"
 
 style Page
-  max-width=1180 margin="0 auto" padding="28px 36px" font-family="system-ui, sans-serif" line-height=1.5 color="#171717" background-color="#f6f6f6" min-height="100vh" box-sizing="border-box"
+  color-scheme="light" max-width=1180 margin="0 auto" padding="28px 36px" font-family="system-ui, sans-serif" line-height=1.5 color="#171717" background-color="#f6f6f6" min-height="100vh" box-sizing="border-box"
 
 style Toast
   position="sticky" bottom=24 margin-left="auto" max-width=420 gap=8 align-items="start" background-color="#fff" border="1px solid #111" padding=4 z-index=10

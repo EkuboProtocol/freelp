@@ -10,10 +10,12 @@ component Shell
     disconnect: action
     copy: action
     copied: bool
+    narrow: bool
   view
-    header class=Header
+    // Narrow screens put the navigation on its own row under the title.
+    header class=Header flex-wrap=(narrow ? "wrap" : "nowrap")
       text "FreeLP" role="heading" aria-level=1 class=Title
-      nav aria-label="Main navigation" display="flex" flex-wrap="wrap" gap=20 flex=1
+      nav aria-label="Main navigation" display="flex" flex-wrap="wrap" gap=20 flex=(narrow ? "1 0 100%" : "1") order=(narrow ? 3 : 0)
         link href="#/positions" aria-current=(page == "positions" ? "page" : "false") class=NavLink border-bottom=(page == "positions" ? "2px solid #111" : "2px solid transparent")
           text "Positions"
         link href="#/networks" aria-current=(page == "networks" ? "page" : "false") class=NavLink border-bottom=(page == "networks" ? "2px solid #111" : "2px solid transparent")
