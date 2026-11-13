@@ -1,0 +1,317 @@
+// Create position: the form lives in the URL after `#/create?`; app.ts
+// (src/sources/create.ts) reads it for the pool, the preview and the gate.
+use CForm, CreateSetup, CreateTokens, PickerBalances, Candidate, Imported, Gate, Registry, Snap, PoolView, Quote, ModeReply, RangeReply, SpacingCandidate, CreateViewport, parseForm, formHash, withRange, chooseToken, sameToken, otherToken, matches, item from "./create.contract"
+use Reply, TxReply from "./shapes.contract"
+use Balance, MaxReply from "./tokens.contract"
+
+shape CreateTime
+  epochAtZero: number
+  utcOffset: number
+
+members App
+  // The setup and the form the route names.
+  resource createSetup = createSetup(revision) when page == "create" as shape CreateSetup else empty()
+  derive cf = parseForm(route, createSetup.active)
+  resource createTokens = createTokens(cf.chain, revision, tokenImports) when page == "create" and createSetup.active != 0 as shape CreateTokens else empty()
+  resource createSnap = createSnap(route, revision, tokenImports) when page == "create" as shape Snap else empty()
+  resource createGate = createGate(cf.chain, revision, gateRetry) when page == "create" as shape Gate else empty()
+  resource createRegistry = createRegistry(cf.chain, cf.a, cf.b, revision, registryRetry, registryPages) when page == "create" as shape Registry else empty()
+  resource createPool = createPool(route, poolEpoch, zoom, tokenImports) when page == "create" and cf.a != "" and cf.b != "" as shape PoolView else empty()
+  resource createQuote = createQuote(route, revision * 1000 + balanceRetry, poolEpoch) when page == "create" and cf.a != "" and cf.b != "" as shape Quote else empty()
+  resource createBalance0 = createBalance(cf.chain, cf.a, revision, balanceRetry) when page == "create" and session.account != "" as shape Balance else empty()
+  resource createBalance1 = createBalance(cf.chain, cf.b, revision, balanceRetry) when page == "create" and session.account != "" as shape Balance else empty()
+  resource pickerBalances = pickerBalances(cf.chain, revision, pickerRefresh) when page == "create" and pickerSide >= 0 and session.account != "" as shape PickerBalances else empty()
+  resource createTime = exactTime() as shape CreateTime
+  resource createViewport = exactViewport() as shape CreateViewport
+  resource createSpacing = spacingCandidate(rawSpacing ? spacingTicks : spacingDraft, rawSpacing) when page == "create" and spacingOpen as shape SpacingCandidate else empty()
+  derive pickerRows = createTokens.rows.filter(r => matches(r, pickerSearch))
+  derive pickerCount = pickerRows.length
+  derive candidate = match tokenRead { case some(r) => r, case none => Candidate(ok=false, error="", address="", symbol="", name="", decimals=0) }
+  derive showCandidate = candidateFor != "" and candidateFor == pickerSearch and candidate.ok and not pending(tokenRead)
+  state gateRetry = 0
+  state registryRetry = 0
+  state registryPages = 1
+  state poolRetry = 0
+  // Pool state is read again on retry and after every confirmed write.
+  derive poolEpoch = revision * 1000 + poolRetry
+  state balanceRetry = 0
+  state tokenImports = 0
+  state zoom = 50
+  state advanced = false
+  state rawFee = false
+  state rawSpacing = false
+  state spacingDraft = ""
+  state spacingTicks = ""
+  state spacingOpen = false
+  state summaryOpen = false
+  state detailsOpen = false
+  state limitsOpen = false
+  state depthOpen = false
+  state fieldEditing = ""
+  state fieldDraft = ""
+  state pickerSide = -1
+  state importSide = -1
+  state pickerSearch = ""
+  state pickerRefresh = 0
+  state pickerIndex = -1
+  state pickerError = ""
+  state candidateFor = ""
+  state rangeError = ""
+  state poolStamp = 0
+  state maxSide = 0
+  state maxMessages = ["", ""]
+  mutation networkSelected as shape Reply
+  mutation tokenRead as shape Candidate then afterTokenRead
+  mutation tokenImported as shape Imported then afterImport
+  mutation rangeMode as shape ModeReply then afterRangeMode
+  mutation rangePicked as shape RangeReply then afterRangePicked
+  mutation positionCreated as shape TxReply then afterCreate
+  mutation approvalSent as shape TxReply then afterTx
+  mutation maxEstimated as shape MaxReply then afterCreateMax
+  task stampPool when page == "create" and createPool.state == "ready" key=createPool.key
+    after(1, markPool)
+  action markPool
+    poolStamp = performanceNow()
+  // Every edit writes the whole form back into the URL, in place.
+  action editField(field: string, shown: string)
+    fieldEditing = field
+    fieldDraft = shown
+  action endEdit
+    fieldEditing = ""
+  action pickNetwork(v: string)
+    let chain = match parseNumber(v) { case some(n) => n, case none => cf.chain }
+    send networkSelected = selectNetwork(chain)
+    nav = replace(nav, path("home") + "#" + formHash(parseForm("/create", chain)))
+  // Amounts: the side typed is the one specified; the other follows.
+  action setAmount0(v: string)
+    fieldDraft = v
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, specified=0, maxA=v, maxB="")))
+  action setAmount1(v: string)
+    fieldDraft = v
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, specified=1, maxA="", maxB=v)))
+  action fillAmount0(v: string)
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, specified=0, maxA=v, maxB="")))
+  action fillAmount1(v: string)
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, specified=1, maxA="", maxB=v)))
+  action setSlippage(v: string)
+    fieldDraft = v
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, slippage=(v == "" ? "0" : v))))
+  action setFee(v: string)
+    fieldDraft = v
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, fee=v, exactFee="")))
+  action setExactFee(v: string)
+    fieldDraft = v
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, exactFee=v)))
+  action setKind(v: string)
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, kind=v)))
+  action setExtension(v: string)
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, extension=v)))
+  action setAmplification(v: string)
+    fieldDraft = v
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, amplification=v)))
+  action setCenter(v: string)
+    fieldDraft = v
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, center=v)))
+  action toggleCreateAdvanced(on: bool)
+    advanced = on
+  action toggleRawFee(on: bool)
+    rawFee = on
+  action toggleSummary
+    summaryOpen = not summaryOpen
+  action toggleDetails
+    detailsOpen = not detailsOpen
+  action toggleLimits
+    limitsOpen = not limitsOpen
+  action toggleDepth
+    depthOpen = not depthOpen
+  // Tick spacing.
+  action toggleSpacing
+    spacingOpen = not spacingOpen
+    spacingDraft = createSnap.spacingPercent
+    spacingTicks = `${createSnap.spacing}`
+  action toggleRawSpacing(on: bool)
+    rawSpacing = on
+  action setSpacingDraft(v: string)
+    if rawSpacing
+      spacingTicks = v
+    else
+      spacingDraft = v
+  // Applying closes the control, as the React control remounted closed.
+  action applySpacing(n: number)
+    spacingOpen = false
+    rawSpacing = false
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, spacing=`${n}`)))
+  // Registered pools.
+  action pickPool(exactFee: string, fee: string, extension: string, kind: string, spacing: number, center: string, amplification: string)
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, exactFee=exactFee, fee=fee, extension=extension, kind=kind, spacing=(kind == "concentrated" ? `${spacing}` : cf.spacing), center=center, amplification=amplification, raw=false, full=false, price0="", price1="", price2="", tick0="", tick1="", tick2="", maxA="", maxB="", specified=0)))
+  action retryRegistry
+    registryPages = 1
+    registryRetry = registryRetry + 1
+  action moreRegistry
+    registryPages = registryPages + 1
+  // The range.
+  action setBound(index: number, v: string)
+    fieldDraft = v
+    nav = replace(nav, path("home") + "#" + formHash(withRange(cf, createPool.prices, createPool.ticks, index, v)))
+  action setInitial(v: string)
+    fieldDraft = v
+    nav = replace(nav, path("home") + "#" + formHash(cf.raw ? CForm(cf, tick2=v) : CForm(cf, price2=v)))
+  action toggleFull
+    nav = replace(nav, path("home") + "#" + formHash(CForm(cf, full=not cf.full)))
+  action toggleRangeMode
+    send rangeMode = createRangeMode(route, poolEpoch)
+  action afterRangeMode
+    match rangeMode
+      case some(r)
+        rangeError = r.error
+        if r.ok
+          if cf.raw
+            nav = replace(nav, path("home") + "#" + formHash(CForm(cf, raw=false, full=false, price0=r.v0, price1=r.v1, price2=r.v2)))
+          else
+            nav = replace(nav, path("home") + "#" + formHash(CForm(cf, raw=true, full=false, tick0=r.v0, tick1=r.v1, tick2=r.v2)))
+      case none
+        rangeError = ""
+  action presetRange(n: number)
+    send rangePicked = createRangeAt(route, poolEpoch, 0, 0, n)
+  action chartRange(lower: number, upper: number)
+    send rangePicked = createRangeAt(route, poolEpoch, lower, upper, 0)
+  action afterRangePicked
+    match rangePicked
+      case some(r)
+        if r.ok
+          nav = replace(nav, path("home") + "#" + formHash(CForm(cf, raw=false, full=false, price0=r.v0, price1=r.v1, price2=r.v2)))
+      case none
+        rangeError = ""
+  action zoomOut
+    zoom = min(256, zoom * 2)
+  action zoomIn
+    zoom = max(4, zoom / 2)
+  action refreshPool
+    poolRetry = poolRetry + 1
+    balanceRetry = balanceRetry + 1
+  action retryGate
+    gateRetry = gateRetry + 1
+  action retryBalance
+    balanceRetry = balanceRetry + 1
+  // The deposit.
+  action estimateMax(side: number)
+    maxSide = side
+    send maxEstimated = createMax(route, revision * 1000 + balanceRetry, poolEpoch, side)
+  action afterCreateMax
+    match maxEstimated
+      case some(r)
+        maxMessages = maxSide == 0 ? [r.message, item(maxMessages, 1)] : [item(maxMessages, 0), r.message]
+        if r.ok
+          if maxSide == 0
+            nav = replace(nav, path("home") + "#" + formHash(CForm(cf, specified=0, maxA=r.amount, maxB="")))
+          else
+            nav = replace(nav, path("home") + "#" + formHash(CForm(cf, specified=1, maxA="", maxB=r.amount)))
+      case none
+        maxSide = maxSide
+  action approve(side: number)
+    send approvalSent = createApprove(route, revision * 1000 + balanceRetry, poolEpoch, side)
+  action afterTx
+    revision = revision + 1
+  action create
+    send positionCreated = createPosition(route, revision * 1000 + balanceRetry, poolEpoch, performanceNow() - poolStamp)
+  action afterCreate
+    match positionCreated
+      case some(r)
+        if r.hash == "stale"
+          status = r.error
+          poolRetry = poolRetry + 1
+          balanceRetry = balanceRetry + 1
+        else
+          revision = revision + 1
+          if r.ok
+            nav = push(nav, path("home") + "#/positions")
+          else
+            status = r.error
+      case none
+        status = status
+  // The token picker.
+  action openPicker(side: number)
+    pickerSide = side
+    pickerSearch = ""
+    pickerError = ""
+    pickerIndex = -1
+    candidateFor = ""
+    showModal("token-picker")
+    focus("token-search")
+  action closePicker
+    pickerSide = -1
+    close("token-picker")
+  action setPickerSearch(v: string)
+    pickerSearch = v
+    pickerError = ""
+    pickerIndex = -1
+    candidateFor = ""
+  action refreshPicker
+    pickerRefresh = pickerRefresh + 1
+  action choose(address: string)
+    chooseOn(pickerSide, address)
+  // An import's reply may land after the other picker opened: it fills the
+  // side the import started from.
+  action chooseOn(side: number, address: string)
+    if otherToken(cf, side, address)
+      status = "Choose two different tokens for this position."
+    else
+      if not sameToken(cf, side, address)
+        nav = replace(nav, path("home") + "#" + formHash(chooseToken(cf, side, address)))
+    if pickerSide == side
+      pickerSide = -1
+      close("token-picker")
+  action readCandidate
+    pickerError = ""
+    candidateFor = pickerSearch
+    send tokenRead = readToken(cf.chain, pickerSearch)
+  action afterTokenRead
+    match tokenRead
+      case some(r)
+        pickerError = r.error
+      case none
+        pickerError = ""
+  action importCandidate(address: string, symbol: string, name: string, decimals: number)
+    importSide = pickerSide
+    send tokenImported = importToken(cf.chain, address, symbol, name, decimals)
+  action afterImport
+    match tokenImported
+      case some(r)
+        tokenImports = tokenImports + 1
+        if r.ok
+          chooseOn(importSide, r.address)
+        else
+          pickerError = r.error
+      case none
+        pickerError = ""
+  action pickerFocus(i: number)
+    pickerIndex = i
+  action pickerKey(key: string)
+    if key == "ArrowDown"
+      focus(`token-option-${min(pickerIndex + 1, pickerCount - 1)}`)
+    if key == "ArrowUp"
+      focus(`token-option-${max(pickerIndex - 1, 0)}`)
+  action connectCreate
+    if session.wallets.length == 1
+      match first(session.wallets)
+        case some(w)
+          connectWallet(w.uuid)
+        case none
+          showModal("create-wallet")
+    else
+      showModal("create-wallet")
+  action setAmount(side: number, v: string)
+    if side == 0
+      setAmount0(v)
+    else
+      setAmount1(v)
+  action fillAmount(side: number, v: string)
+    if side == 0
+      fillAmount0(v)
+    else
+      fillAmount1(v)
+  action setFeeInput(raw: bool, v: string)
+    if raw
+      setExactFee(v)
+    else
+      setFee(v)

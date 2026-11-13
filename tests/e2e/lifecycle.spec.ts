@@ -4,6 +4,7 @@ import { rpcEndpoint } from "../../src/chains";
 import { NETWORKS } from "../../src/networks";
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
+import { loadRepositoryArtifacts } from "../support/artifacts";
 import {
   parseUnits,
   decodeFunctionData,
@@ -32,10 +33,11 @@ import {
   deploymentAddress,
   prepareDeployment,
 } from "../../src/deterministic";
+test.beforeAll(loadRepositoryArtifacts);
 const rpcUrl = "http://127.0.0.1:18545";
 function transactionStatus(page: Page) {
   return page.locator(
-    "dialog[open] .status[role=status], body:not(:has(dialog[open])) .notification-toast .status[role=status]",
+    "dialog[open] [data-testid=dialog-status], body:not(:has(dialog[open])) [data-testid=notification-toast] [role=status]",
   );
 }
 // Anvil's documented public development key. Never use on a funded chain.
@@ -194,7 +196,7 @@ for (const { missingDecimals, native, batch } of [
         request.method() === "GET" &&
         parsed.origin === "http://127.0.0.1:14173" &&
         (parsed.pathname === "/" ||
-          /^\/(assets\/[^/]+\.(js|css)|tokens\/\d+\.json|favicon\.svg)$/.test(
+          /^\/((modules\/)?[\w.-]+\.(js|css)|(tokens\/\d+|artifacts\/\w+)\.json|favicon\.svg)$/.test(
             parsed.pathname,
           ))
       )
@@ -543,12 +545,12 @@ for (const { missingDecimals, native, batch } of [
     await page
       .getByRole("link", { name: "Manage position #1", exact: true })
       .click();
-    await expect(page.locator(".portfolio-positions")).not.toBeVisible();
+    await expect(page.getByTestId("portfolio-positions")).not.toBeVisible();
     await expect(
       page.getByRole("link", { name: "All positions", exact: true }),
     ).toBeVisible();
     await page.goBack();
-    await expect(page.locator(".portfolio-positions")).toBeVisible();
+    await expect(page.getByTestId("portfolio-positions")).toBeVisible();
     await page.goForward();
     await capturePosition(page);
     await expect(
@@ -723,7 +725,7 @@ async function openDeployPage(page: Page, batch: boolean) {
   await page.evaluate(() => {
     location.hash = "#/deploy/31337";
   });
-  await expect(page.locator("p", { hasText: "Network:" })).toContainText(
+  await expect(page.getByTestId("deploy-network")).toContainText(
     batch ? "Anvil (31337) · not enabled" : "Anvil (31337) · enabled",
   );
 }
@@ -743,7 +745,7 @@ async function enableAnvil(page: Page, batch: boolean) {
   await foundry.click();
   await expect(foundry).toBeChecked();
   await expect(
-    page.locator(".network-row", { hasText: "Anvil" }),
+    page.getByTestId("network-row").filter({ hasText: "Anvil" }),
   ).toContainText("Ready");
 }
 
@@ -772,14 +774,23 @@ async function checkPoolChart(
   await expect(
     page.getByRole("img", { name: "Pool token amounts by price" }),
   ).toBeVisible({ timeout: 30000 });
-  const heights = await page
-    .locator(
-      '.liquidity-chart g rect[fill="#111"], .liquidity-chart g rect[fill="#999"]',
+  // Exact writes SVG geometry and fill as inline styles, not attributes.
+  await expect
+    .poll(() =>
+      page
+        .getByTestId("liquidity-chart")
+        .locator("rect")
+        .evaluateAll((nodes) =>
+          nodes.some((node) => {
+            const style = getComputedStyle(node);
+            return (
+              ["rgb(17, 17, 17)", "rgb(153, 153, 153)"].includes(style.fill) &&
+              parseFloat(style.height) > 0
+            );
+          }),
+        ),
     )
-    .evaluateAll((nodes) =>
-      nodes.map((node) => Number(node.getAttribute("height"))),
-    );
-  expect(heights.some((height) => height > 0)).toBe(true);
+    .toBe(true);
 }
 
 async function checkTokenImports(
@@ -798,7 +809,7 @@ async function checkTokenImports(
     await dialog.getByLabel("Search tokens or paste an address").fill(address);
     if (address === zeroAddress) {
       await dialog
-        .locator(".token-option")
+        .getByTestId("token-option")
         .filter({ hasText: chainDefinition(31337).name })
         .first()
         .click();
@@ -812,6 +823,8 @@ async function checkTokenImports(
     await dialog
       .getByRole("button", { name: "Import token", exact: true })
       .click();
+    // The import replies asynchronously; the picker closes once it is chosen.
+    await expect(dialog).toHaveCount(0);
   }
   if (native) return;
   const saved = await page.evaluate(() =>
@@ -851,15 +864,16 @@ async function checkCustomSpacing(
 ) {
   if (missingDecimals || native) return;
   await page.getByRole("switch", { name: "Advanced", exact: true }).click();
-  const control = page.locator(".tick-spacing-control");
-  await control.locator("summary").click();
+  const control = page.getByTestId("tick-spacing-control");
+  const summary = control.getByRole("button", { name: /^. Tick spacing ·/ });
+  await summary.click();
   await control.getByLabel("Enter exact ticks").check();
   await control.getByLabel("Tick spacing (ticks)").fill("777");
   await control.getByRole("button", { name: "Apply tick spacing" }).click();
-  await expect(control.locator("summary")).toContainText("0.0777%");
+  await expect(summary).toContainText("0.0777%");
   await expect(page.getByLabel("Initial price")).toBeVisible();
-  await expect(page.locator(".pool-options")).toBeHidden();
-  await control.locator("summary").click();
+  await expect(page.getByTestId("pool-options")).toBeHidden();
+  await summary.click();
   await control.getByRole("button", { name: "0.6%", exact: true }).click();
   await page.getByRole("switch", { name: "Advanced", exact: true }).click();
   await expect(
@@ -954,7 +968,7 @@ async function capturePosition(page: Page) {
   await expect(artwork).toBeVisible();
   await expect(artwork).toHaveJSProperty("naturalWidth", 640);
   await expect(page.getByText("Exact amount")).toHaveCount(0);
-  await expect(page.locator(".current-price strong").last()).toBeVisible();
+  await expect(page.getByTestId("current-price").last()).toBeVisible();
   await expect(
     page.getByRole("button", { name: /Burn|Transfer NFT/ }),
   ).toHaveCount(0);

@@ -1,0 +1,129 @@
+// Deploy contracts: the fixed-address contracts this build needs on a
+// network, each checked against the bundled artifacts before any deployment.
+use TextLink from "./shapes.contract"
+
+shape DeployCard
+  kind: string
+  title: string
+  address: string
+  core: string
+  poolKeyIndex: string
+  renderer: string
+  state: string
+  error: string
+
+shape DeployView
+  state: string
+  chainId: number
+  name: string
+  enabled: bool
+  cards: DeployCard[]
+  batch: bool
+  missing: number
+  batchError: string
+  complete: bool
+  factory: string
+  salt: string
+
+component DeployPage
+  props
+    view: DeployView
+    loading: bool
+    disabled: bool
+    deploy: action
+    deployAll: action
+    refresh: action
+    details: bool
+    toggleDetails: action
+  view
+    section aria-labelledby="deploy-title"
+      column gap=12
+        text "Deploy contracts" id="deploy-title" role="heading" aria-level=2 class=H2
+        if view.state == "invalid"
+          text "This deployment link does not name a supported network. Open Deploy contracts from a network in Networks." role="alert"
+          link href="#/networks" class=PrimaryLink
+            text "Networks"
+        if view.state == "none" and not loading
+          row gap=6
+            text "Choose a network in Networks to deploy contracts."
+            link href="#/networks" class=TextLink
+              text "Networks"
+        if view.state == "chain"
+          text `Network: ${view.name} (${view.chainId}) · ${view.enabled ? "enabled" : "not enabled"}` testId="deploy-network"
+          text "Deploy missing contracts once for everyone on this network. Addresses depend on the fixed salt and contract code, never on your wallet. Existing contracts are detected before any deployment."
+          if view.batch
+            row gap=12 align-items="center" flex-wrap="wrap" margin="8px 0"
+              button press=deployAll disabled=(disabled or view.missing == 0) class=Primary
+                text "Deploy all"
+              text (view.missing == 0 ? "All contracts are deployed." : "Deploy missing contracts in one wallet request.")
+              button press=refresh class=Plain
+                text "Refresh deployments"
+            if view.batchError != ""
+              text `Error: ${view.batchError}` role="alert" class=Status
+          for c in view.cards key=c.kind
+            column class=Panel gap=8
+              text c.title role="heading" aria-level=3 font-size=17 font-weight=700
+              text c.address font-family="monospace" overflow-wrap="anywhere"
+              if c.core != ""
+                row class=Inline
+                  text "Core:"
+                  text c.core font-family="monospace" overflow-wrap="anywhere"
+              if c.poolKeyIndex != ""
+                column
+                  row class=Inline
+                    text "PoolKeyIndex:"
+                    text c.poolKeyIndex font-family="monospace" overflow-wrap="anywhere"
+                  row class=Inline
+                    text "Metadata renderer:"
+                    text c.renderer font-family="monospace" overflow-wrap="anywhere"
+              text (loading ? "Checking code on this network…" : c.state == "exists" ? "Already deployed · code verified against this build" : c.state == "error" ? "Contract verification failed. Deployment is disabled." : "Not deployed · no code at this address") role="status"
+              if c.error != ""
+                text `Error: ${c.error}` role="alert" class=Status
+              if c.state != "exists"
+                row gap=12
+                  button press=deploy(c.kind) disabled=(disabled or loading or c.state != "missing") class=Primary
+                    text `Deploy ${c.kind}`
+                  button press=refresh class=Plain
+                    text "Refresh status"
+          if view.complete
+            row role="status" class=Panel gap=6 flex-wrap="wrap"
+              text (view.enabled ? "All contracts are deployed and this network is enabled." : "All contracts are deployed. Now enable this network in Networks.")
+              link href="#/networks" class=TextLink
+                text "Networks"
+          button press=toggleDetails aria-expanded=details aria-controls="deploy-details" class=Disclosure
+            row gap=4 align-items="center"
+              text (details ? "▾" : "▸")
+              text `Deterministic deployment details`
+          if details
+            column id="deploy-details" gap=8
+              row class=Inline
+                text "CREATE2 factory:"
+                text view.factory font-family="monospace" overflow-wrap="anywhere"
+              row class=Inline
+                text "Fixed salt:"
+                text view.salt font-family="monospace" overflow-wrap="anywhere"
+              text "This build uses fixed contract addresses on every network. Networks must provide the standard CREATE2 factory."
+
+style H2
+  font-size=27 font-weight=700 letter-spacing=-0.7 margin="0 0 8px"
+
+style Inline
+  display="flex" flex-wrap="wrap" column-gap="0.3em"
+
+style Panel
+  border="1px solid #e1e1e1" border-radius=18 background-color="#fff" padding=24 margin="8px 0"
+
+style Primary
+  background-color="#111" color="#fff" border="1px solid #111" padding="8px 16px" border-radius=10
+
+style PrimaryLink
+  background-color="#111" color="#fff" padding="10px 18px" border-radius=10 text-decoration="none" align-self="start"
+
+style Plain
+  border="1px solid #666" padding="8px 12px" background-color="#fff"
+
+style Status
+  border-left="3px solid #111" padding=12 overflow-wrap="anywhere"
+
+style Disclosure
+  align-self="start" color="#555" padding="4px 0"

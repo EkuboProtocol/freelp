@@ -1,0 +1,62 @@
+// A token amount field's balance line: the balance and quick fills.
+// app.ts answers the Balance (src/sources/balances.ts `balanceView`).
+
+shape Fraction
+  label: string
+  amount: string
+
+shape Balance
+  state: string
+  address: string
+  symbol: string
+  decimals: number
+  raw: string
+  exact: string
+  display: string
+  native: bool
+  allowance: string
+  fractions: Fraction[]
+
+shape MaxReply
+  ok: bool
+  amount: string
+  message: string
+
+// `pick` takes the amount to fill in; `max` estimates the native Max.
+component TokenBalance
+  props
+    balance: Balance
+    pick: action
+    retry: action
+    max: action
+    maxMessage: string
+    maxPending: bool
+    disabled: bool
+  view
+    if balance.state == "loading"
+      row role="status" class=BalanceRow
+        text "Loading balance…" font-size=13
+    if balance.state == "failed"
+      row role="status" class=BalanceRow
+        text "Balance unavailable" font-size=13
+        button press=retry class=Small
+          text "Retry balance"
+    if balance.state == "ready"
+      column gap=6
+        row class=BalanceRow justify-content="space-between"
+          text `Balance: ${balance.display} ${balance.symbol}` title=balance.exact font-size=13
+          row gap=6 flex-wrap="wrap"
+            for f in balance.fractions key=f.label
+              button press=pick(f.amount) disabled=disabled class=Small
+                text f.label
+            if balance.native
+              button press=max disabled=(disabled or maxPending) aria-busy=maxPending class=Small
+                text "Max available"
+        if balance.native
+          text (maxMessage != "" ? maxMessage : "Enter an amount first to estimate a gas reserve for Max.") role="status" font-size=12 color="#555"
+
+style BalanceRow
+  display="flex" align-items="center" flex-wrap="wrap" gap=8
+
+style Small
+  border="1px solid #666" padding="4px 8px" background-color="#fff" font-size=13

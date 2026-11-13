@@ -34,8 +34,8 @@ for (const width of [390, 768, 1440]) {
       page.getByRole("button", { name: "Select second token" }).boundingBox(),
       page.getByLabel("Minimum price", { exact: true }).boundingBox(),
       page.getByLabel("Maximum price", { exact: true }).boundingBox(),
-      page.locator(".range-section").boundingBox(),
-      page.locator(".create-deposit").boundingBox(),
+      page.getByTestId("range-section").boundingBox(),
+      page.getByTestId("create-deposit").boundingBox(),
     ]);
     expect(Math.abs(pair0!.y - pair1!.y)).toBeLessThan(1);
     expect(Math.abs(pair0!.width - pair1!.width)).toBeLessThan(1);

@@ -7,6 +7,7 @@ import {
   DEFAULT_METADATA_RENDERER,
 } from "../../src/deployments";
 import { expectedRuntime } from "../../src/contractDeployment";
+import { loadRepositoryArtifacts } from "./artifacts";
 import { mockRegistry } from "./registryRpc";
 const addresses = {
   Core: DEFAULT_CONTRACTS.core,
@@ -20,6 +21,7 @@ export async function mockDeployments(
   missing?: keyof typeof addresses,
   extraChainIds: number[] = [],
 ) {
+  await loadRepositoryArtifacts();
   const networks = [
     ...NETWORKS,
     ...extraChainIds.map((id) => chainSettings(id)),

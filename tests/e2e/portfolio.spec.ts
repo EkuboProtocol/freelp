@@ -92,8 +92,8 @@ test("all networks load independently with exactly one portfolio RPC each", asyn
   await page
     .getByRole("button", { name: "Connect wallet", exact: true })
     .click();
-  await expect(page.locator(".portfolio-position")).toHaveCount(3);
-  await expect(page.locator(".current-price strong")).toHaveText([
+  await expect(page.getByTestId("portfolio-position")).toHaveCount(3);
+  await expect(page.getByTestId("current-price")).toHaveText([
     "1000000000000",
     "1000000000000",
     "1000000000000",
@@ -101,17 +101,19 @@ test("all networks load independently with exactly one portfolio RPC each", asyn
   await expect(
     page.getByRole("button", { name: "Refresh positions", exact: true }),
   ).toBeEnabled();
-  await expect(page.locator(".portfolio-position")).toContainText([
+  await expect(page.getByTestId("portfolio-position")).toContainText([
     "Uncollected fees: 0.01 ETH / 5 USDC",
     "Uncollected fees: 0.01 ETH / 5 USDC",
     "Uncollected fees: 0.01 ETH / 5 USDC",
   ]);
-  await expect(page.locator(".portfolio-position")).toHaveCount(3);
-  await expect(page.locator(".position-status.active")).toHaveText("In range");
-  await expect(page.locator(".position-status.inactive")).toHaveText(
+  await expect(page.getByTestId("portfolio-position")).toHaveCount(3);
+  await expect(page.getByTestId("position-status-active")).toHaveText(
+    "In range",
+  );
+  await expect(page.getByTestId("position-status-inactive")).toHaveText(
     "Out of range",
   );
-  await expect(page.locator(".position-status.closed")).toHaveText("Closed");
+  await expect(page.getByTestId("position-status-closed")).toHaveText("Closed");
   expect(calls.size).toBe(NETWORKS.length);
   for (const requests of calls.values()) expect(requests).toEqual(["eth_call"]);
   await page.screenshot({
@@ -131,7 +133,7 @@ test("all networks load independently with exactly one portfolio RPC each", asyn
   await page.route("https://**", (route) => route.abort());
   for (const exit of ["back", "navigation", "all positions"]) {
     await page
-      .locator(".portfolio-position")
+      .getByTestId("portfolio-position")
       .first()
       .getByRole("link", { name: "Manage position #1", exact: true })
       .click();
@@ -149,7 +151,7 @@ test("all networks load independently with exactly one portfolio RPC each", asyn
       await page
         .getByRole("link", { name: "All positions", exact: true })
         .click();
-    await expect(page.locator(".portfolio-positions")).toBeVisible();
+    await expect(page.getByTestId("portfolio-positions")).toBeVisible();
     await expect(
       page.getByLabel("Manage position", { exact: true }),
     ).toHaveCount(0);

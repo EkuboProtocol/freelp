@@ -33,12 +33,12 @@ test("token selection discovers real pools and preserves exact selected configur
     }
   });
   await page.goto(url);
-  await expect(page.locator(".registered-pool-card")).toHaveCount(2);
+  await expect(page.getByTestId("registered-pool-card")).toHaveCount(2);
   await expect(
     page.getByText("Preset configuration", { exact: true }),
   ).toHaveCount(0);
   const selected = page
-    .locator(".registered-pool-card")
+    .getByTestId("registered-pool-card")
     .filter({ hasText: "0.05%" });
   await selected.click();
   await expect(selected).toHaveAttribute("aria-pressed", "true");
@@ -76,7 +76,7 @@ test("registered pools remain browsable before this manager is deployed", async 
   await mockPoolData(page, true);
   await mockRegistry(page, fixturePools());
   await page.goto(url);
-  await expect(page.locator(".registered-pool-card")).toHaveCount(2);
+  await expect(page.getByTestId("registered-pool-card")).toHaveCount(2);
   await expect(
     page.getByRole("heading", { name: "Deploy contracts to create positions" }),
   ).toBeVisible();
@@ -117,12 +117,12 @@ test("pair pagination excludes unrelated pools and exposes Load more until compl
   await mockPoolData(page, true);
   await mockRegistry(page, keys);
   await page.goto(url);
-  await expect(page.locator(".registered-pool-card")).toHaveCount(16);
+  await expect(page.getByTestId("registered-pool-card")).toHaveCount(16);
   await expect(page.getByText(/Loaded 16 of 17/)).toBeVisible();
   await page
     .getByRole("button", { name: "Load more registered pools" })
     .click();
-  await expect(page.locator(".registered-pool-card")).toHaveCount(17);
+  await expect(page.getByTestId("registered-pool-card")).toHaveCount(17);
   await expect(page.getByText(/Loaded 17 of 17/)).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Load more registered pools" }),

@@ -1,0 +1,110 @@
+// Networks: which mainnets FreeLP uses, and each one's RPC.
+use TextLink from "./shapes.contract"
+
+shape ChainRow
+  id: number
+  name: string
+  symbol: string
+  enabled: bool
+  custom: bool
+  rpcUrl: string
+  defaultRpc: string
+  state: string
+
+shape Catalog
+  rows: ChainRow[]
+  enabled: number
+  total: number
+  storageWarning: string
+
+shape Blocked
+  chainId: number
+  name: string
+  state: string
+
+component NetworksPage
+  props
+    catalog: Catalog
+    search: string
+    setSearch: action
+    busy: bool
+    checking: number
+    toggle: action
+    turnedOff: number[]
+    restore: action
+    edit: action
+    editing: number
+    rpcDraft: string
+    setRpcDraft: action
+    rpcError: string
+    rpcBusy: bool
+    saveRpc: action
+    defaultRpc: action
+    closeRpc: action
+    blocked: Blocked
+    dismissBlocked: action
+  view
+    section aria-labelledby="networks-title"
+      column gap=12
+        text "Networks" id="networks-title" role="heading" aria-level=2 font-size=27 font-weight=700 letter-spacing=-0.7 margin="0 0 8px"
+        text `Enabled: ${catalog.enabled} of ${catalog.total} mainnets`
+        if catalog.storageWarning != ""
+          text catalog.storageWarning role="status"
+        if catalog.enabled == 0
+          button press=restore disabled=busy class=Plain align-self="start"
+            text "Restore default networks"
+        input value=search input=setSearch aria-label="Search networks" placeholder="Search networks" class=Field
+        column
+          for c in catalog.rows.filter(r => `${r.name} ${r.id}`.toLowerCase().includes(search.trim().toLowerCase())) key=`${c.id}`
+            row class=NetworkRow testId="network-row"
+              row gap=12 align-items="center" flex=1 min-width=0
+                input type="checkbox" checked=(c.enabled and not turnedOff.includes(c.id)) change=toggle(c.id) aria-label=`Enable ${c.name}` aria-busy=(checking == c.id) disabled=(busy or checking != 0)
+                column min-width=0
+                  text c.name font-weight=700
+                  text `${c.id} · ${c.symbol} · catalog · ${c.enabled ? "enabled" : "disabled"} · RPC ${c.custom ? "custom" : "default"} · ${checking == c.id ? "Checking…" : c.state}` font-size=12 color="#555"
+              button press=edit(c.id) aria-label=`Edit ${c.name} RPC` disabled=busy class=Plain
+                text "RPC settings"
+          if catalog.rows.filter(r => `${r.name} ${r.id}`.toLowerCase().includes(search.trim().toLowerCase())).length == 0
+            text "No matching networks."
+        dialog id="network-dialog" aria-labelledby="network-dialog-title" cancel=closeRpc class=Dialog
+          column gap=12
+            row justify-content="space-between" align-items="center"
+              text "RPC settings" id="network-dialog-title" role="heading" aria-level=2 font-size=21 font-weight=700
+              button press=closeRpc aria-label="Close network dialog" disabled=rpcBusy class=Plain
+                text "×"
+            for c in catalog.rows.filter(r => r.id == editing) key=`${c.id}`
+              text c.name
+              text "RPC URL override" id="rpc-label" font-size=14
+              input type="url" value=rpcDraft input=setRpcDraft submit=saveRpc aria-labelledby="rpc-label" placeholder=c.defaultRpc autocomplete="off" disabled=rpcBusy autofocus=true class=Field
+            if rpcError != ""
+              text rpcError role="alert"
+            row gap=12 justify-content="space-between"
+              button press=defaultRpc disabled=rpcBusy class=Plain
+                text "Use default RPC"
+              button press=saveRpc disabled=rpcBusy class=Plain
+                text (rpcBusy ? "Checking RPC…" : "Save RPC")
+        dialog id="enable-blocked" aria-labelledby="enable-blocked-title" cancel=dismissBlocked class=Dialog
+          column gap=12
+            row justify-content="space-between" align-items="center"
+              text `${blocked.state == "missing" ? "Contracts are not deployed on" : blocked.state == "mismatched" ? "Incompatible contracts on" : "Could not verify"} ${blocked.name}` id="enable-blocked-title" role="heading" aria-level=2 font-size=21 font-weight=700
+              button press=dismissBlocked aria-label="Close network check" class=Plain
+                text "×"
+            text `${blocked.state == "missing" ? "This build's contracts are missing at their fixed addresses. Deploy them once for everyone, then enable the network." : blocked.state == "mismatched" ? "Code at this build's fixed addresses does not match. Do not use this network with this build." : "The RPC did not answer for this network. Review its RPC settings, then enable it again."} The network stays disabled.`
+            row gap=12 justify-content="space-between"
+              if blocked.state != "unreachable"
+                link href=`#/deploy/${blocked.chainId}` class=TextLink
+                  text "Deploy on this network"
+              button press=dismissBlocked class=Plain
+                text "Cancel"
+
+style NetworkRow
+  display="flex" align-items="center" justify-content="space-between" gap=12 padding="10px 0" border-bottom="1px solid #ddd"
+
+style Field
+  border="1px solid #666" padding="8px 12px" background-color="#fff" font="inherit"
+
+style Plain
+  border="1px solid #666" padding="8px 12px" background-color="#fff"
+
+style Dialog
+  width="min(480px, calc(100vw - 32px))" background-color="#fff" border="1px solid #111" padding=20

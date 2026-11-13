@@ -5,6 +5,9 @@ on:
     tags: ["**"]
 permissions:
   contents: read
+env:
+  # Exact's CLI never sends usage notes from CI.
+  EXACT_FEEDBACK: "0"
 jobs:
   checks:
     name: Format, notices, lint, types and unit tests
@@ -15,8 +18,19 @@ jobs:
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
-          bun-version: 1.4.0
+          bun-version: 1.4.2
       - run: bun install --frozen-lockfile
+      # The pinned Exact checkout and its compiled Contract compiler; a miss
+      # builds the compiler with the Rust toolchain Exact pins.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cache/exact
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: exact-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: exact-${{ runner.os }}-
+      - run: bun run exact:setup
       # Every step runs even when an earlier one fails, so one push reports
       # every kind of problem at once.
       - name: Format
@@ -47,8 +61,19 @@ jobs:
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
-          bun-version: 1.4.0
+          bun-version: 1.4.2
       - run: bun install --frozen-lockfile
+      # The pinned Exact checkout and its compiled Contract compiler; a miss
+      # builds the compiler with the Rust toolchain Exact pins.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cache/exact
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: exact-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: exact-${{ runner.os }}-
+      - run: bun run exact:setup
       - run: bun run build
       - run: bunx playwright install --with-deps chromium
       - if: matrix.project == 'chain'
@@ -81,8 +106,19 @@ jobs:
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
-          bun-version: 1.4.0
+          bun-version: 1.4.2
       - run: bun install --frozen-lockfile
+      # The pinned Exact checkout and its compiled Contract compiler; a miss
+      # builds the compiler with the Rust toolchain Exact pins.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cache/exact
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: exact-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: exact-${{ runner.os }}-
+      - run: bun run exact:setup
       - run: bun run build
       - run: bunx playwright install --with-deps chromium
       - name: UX audit and Lighthouse
@@ -111,8 +147,19 @@ jobs:
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
-          bun-version: 1.4.0
+          bun-version: 1.4.2
       - run: bun install --frozen-lockfile
+      # The pinned Exact checkout and its compiled Contract compiler; a miss
+      # builds the compiler with the Rust toolchain Exact pins.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cache/exact
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: exact-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: exact-${{ runner.os }}-
+      - run: bun run exact:setup
       - run: bun run build
       # The packaged-app and gateway checks load the site in Chromium.
       - run: bunx playwright install --with-deps chromium

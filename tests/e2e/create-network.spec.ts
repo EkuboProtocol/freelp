@@ -23,9 +23,7 @@ for (const missing of [
     ).toHaveCount(0);
     await page.getByRole("link", { name: "Go to Deploy" }).click();
     await expect(page).toHaveURL(/#\/deploy\/8453$/);
-    await expect(page.locator("p", { hasText: "Network:" })).toContainText(
-      "Base",
-    );
+    await expect(page.getByTestId("deploy-network")).toContainText("Base");
   });
 }
 
@@ -37,13 +35,15 @@ test("verified runtime code enables a chain-scoped form without fabricated pool 
   await expect(
     page.getByRole("button", { name: "Select first token" }),
   ).toBeEnabled();
-  await expect(page.locator(".pool-options button")).toHaveCount(0);
+  await expect(
+    page.getByTestId("pool-options").getByRole("button"),
+  ).toHaveCount(0);
   await expect(
     page.getByText(
       "Select two tokens to discover registered pools for the pair.",
     ),
   ).toBeVisible();
-  await expect(page.locator(".pool-options")).toBeVisible();
+  await expect(page.getByTestId("pool-options")).toBeVisible();
   await expect(
     page.getByLabel("Pool fee (%)", { exact: true }),
   ).not.toBeVisible();
@@ -52,17 +52,17 @@ test("verified runtime code enables a chain-scoped form without fabricated pool 
   ).toHaveCount(0);
   await page.getByRole("switch", { name: "Advanced", exact: true }).click();
   await expect(page.getByLabel("Extension address")).toBeVisible();
-  await expect(page.locator(".tick-spacing-control")).toBeVisible();
+  await expect(page.getByTestId("tick-spacing-control")).toBeVisible();
   await page.getByRole("button", { name: "Select first token" }).click();
   await expect(
-    page.getByRole("dialog").locator(".token-network").first(),
+    page.getByRole("dialog").getByTestId("token-network").first(),
   ).toHaveText("Ethereum");
-  await expect(page.locator(".currency-mark")).toHaveCount(0);
+  await expect(page.getByRole("dialog").locator("img")).toHaveCount(0);
   await page.getByRole("button", { name: "Close token selector" }).click();
   await page.getByLabel("Network", { exact: true }).selectOption("8453");
   await page.getByRole("button", { name: "Select first token" }).click();
   await expect(
-    page.getByRole("dialog").locator(".token-network").first(),
+    page.getByRole("dialog").getByTestId("token-network").first(),
   ).toHaveText("Base");
   await expect(page.getByRole("dialog")).not.toContainText("Ethereum");
 });

@@ -23,8 +23,10 @@ test("listing networks makes no code reads and a blocked enable opens the deploy
   const methods = recordMethods(page);
   await mockDeployments(page, "FreeLP");
   await page.goto("/#/networks");
-  await expect(page.locator(".network-row")).toHaveCount(MAINNET_CHAINS.length);
-  await expect(page.locator(".network-row").first()).toContainText(
+  await expect(page.getByTestId("network-row")).toHaveCount(
+    MAINNET_CHAINS.length,
+  );
+  await expect(page.getByTestId("network-row").first()).toContainText(
     "Not checked",
   );
   expect(methods).toEqual([]);
@@ -33,7 +35,10 @@ test("listing networks makes no code reads and a blocked enable opens the deploy
     name: "Enable Ethereum",
     exact: true,
   });
-  const row = page.locator(".network-row", { hasText: "Ethereum" }).first();
+  const row = page
+    .getByTestId("network-row")
+    .filter({ hasText: "Ethereum" })
+    .first();
   await ethereum.uncheck();
   expect(methods).toEqual([]);
 
@@ -121,7 +126,7 @@ test("deploy pages are scoped to a chain and invalid links point back to Network
   await expect(
     page.getByRole("heading", { name: "Deploy contracts" }),
   ).toBeVisible();
-  await expect(page.locator("p", { hasText: "Network:" })).toContainText(
+  await expect(page.getByTestId("deploy-network")).toContainText(
     "Base (8453) · enabled",
   );
   await expect(
@@ -130,7 +135,7 @@ test("deploy pages are scoped to a chain and invalid links point back to Network
   await expect(page.getByLabel("Deployment network")).toHaveCount(0);
 
   await page.goto("/#/deploy/43114");
-  await expect(page.locator("p", { hasText: "Network:" })).toContainText(
+  await expect(page.getByTestId("deploy-network")).toContainText(
     "Avalanche (43114) · not enabled",
   );
   await expect(
@@ -152,7 +157,7 @@ test("deploy pages are scoped to a chain and invalid links point back to Network
 
   await page.goto("/#/deploy");
   await expect(page).toHaveURL(/#\/deploy\/1$/);
-  await expect(page.locator("p", { hasText: "Network:" })).toContainText(
+  await expect(page.getByTestId("deploy-network")).toContainText(
     "Ethereum (1)",
   );
 });

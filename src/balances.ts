@@ -1,12 +1,11 @@
 import type { Address } from "viem";
-import tokenFetcher from "../artifacts/FreeLPDataFetcher.json" with { type: "json" };
+import fetcherAbi from "../artifacts/abi/FreeLPDataFetcher.json" with { type: "json" };
 import { DEFAULT_POSITION_DATA_FETCHER } from "./deployments";
 import { rpc } from "./rpc";
 import type { Settings } from "./types";
 const cache = new Map<
   string,
   {
-    expires: number;
     value: Promise<{
       balances: Map<string, bigint>;
       allowances: Map<string, bigint>;
@@ -31,13 +30,15 @@ export function tokenSnapshot(
     refresh,
   ]);
   const cached = cache.get(key);
-  if (cached && cached.expires > Date.now()) return cached.value;
+  // Concurrent reads of the same balances share one request.
+  if (cached) return cached.value;
   const value = readBalances(settings, owner, tokens);
-  cache.set(key, { expires: Date.now() + 30000, value });
-  if (cache.size > 64) cache.delete(cache.keys().next().value!);
-  void value.catch(() => {
-    if (cache.get(key)?.value === value) cache.delete(key);
-  });
+  cache.set(key, { value });
+  void value
+    .finally(() => {
+      if (cache.get(key)?.value === value) cache.delete(key);
+    })
+    .catch(() => {});
   return value;
 }
 async function readBalances(
@@ -47,7 +48,7 @@ async function readBalances(
 ) {
   const [balances, allowances] = (await rpc(settings).readContract({
     address: settings.freeLPDataFetcher ?? DEFAULT_POSITION_DATA_FETCHER,
-    abi: tokenFetcher.abi,
+    abi: fetcherAbi,
     functionName: "getNonzeroBalancesAndAllowances",
     args: [owner, tokens, [settings.manager]],
   })) as [

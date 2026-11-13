@@ -22,7 +22,7 @@ test("the footer links GitHub and shows the version, and About holds one run com
     page.getByRole("heading", { name: "About FreeLP", exact: true }),
   ).toBeVisible();
   await expect(page.getByText("Build details")).toHaveCount(0);
-  await expect(page.locator(".command")).toHaveCount(1);
+  await expect(page.getByTestId("command")).toHaveCount(1);
   await expect(page.locator("#main-content")).not.toContainText(
     /0x[0-9a-fA-F]{40}/,
   );

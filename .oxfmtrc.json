@@ -6,6 +6,7 @@
     "artifacts/**",
     "public/tokens/**",
     "deploy/**",
-    "index.html"
+    "exact.mjs",
+    "src/chainCatalog.json"
   ]
 }

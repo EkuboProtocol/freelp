@@ -1,0 +1,14 @@
+{
+  "name": "isows",
+  "version": "1.0.7",
+  "description": "FreeLP's stand-in for isows: FreeLP reads over HTTP only, and Exact's data module has no WebSocket.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  }
+}

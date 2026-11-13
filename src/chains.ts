@@ -1,13 +1,11 @@
-import * as chains from "viem/chains";
-import type { Chain } from "viem";
+import catalogJson from "./chainCatalog.json" with { type: "json" };
 import { DEFAULT_CONTRACTS } from "./deployments";
 import type { Settings } from "./types";
 export const DEFAULT_CHAIN_IDS = [4663, 8453, 42161, 1] as const;
-const catalog = new Map<number, Chain>();
-for (const chain of Object.values(chains)) {
-  if (!catalog.has(chain.id) && chain.rpcUrls.default.http.length)
-    catalog.set(chain.id, chain);
-}
+export type Chain = (typeof catalogJson)[number];
+const catalog = new Map<number, Chain>(
+  catalogJson.map((chain) => [chain.id, chain]),
+);
 export const MAINNET_CHAINS = [...catalog.values()]
   .filter((chain) => !chain.testnet)
   .sort((a, b) => a.name.localeCompare(b.name));

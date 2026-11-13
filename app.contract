@@ -1,0 +1,96 @@
+// FreeLP: the pages. app.ts answers every resource and mutation; the page
+// module (modules/web/index.js) holds the wallets and browser storage.
+// Pages live after the hash (#/positions), so the site works from any path:
+// a content address, a gateway's /ipfs/<cid>/ or the local launcher.
+use Session, AppInfo, Client, Reply from "./ui/shapes.contract"
+use Shell, Footer from "./ui/shell.contract"
+use AboutPage, TermsPage from "./ui/static.contract"
+use NetworksPage, Catalog from "./ui/networks.contract"
+use DeployPage from "./ui/deploy.contract"
+use PositionsPage from "./ui/positions.contract"
+use CreateHead, PairButtons, TokenPicker, PoolPicker, GateStatus, PoolStatus, DepthChart, RangeFields, DepositPanel, WalletDialog, item from "./ui/create.contract"
+
+routes nav
+  home "/" render=build
+  notfound render=build
+
+component App
+  members "./ui/session.members.contract"
+  members "./ui/networks.members.contract"
+  members "./ui/deploy.members.contract"
+  members "./ui/positions.members.contract"
+  members "./ui/create.members.contract"
+  derive route = fragment(top(nav))
+  // A page rendered at build cannot know the hash: it draws the header and
+  // footer only, and the route's page once the browser runs the app.
+  resource client = client() as shape Client else empty()
+  derive page = client.live ? pageOf(route) : ""
+  resource info = appInfo() as shape AppInfo else empty()
+  view
+    main testId="app" class=Page padding=(createViewport.width <= 750 ? "20px" : "28px 36px")
+      head title="FreeLP" description="Manage EVM liquidity positions with your wallet and RPC endpoints. No application fees, indexers, or hosted metadata."
+      Shell(page=page, session=session, busy=busy, connect=connectWallet, disconnect=disconnectWallet, copy=copyAccount, copied=copied, narrow=(createViewport.width <= 600))
+      if notification != ""
+        row aria-label="Notification" class=Toast testId="notification-toast"
+          text notification role="status" tabindex=0 class=Status flex=1
+          button press=dismissStatus aria-label="Dismiss notification"
+            text "×"
+      column id="main-content" tabindex=-1
+        // Until then, keep the empty Positions page's height so the footer does
+        // not move when the page arrives.
+        if page == ""
+          column min-height=380
+        if page == "networks"
+          NetworksPage(catalog=catalog, search=networkSearch, setSearch=setNetworkSearch, busy=busy, checking=checking, toggle=toggleNetwork, turnedOff=turnedOff, restore=restoreNetworks, edit=openRpc, editing=editing, rpcDraft=rpcDraft, setRpcDraft=setRpcDraft, rpcError=rpcError, rpcBusy=pending(rpcSaved) or pending(rpcReset), saveRpc=saveRpc, defaultRpc=useDefaultRpc, closeRpc=closeRpc, blocked=blocked, dismissBlocked=dismissBlocked)
+        if page == "deploy"
+          DeployPage(view=deployment, loading=pending(deployment), disabled=(busy or session.account == ""), deploy=deployContract, deployAll=deployAllContracts, refresh=refreshDeployment, details=deployDetails, toggleDetails=toggleDeployDetails)
+        if page == "terms"
+          TermsPage()
+        if page == "build"
+          AboutPage(version=info.version, contracts=info.contracts, contractsUrl=info.contractsUrl, copy=copyCommand, copied=commandCopied)
+        if page == "create"
+          section max-width=1108 width="100%" margin="32px auto 48px" font-size=15
+            CreateHead(setup=createSetup, chain=cf.chain, busy=busy, pick=pickNetwork)
+            if not createTokens.loaded
+              text "Loading the token list…" role="status"
+            else
+              if not createTokens.enabled
+                text "Enable this network in Networks before using this link." role="alert"
+              else
+                column
+                  PairButtons(snap=createSnap, open=openPicker, narrow=(createViewport.width <= 600))
+                  TokenPicker(tokens=createTokens, balances=pickerBalances, connected=(session.account != ""), search=pickerSearch, setSearch=setPickerSearch, refresh=refreshPicker, choose=choose, close=closePicker, key=pickerKey, focused=pickerFocus, read=readCandidate, reading=pending(tokenRead), error=pickerError, candidate=candidate, showCandidate=showCandidate, importIt=importCandidate, chainName=createTokens.network)
+                  PoolPicker(form=cf, snap=createSnap, registry=createRegistry, loading=pending(createRegistry), advanced=advanced, setAdvanced=toggleCreateAdvanced, rawFee=rawFee, setRawFee=toggleRawFee, summaryOpen=summaryOpen, toggleSummary=toggleSummary, pickPool=pickPool, retry=retryRegistry, more=moreRegistry, editing=fieldEditing, draft=fieldDraft, edit=editField, done=endEdit, setFeeInput=setFeeInput, setKind=setKind, setExtension=setExtension, setAmplification=setAmplification, setCenter=setCenter, spacingOpen=spacingOpen, toggleSpacing=toggleSpacing, rawSpacing=rawSpacing, setRawSpacing=toggleRawSpacing, spacingValue=(rawSpacing ? spacingTicks : spacingDraft), setSpacingDraft=setSpacingDraft, candidate=createSpacing, applySpacing=applySpacing, narrow=(createViewport.width <= 600))
+                  GateStatus(gate=createGate, pending=pending(createGate), chain=cf.chain, retry=retryGate)
+                  if createGate.state == "ready" and not pending(createGate)
+                    PoolStatus(pool=createPool, loading=(cf.a != "" and cf.b != "" and (pending(createPool) or createPool.state == "idle")), updated=formatTime(createTime.epochAtZero + poolStamp, createTime.utcOffset, "short"), refresh=refreshPool, narrow=(createViewport.width <= 600))
+                    if createPool.state == "ready"
+                      view display="grid" grid-template-columns=(createViewport.width > 900 ? "minmax(0, 1.45fr) minmax(320px, 1fr)" : "1fr") gap=32 align-items="start"
+                        section aria-labelledby="range-heading" testId="range-section" min-width=0 padding-top=(createViewport.width > 900 ? 24 : 0)
+                          text "Price range and liquidity" id="range-heading" role="heading" aria-level=3 font-size=20 font-weight=600 letter-spacing=-0.35
+                          if not createPool.initialized
+                            text "New pool: you set its first price. An incorrect price can cause immediate loss of your deposit. Enter and verify the initial price before depositing." border-left="3px solid #111" padding=12 margin-top=12
+                          if createPool.chart.shown
+                            DepthChart(chart=createPool.chart, symbols=createSnap.symbols, zoom=zoom, zoomIn=zoomIn, zoomOut=zoomOut, select=chartRange, depthOpen=depthOpen, toggleDepth=toggleDepth)
+                          else
+                            text "This pool is not initialized. Set its initial price when creating the first position." margin="20px 0 24px"
+                          RangeFields(form=cf, snap=createSnap, pool=createPool, stable=(cf.kind == "stable"), editing=fieldEditing, draft=fieldDraft, edit=editField, done=endEdit, setBound=setBound, setInitial=setInitial, toggleFull=toggleFull, toggleMode=toggleRangeMode, preset=presetRange, error=rangeError)
+                        DepositPanel(form=cf, snap=createSnap, quote=createQuote, route=route, session=session, busy=busy, balance0=createBalance0, balance1=createBalance1, editing=fieldEditing, draft=fieldDraft, edit=editField, done=endEdit, setAmount=setAmount, fill=fillAmount, retryBalance=retryBalance, max=estimateMax, maxMessages=maxMessages, maxPending=pending(maxEstimated), setSlippage=setSlippage, detailsOpen=detailsOpen, toggleDetails=toggleDetails, limitsOpen=limitsOpen, toggleLimits=toggleLimits, approve=approve, create=create, creating=pending(positionCreated), connect=connectCreate, narrow=(createViewport.width <= 600), mid=(createViewport.width <= 900 and createViewport.width > 600))
+                  WalletDialog(session=session, connect=connectWallet)
+        if page == "positions"
+          PositionsPage(kind=positionPage, account=session.account, wallets=session.wallets, busy=busy, txStatus=tx.status, networks=positionNets, chains=positionChains, allCount=allCards.length, cards=shownCards, pageIndex=activePage, pageCount=pageCount, checking=checkingChains, filter=chainFilter, setFilter=setChainFilter, previous=previousPage, next=nextPage, refresh=refreshPositions, retry=retryChain, openPools=openPools, togglePool=togglePool, connect=connectEmpty, pick=pickWallet, dismiss=closeWalletDialog, v=positionView, ready=detailReady, loading=pending(positionView), updated=updatedAt, refreshPosition=refreshPosition, retryPosition=retryPosition, mode=dialogMode, openAdd=openAdd, openWithdraw=openWithdraw, closeDialog=closePositionDialog, dialogCancelled=dialogCancelled, collect=collectNow, review=withdrawal, portionText=portionText, portion=portion, recipient=recipient, setPortionText=setPortionText, setPortionRange=setPortionRange, presetPortion=presetPortion, setRecipient=setRecipient, withdraw=withdrawNow, d=deposit, depositLoading=pending(deposit), balances=depositBalances, side=depositSide, value=depositValue, setAmount=setDeposit, retryBalance=retryBalances, max=maxFor, maxMessage=maxMessage, maxPending=pending(maxSent), retryReads=retryTokenReads, approve=approveNow, add=addNow, advancedOpen=advancedOpen, toggleAdvanced=toggleAdvanced, slippageText=slippageText, setSlippage=setSlippageText)
+      Footer(version=info.version)
+
+fn pageOf(route: string): string = route == "/networks" or route == "/settings" ? "networks" : route == "/terms" ? "terms" : route == "/build" ? "build" : route.startsWith("/create") ? "create" : route.startsWith("/deploy") ? "deploy" : "positions"
+
+style Page
+  color-scheme="light" max-width=1180 margin="0 auto" padding="28px 36px" font-family="system-ui, sans-serif" line-height=1.5 color="#171717" background-color="#f6f6f6" min-height="100vh" box-sizing="border-box"
+
+style Toast
+  position="sticky" bottom=24 margin-left="auto" max-width=420 gap=8 align-items="start" background-color="#fff" border="1px solid #111" padding=4 z-index=10
+
+style Status
+  border-left="3px solid #111" padding=12 overflow-wrap="anywhere" white-space="pre-wrap" max-height="calc(100vh - 96px)" overflow-y="auto"
+
+style PageTitle
+  font-size=27 font-weight=700 letter-spacing=-0.7 margin="0 0 20px"

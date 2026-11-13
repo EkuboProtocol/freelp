@@ -1,32 +1,69 @@
 import {
   encodeDeployData,
+  keccak256,
   padHex,
+  toBytes,
   type Abi,
   type Address,
   type Hex,
 } from "viem";
-import coreArtifact from "../artifacts/Core.json" with { type: "json" };
-import managerArtifact from "../artifacts/FreeLP.json" with { type: "json" };
-import snapshotArtifact from "../artifacts/FreeLPDataFetcher.json" with { type: "json" };
-import indexArtifact from "../artifacts/PoolKeyIndex.json" with { type: "json" };
-import rendererArtifact from "../artifacts/FreeLPMetadataRenderer.json" with { type: "json" };
+import digests from "../artifacts/digests.json" with { type: "json" };
 import {
   DEFAULT_POOL_KEY_INDEX,
   DEFAULT_METADATA_RENDERER,
 } from "./deployments";
 import type { ContractKind } from "./contracts";
-const CONTRACT_ARTIFACTS = {
-  Core: coreArtifact,
-  FreeLP: managerArtifact,
-  FreeLPDataFetcher: snapshotArtifact,
-  PoolKeyIndex: indexArtifact,
-  FreeLPMetadataRenderer: rendererArtifact,
+
+type Artifact = {
+  abi: Abi;
+  bytecode: Hex;
+  deployedBytecode: Hex;
+  immutableReferences: Record<string, { start: number; length: number }[]>;
+  immutableBindings: Record<string, string>;
 };
-export function deployment(kind: ContractKind, core: Address) {
+export type ArtifactFetch = (path: string) => Promise<string>;
+
+// Creation and runtime code are only needed to deploy or to check a
+// network's contracts, so they stay out of the first download: the site
+// carries the artifacts, and each is checked against this build's digest.
+const CONTRACT_ARTIFACTS: Partial<Record<ContractKind, Artifact>> = {};
+let fetchArtifact: ArtifactFetch | undefined;
+let loading: Promise<void> | undefined;
+
+export function setArtifactFetch(next: ArtifactFetch) {
+  fetchArtifact = next;
+}
+
+export function loadArtifacts() {
+  return (loading ??= Promise.all(
+    (Object.keys(digests) as ContractKind[]).map(async (kind) => {
+      if (!fetchArtifact)
+        throw new Error("This build's contract artifacts are unavailable.");
+      const text = await fetchArtifact(`artifacts/${kind}.json`);
+      if (keccak256(toBytes(text)) !== digests[kind])
+        throw new Error(`${kind} artifact does not match this build.`);
+      CONTRACT_ARTIFACTS[kind] = JSON.parse(text) as Artifact;
+    }),
+  ).then(
+    () => {},
+    (error: unknown) => {
+      loading = undefined;
+      throw error;
+    },
+  ));
+}
+
+function artifactOf(kind: ContractKind) {
   const artifact = CONTRACT_ARTIFACTS[kind];
+  if (!artifact) throw new Error("Contract artifacts have not loaded yet.");
+  return artifact;
+}
+
+export function deployment(kind: ContractKind, core: Address) {
+  const artifact = artifactOf(kind);
   return encodeDeployData({
-    abi: artifact.abi as Abi,
-    bytecode: artifact.bytecode as Hex,
+    abi: artifact.abi,
+    bytecode: artifact.bytecode,
     args: constructorArgs(kind, core),
   });
 }
@@ -39,9 +76,9 @@ function constructorArgs(kind: ContractKind, core: Address) {
 }
 
 export function expectedRuntime(kind: ContractKind, core: Address): Hex {
-  const artifact = CONTRACT_ARTIFACTS[kind];
+  const artifact = artifactOf(kind);
   let runtime = artifact.deployedBytecode.toLowerCase();
-  const bindings = artifact.immutableBindings as Record<string, string>;
+  const bindings = artifact.immutableBindings;
   for (const [id, offsets] of Object.entries(artifact.immutableReferences)) {
     const value = immutableValue(bindings[id], core);
     for (const { start, length } of offsets) {

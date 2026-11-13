@@ -1,0 +1,39 @@
+// The wallet session: which injected wallets exist, the connected account,
+// and the one notification the page shows.
+use Session, Reply, TxState from "./shapes.contract"
+
+members App
+  state revision = 0
+  state status = ""
+  state copied = false
+  state commandCopied = false
+  resource session = loadSession(revision) as shape Session else empty()
+  mutation walletConnected as shape Reply then afterWallet
+  mutation walletDisconnected as shape Reply then afterWallet
+  mutation noticeCleared as shape Reply
+  resource tx = txState() as shape TxState else empty()
+  derive busy = tx.busy
+  derive notification = status != "" ? status : tx.status != "" ? tx.status : session.notice
+  action connectWallet(uuid: string)
+    send walletConnected = connectWallet(uuid)
+  action disconnectWallet
+    send walletDisconnected = disconnectWallet()
+  action afterWallet
+    status = match walletConnected { case some(r) => r.error, case none => "" }
+  task copiedTimer when copied
+    after(1500, uncopy)
+  action copyAccount
+    copyText(session.account)
+    copied = true
+  task commandCopiedTimer when commandCopied
+    after(1500, uncopyCommand)
+  action copyCommand(text: string)
+    copyText(text)
+    commandCopied = true
+  action uncopyCommand
+    commandCopied = false
+  action uncopy
+    copied = false
+  action dismissStatus
+    status = ""
+    send noticeCleared = dismissNotice()

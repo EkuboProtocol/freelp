@@ -1,3 +1,4 @@
+import { loadRepositoryArtifacts } from "../support/artifacts";
 import { test, expect } from "@playwright/test";
 import {
   createPublicClient,
@@ -32,6 +33,8 @@ const settings = {
   rpcUrl,
   nativeSymbol: "ETH",
 };
+
+test.beforeAll(loadRepositoryArtifacts);
 
 test("CREATE2 addresses are shared across accounts and occupied addresses cannot be redeployed", async () => {
   await node.request({ method: "anvil_reset", params: [] });

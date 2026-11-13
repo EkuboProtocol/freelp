@@ -1,0 +1,41 @@
+// Records app.ts answers with, shared by the pages.
+shape WalletOption
+  uuid: string
+  name: string
+
+shape Session
+  wallets: WalletOption[]
+  connected: string
+  account: string
+  short: string
+  identicon: number[]
+  notice: string
+  ready: bool
+
+shape Client
+  live: bool
+
+// Build facts: answered without the page module, so a page rendered at build
+// carries them.
+shape AppInfo
+  version: string
+  contracts: string
+  contractsUrl: string
+
+shape Reply
+  ok: bool
+  error: string
+
+shape TxState
+  busy: bool
+  status: string
+
+// A transaction's outcome: the hash once it confirmed, else why not.
+shape TxReply
+  ok: bool
+  error: string
+  hash: string
+
+// Links read as text: inherited colour, underlined.
+style TextLink
+  color="inherit" text-decoration="underline"

@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { immutableNames, bindImmutables } from "./artifact-immutables";
+import { artifactDerivatives } from "./artifact-derivatives";
 import {
   verifySourceCheckout,
   verifyArtifactSources,
@@ -59,3 +60,5 @@ for (const name of [
 await mkdir("artifacts", { recursive: true });
 for (const { name, output } of outputs)
   await writeFile(`artifacts/${name}.json`, JSON.stringify(output));
+for (const [path, text] of Object.entries(await artifactDerivatives()))
+  await writeFile(path, text);

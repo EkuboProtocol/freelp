@@ -8,3 +8,9 @@ test-results/
 release/
 
 cli-dist/
+
+.exact-sdk/
+.exact/
+/app.contract.d.ts
+/target/
+/dist.*

@@ -12,8 +12,9 @@ import {
   type Abi,
   type Address,
 } from "viem";
-import snapshotArtifact from "../artifacts/FreeLPDataFetcher.json" with { type: "json" };
-import managerArtifact from "../artifacts/FreeLP.json" with { type: "json" };
+import fetcherAbi from "../artifacts/abi/FreeLPDataFetcher.json" with { type: "json" };
+import freeLPAbi from "../artifacts/abi/FreeLP.json" with { type: "json" };
+import { loadArtifacts } from "./contractDeployment";
 import { rpc } from "./rpc";
 import type { Position, Settings } from "./types";
 export type ContractKind =
@@ -22,7 +23,7 @@ export type ContractKind =
   | "FreeLPMetadataRenderer"
   | "FreeLP"
   | "FreeLPDataFetcher";
-export const managerAbi = managerArtifact.abi as Abi;
+export const managerAbi = freeLPAbi as Abi;
 export const managerData = (
   functionName: string,
   args: readonly unknown[] = [],
@@ -48,7 +49,7 @@ export async function positions(
   const { data } = await rpc(settings).call({
     to: settings.freeLPDataFetcher ?? DEFAULT_POSITION_DATA_FETCHER,
     data: encodeFunctionData({
-      abi: snapshotArtifact.abi,
+      abi: fetcherAbi,
       functionName: "ownedPositions",
       args: [settings.manager, holder],
     }),
@@ -58,7 +59,7 @@ export async function positions(
       "The RPC returned no position data. Retry this network or review its RPC URL.",
     );
   const [chainId, managerDeployed, items] = decodeFunctionResult({
-    abi: snapshotArtifact.abi,
+    abi: fetcherAbi,
     functionName: "ownedPositions",
     data,
   }) as [bigint, boolean, Position[]];
@@ -148,6 +149,9 @@ export async function verifyCode(
   address: Address,
   kind: ContractKind,
 ) {
-  const code = await rpc(settings).getCode({ address });
+  const [code] = await Promise.all([
+    rpc(settings).getCode({ address }),
+    loadArtifacts(),
+  ]);
   assertContractRuntime(kind, settings.core, code);
 }
