@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import tokenFetcher from "../artifacts/FreeLPDataFetcher.json" with { type: "json" };
+import fetcherAbi from "../artifacts/abi/FreeLPDataFetcher.json" with { type: "json" };
 import { DEFAULT_POSITION_DATA_FETCHER } from "./deployments";
 import { rpc } from "./rpc";
 import type { Settings } from "./types";
@@ -48,7 +48,7 @@ async function readBalances(
 ) {
   const [balances, allowances] = (await rpc(settings).readContract({
     address: settings.freeLPDataFetcher ?? DEFAULT_POSITION_DATA_FETCHER,
-    abi: tokenFetcher.abi,
+    abi: fetcherAbi,
     functionName: "getNonzeroBalancesAndAllowances",
     args: [owner, tokens, [settings.manager]],
   })) as [

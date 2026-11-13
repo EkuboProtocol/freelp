@@ -10,6 +10,14 @@ shape Session
   short: string
   identicon: number[]
   notice: string
+  ready: bool
+
+shape Client
+  live: bool
+
+// Build facts: answered without the page module, so a page rendered at build
+// carries them.
+shape AppInfo
   version: string
   contracts: string
   contractsUrl: string

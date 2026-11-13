@@ -1,4 +1,4 @@
-import { deployment } from "./contractDeployment";
+import { deployment, loadArtifacts } from "./contractDeployment";
 import { assertContractRuntime } from "./contractIdentity";
 import { concatHex, getCreate2Address, type Address } from "viem";
 import { verifyCode, type ContractKind } from "./contracts";
@@ -86,6 +86,7 @@ export async function verifyDeploymentBatch(
     );
 }
 export async function deploymentStatus(settings: Settings, kind: ContractKind) {
+  await loadArtifacts();
   const address = deploymentAddress(kind, settings.core);
   const client = rpc(settings);
   const [chainId, code] = await Promise.all([
@@ -128,6 +129,7 @@ export async function verifyDeploymentTransaction(
   settings: Settings,
   tx: Transaction,
 ) {
+  await loadArtifacts();
   const kind = DEPLOYMENT_KINDS.find(
     (kind) =>
       concatHex([

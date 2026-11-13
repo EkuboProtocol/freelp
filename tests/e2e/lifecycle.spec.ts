@@ -4,6 +4,7 @@ import { rpcEndpoint } from "../../src/chains";
 import { NETWORKS } from "../../src/networks";
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
+import { loadRepositoryArtifacts } from "../support/artifacts";
 import {
   parseUnits,
   decodeFunctionData,
@@ -32,6 +33,7 @@ import {
   deploymentAddress,
   prepareDeployment,
 } from "../../src/deterministic";
+test.beforeAll(loadRepositoryArtifacts);
 const rpcUrl = "http://127.0.0.1:18545";
 function transactionStatus(page: Page) {
   return page.locator(
@@ -194,7 +196,7 @@ for (const { missingDecimals, native, batch } of [
         request.method() === "GET" &&
         parsed.origin === "http://127.0.0.1:14173" &&
         (parsed.pathname === "/" ||
-          /^\/((modules\/)?[\w.-]+\.(js|css)|tokens\/\d+\.json|favicon\.svg)$/.test(
+          /^\/((modules\/)?[\w.-]+\.(js|css)|(tokens\/\d+|artifacts\/\w+)\.json|favicon\.svg)$/.test(
             parsed.pathname,
           ))
       )

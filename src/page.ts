@@ -1,4 +1,5 @@
 import { report, setStorageBackend } from "./storage";
+import { setArtifactFetch } from "./contractDeployment";
 import { setCatalogFetch } from "./tokenCatalog";
 import type { Provider } from "./types";
 
@@ -15,6 +16,11 @@ let native: Native | undefined;
 export function attach(next: unknown) {
   if (next && typeof (next as Native).later === "function")
     native = next as Native;
+}
+
+// False while the build renders a page ahead: there is no page module then.
+export function connected() {
+  return native !== undefined;
 }
 
 export function watch(topic: string) {
@@ -75,5 +81,13 @@ export function ready() {
       },
     });
     setCatalogFetch((path) => page("asset", { path }));
+    setArtifactFetch(async (path) => {
+      const file = await page<{ status: number; text: string }>("asset", {
+        path,
+      });
+      if (file.status !== 200)
+        throw new PageError("This build's contract artifacts are unavailable.");
+      return file.text;
+    });
   }));
 }

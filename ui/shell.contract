@@ -38,7 +38,7 @@ component Shell
           for w in session.wallets key=w.uuid
             button press=connect(w.uuid) class=Plain
               text `Connect ${w.name}`
-          if session.wallets.length == 0
+          if session.ready and session.wallets.length == 0
             text "No wallet detected" font-size=13 color="#555"
 
 component Identicon

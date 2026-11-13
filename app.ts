@@ -2,7 +2,7 @@
 // Reads go to the configured RPC endpoints; wallets, browser storage and the
 // app's own files are reached through the page module (src/page.ts).
 import type { Answer, Sources } from "./app.contract.d.ts";
-import { attach } from "./src/page";
+import { attach, connected } from "./src/page";
 import * as shell from "./src/sources/shell";
 import * as tx from "./src/sources/tx";
 import * as deploy from "./src/sources/deploy";
@@ -14,6 +14,8 @@ export const grants = "net.fetch https:\nnet.fetch http:";
 
 const sources: Sources = {
   loadSession: () => shell.session(),
+  appInfo: async () => shell.appInfo(),
+  client: async () => shell.client(),
   txState: async () => tx.txState(),
   connectWallet: ([uuid]) => shell.connectWallet(uuid),
   disconnectWallet: () => shell.disconnectWallet(),
@@ -94,7 +96,13 @@ const sources: Sources = {
     create.createApprove(route, revision, retry, side),
 };
 
+// A page rendered at build has no page module: it carries only the build's
+// own facts, and the browser asks every other source, which may watch a topic.
+const BUILD_FACTS = new Set(["appInfo"]);
+
 export const answer: Answer = (source, args, store, storage, native) => {
   attach(native);
+  if (!connected() && !BUILD_FACTS.has(source))
+    throw new Error("The page is not connected.");
   return sources[source](args, store, storage, native);
 };

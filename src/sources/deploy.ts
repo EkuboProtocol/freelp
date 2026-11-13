@@ -1,3 +1,4 @@
+import { loadArtifacts } from "../contractDeployment";
 import { chainDefinition } from "../chains";
 import { verifyCode, type ContractKind } from "../contracts";
 import {
@@ -90,6 +91,7 @@ export async function deployView(route: string) {
     salt: DEPLOYMENT_SALT,
   };
   if (chainId === "invalid" || chainId === 0) return empty;
+  await loadArtifacts();
   const settings = configuredNetwork(chainId);
   const account = await connectedAccount();
   const batch = account

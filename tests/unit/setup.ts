@@ -1,4 +1,6 @@
+import { loadRepositoryArtifacts } from "../support/artifacts";
 import { setStorageBackend } from "../../src/storage";
+await loadRepositoryArtifacts();
 // Tests stand in for the page's localStorage by defining the global.
 setStorageBackend({
   getItem: (key) =>

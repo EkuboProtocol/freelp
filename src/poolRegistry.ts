@@ -11,7 +11,7 @@ import {
   type Hex,
   type PublicClient,
 } from "viem";
-import artifact from "../artifacts/PoolKeyIndex.json" with { type: "json" };
+import indexAbi from "../artifacts/abi/PoolKeyIndex.json" with { type: "json" };
 import { DEFAULT_POOL_KEY_INDEX } from "./deployments";
 import { rpc } from "./rpc";
 import type { Settings } from "./types";
@@ -20,7 +20,7 @@ import { poolConfig } from "./poolOptions";
 import { percentFromExactFee } from "./fee";
 
 export const PAGE_SIZE = 16;
-const abi = artifact.abi as Abi;
+const abi = indexAbi as Abi;
 type IndexClient = Pick<
   PublicClient,
   "getBlockNumber" | "getChainId" | "readContract"

@@ -2,7 +2,7 @@
 // module (modules/web/index.js) holds the wallets and browser storage.
 // Pages live after the hash (#/positions), so the site works from any path:
 // a content address, a gateway's /ipfs/<cid>/ or the local launcher.
-use Session, Reply from "./ui/shapes.contract"
+use Session, AppInfo, Client, Reply from "./ui/shapes.contract"
 use Shell, Footer from "./ui/shell.contract"
 use AboutPage, TermsPage from "./ui/static.contract"
 use NetworksPage, Catalog from "./ui/networks.contract"
@@ -11,8 +11,8 @@ use PositionsPage from "./ui/positions.contract"
 use CreateHead, PairButtons, TokenPicker, PoolPicker, GateStatus, PoolStatus, DepthChart, RangeFields, DepositPanel, WalletDialog, item from "./ui/create.contract"
 
 routes nav
-  home "/"
-  notfound
+  home "/" render=build
+  notfound render=build
 
 component App
   members "./ui/session.members.contract"
@@ -21,7 +21,11 @@ component App
   members "./ui/positions.members.contract"
   members "./ui/create.members.contract"
   derive route = fragment(top(nav))
-  derive page = pageOf(route)
+  // A page rendered at build cannot know the hash: it draws the header and
+  // footer only, and the route's page once the browser runs the app.
+  resource client = client() as shape Client else empty()
+  derive page = client.live ? pageOf(route) : ""
+  resource info = appInfo() as shape AppInfo else empty()
   view
     main testId="app" class=Page padding=(createViewport.width <= 750 ? "20px" : "28px 36px")
       head title="FreeLP" description="Manage EVM liquidity positions with your wallet and RPC endpoints. No application fees, indexers, or hosted metadata."
@@ -32,6 +36,10 @@ component App
           button press=dismissStatus aria-label="Dismiss notification"
             text "×"
       column id="main-content" tabindex=-1
+        // Until then, keep the empty Positions page's height so the footer does
+        // not move when the page arrives.
+        if page == ""
+          column min-height=380
         if page == "networks"
           NetworksPage(catalog=catalog, search=networkSearch, setSearch=setNetworkSearch, busy=busy, checking=checking, toggle=toggleNetwork, turnedOff=turnedOff, restore=restoreNetworks, edit=openRpc, editing=editing, rpcDraft=rpcDraft, setRpcDraft=setRpcDraft, rpcError=rpcError, rpcBusy=pending(rpcSaved) or pending(rpcReset), saveRpc=saveRpc, defaultRpc=useDefaultRpc, closeRpc=closeRpc, blocked=blocked, dismissBlocked=dismissBlocked)
         if page == "deploy"
@@ -39,7 +47,7 @@ component App
         if page == "terms"
           TermsPage()
         if page == "build"
-          AboutPage(version=session.version, contracts=session.contracts, contractsUrl=session.contractsUrl, copy=copyCommand, copied=commandCopied)
+          AboutPage(version=info.version, contracts=info.contracts, contractsUrl=info.contractsUrl, copy=copyCommand, copied=commandCopied)
         if page == "create"
           section max-width=1108 width="100%" margin="32px auto 48px" font-size=15
             CreateHead(setup=createSetup, chain=cf.chain, busy=busy, pick=pickNetwork)
@@ -71,7 +79,7 @@ component App
                   WalletDialog(session=session, connect=connectWallet)
         if page == "positions"
           PositionsPage(kind=positionPage, account=session.account, wallets=session.wallets, busy=busy, txStatus=tx.status, networks=positionNets, chains=positionChains, allCount=allCards.length, cards=shownCards, pageIndex=activePage, pageCount=pageCount, checking=checkingChains, filter=chainFilter, setFilter=setChainFilter, previous=previousPage, next=nextPage, refresh=refreshPositions, retry=retryChain, openPools=openPools, togglePool=togglePool, connect=connectEmpty, pick=pickWallet, dismiss=closeWalletDialog, v=positionView, ready=detailReady, loading=pending(positionView), updated=updatedAt, refreshPosition=refreshPosition, retryPosition=retryPosition, mode=dialogMode, openAdd=openAdd, openWithdraw=openWithdraw, closeDialog=closePositionDialog, dialogCancelled=dialogCancelled, collect=collectNow, review=withdrawal, portionText=portionText, portion=portion, recipient=recipient, setPortionText=setPortionText, setPortionRange=setPortionRange, presetPortion=presetPortion, setRecipient=setRecipient, withdraw=withdrawNow, d=deposit, depositLoading=pending(deposit), balances=depositBalances, side=depositSide, value=depositValue, setAmount=setDeposit, retryBalance=retryBalances, max=maxFor, maxMessage=maxMessage, maxPending=pending(maxSent), retryReads=retryTokenReads, approve=approveNow, add=addNow, advancedOpen=advancedOpen, toggleAdvanced=toggleAdvanced, slippageText=slippageText, setSlippage=setSlippageText)
-      Footer(version=session.version)
+      Footer(version=info.version)
 
 fn pageOf(route: string): string = route == "/networks" or route == "/settings" ? "networks" : route == "/terms" ? "terms" : route == "/build" ? "build" : route.startsWith("/create") ? "create" : route.startsWith("/deploy") ? "deploy" : "positions"
 

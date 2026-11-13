@@ -57,6 +57,17 @@ export async function session() {
     short: account ? `${account.slice(0, 6)}…${account.slice(-4)}` : "",
     identicon: account ? identicon(account) : [],
     notice: state.notice,
+    ready: true,
+  };
+}
+
+// Answers in the browser only: a page rendered at build has no page module.
+export function client() {
+  return { live: true };
+}
+
+export function appInfo() {
+  return {
     version: APP_VERSION,
     contracts: `${CONTRACTS_SOURCE.repository}@${CONTRACTS_SOURCE.commit.slice(0, 7)}`,
     contractsUrl: `https://github.com/${CONTRACTS_SOURCE.repository}/commit/${CONTRACTS_SOURCE.commit}`,

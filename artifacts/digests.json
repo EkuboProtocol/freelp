@@ -1,0 +1,7 @@
+{
+  "Core": "0x238f1c5e67a1f8c16421da9abcbbba62e3522104c8d9e00cc23a7ca15a524d22",
+  "PoolKeyIndex": "0xaa9d80d4e2107ecf1873c1f1131c5210a50597b7feb7908fe2542e269cd7f4b8",
+  "FreeLPMetadataRenderer": "0x4061720fd3da401f6fa997c0ff5107e5df811d7caec77172e1ace472561ddbe3",
+  "FreeLP": "0x49ac9436678f8bd2a8feca06b30fc38d20232a87d98fe10340cda885d18a94cf",
+  "FreeLPDataFetcher": "0xdb8dc76d3f52e6f126bf242af7f8712129b8b7d343b0df0390f0116e5d17f98e"
+}
